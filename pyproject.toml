@@ -1,0 +1,102 @@
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "djangospice"
+version = "0.1.0"
+description = "Application Runtime Framework for building Django apps."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Brian Simpokolwe", email = "briansimpokolwe@gmail.com" }
+]
+
+keywords = [
+    "django",
+    "djangospice",
+    "modular",
+    "framework",
+    "runtime"
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Django",
+    "Framework :: Django :: 5",
+    "Framework :: Django :: 6",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+
+# --- Core Dependencies (Batteries Included) ---
+dependencies = [
+    # Core Framework & API
+    "django>=5.0,<=6.0",
+    "djangorestframework>=3.15",
+    "django-filter>=24.0",
+    "django-tables2>=2.7",
+    "django-model-utils>=4.5",
+    "python-slugify>=8.0",
+    "asgiref>=3.8",
+    "semver>=3.0",
+    "setuptools>=80.9",
+    
+    # Database
+    "psycopg[binary]>=3.1",
+    
+    # Async & WebSockets
+    "channels>=4.1",
+    "channels-redis>=4.2",
+    
+    # Background Task Processing
+    "celery>=5.4",
+    
+    # Data Import/Export & Excel Support
+    "django-import-export>=4.2",
+    "tablib[all]>=3.7",
+    "openpyxl>=3.1",
+    
+    # Notifications & Email Rendering
+    "django-notifications-hq>=1.8",
+    "premailer>=3.10",
+    
+    # PDF Rendering
+    "django-renderpdf>=4.0"
+]
+
+# --- Development Tools ---
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-django",
+    "coverage",
+    "black",
+    "isort",
+    "ruff",
+]
+
+[project.urls]
+Homepage = "https://github.com/briansimpo/djangospice"
+Documentation = "https://github.com/briansimpo/djangospice#readme"
+Source = "https://github.com/briansimpo/djangospice"
+Issues = "https://github.com/briansimpo/djangospice/issues"
+
+[project.scripts]
+djangospice = "djangospice.cli:cli"
+
+# --- Hatch Build Configuration ---
+[tool.hatch.build.targets.wheel]
+packages = ["src/djangospice"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""

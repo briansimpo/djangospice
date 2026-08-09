@@ -1,0 +1,14 @@
+from djangospice.apps.config import AppConfig
+
+class {class_name}AppConfig(AppConfig):
+    name = "{module_name}"
+    label = "{module_label}"
+    verbose_name = "{verbose_name}"
+    url = None
+    icon = None
+
+   
+app_name = {class_name}AppConfig.name 
+app_label = {class_name}AppConfig.label
+verbose_name = {class_name}AppConfig.verbose_name
+
