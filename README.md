@@ -146,7 +146,7 @@ djangospice is organized around reusable infrastructure rather than business-dom
 Common Django model abstractions provide a consistent foundation for application models.
 
 ```python
-from djangospice.db.models import BaseModel
+from djangospice.database.models import BaseModel
 ```
 
 The database layer is intended to eliminate repetitive model infrastructure while preserving normal Django ORM behavior.
