@@ -14,7 +14,6 @@ djangospice sits below application modules and provides common capabilities such
 * Command-line interfaces
 * UI components and widgets
 * HTTP and HTMX responses
-* Notifications
 * Broadcasting and realtime communication
 * Async utilities
 * Tables and data presentation
@@ -44,8 +43,8 @@ djangospice is intended to sit at the foundation of a modular Django ecosystem:
 ┌─────────────────────────────────────────────┐
 │                 djangospice                 │
 │                                             │
-│  Events        CLI          UI / Widgets    │
-│  Notifications Broadcasting  HTTP / HTMX    │
+│  Events        CLI          Widgets         │
+│  Broadcasting  HTMX         Jobs            │
 │  Async         Tables       Files           │
 │  Imports       Exports      Services        │
 │  Base Models   Utilities   Common APIs      │
@@ -71,7 +70,7 @@ For example, individual applications may independently implement:
 
 * Base models
 * Event dispatching
-* Notification delivery
+* Job handling
 * UI components
 * HTMX responses
 * CLI commands
@@ -126,7 +125,7 @@ Once installed, djangospice components can be imported by Django applications an
 For example, using the common model infrastructure:
 
 ```python
-from djangospice.database.models import BaseModel
+from djangospice.db.models import BaseModel
 
 
 class Customer(BaseModel):
@@ -146,7 +145,7 @@ djangospice is organized around reusable infrastructure rather than business-dom
 Common Django model abstractions provide a consistent foundation for application models.
 
 ```python
-from djangospice.database.models import BaseModel
+from djangospice.db.models import BaseModel
 ```
 
 The database layer is intended to eliminate repetitive model infrastructure while preserving normal Django ORM behavior.
@@ -173,31 +172,6 @@ Application Action
 ```
 
 This allows functionality such as notifications, auditing, integrations, and background processing to be attached without modifying the original application logic.
-
----
-
-## Notifications
-
-djangospice provides infrastructure for building application notification systems.
-
-The architecture separates:
-
-```text
-Notification
-     │
-     ├── Storage
-     │
-     ├── Presentation
-     │
-     └── Delivery
-          ├── Email
-          ├── SMS
-          ├── Push
-          ├── Websocket
-          └── Other channels
-```
-
-This separation allows applications to change how notifications are delivered without changing the notification itself.
 
 ---
 
@@ -323,7 +297,6 @@ djangospice
     ├── helpdesk
     ├── CRM
     ├── workforce
-    └── academic applications
 ```
 
 Each application can depend on the common runtime while retaining responsibility for its own domain.
@@ -337,7 +310,7 @@ This keeps domain logic out of the framework.
 A module can build its domain logic on top of djangospice:
 
 ```python
-from djangospice.database.models import BaseModel
+from djangospice.db.models import BaseModel
 
 
 class Invoice(BaseModel):
@@ -457,7 +430,7 @@ Areas of development include:
 * CLI tooling
 * Event-driven application architecture
 * Realtime communication
-* Notification delivery
+* Job handling
 * UI/widget infrastructure
 * HTMX integration
 * Import/export pipelines
@@ -495,7 +468,6 @@ Examples include:
 * Workflow
 * Documents
 * Helpdesk
-* Academic management
 
 ### Products
 
