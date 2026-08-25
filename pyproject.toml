@@ -66,8 +66,7 @@ dependencies = [
     "tablib[all]>=3.7",
     "openpyxl>=3.1",
     
-    # Notifications & Email Rendering
-    "django-notifications-hq>=1.8",
+    # Email Rendering
     "premailer>=3.10",
     
     # PDF Rendering
