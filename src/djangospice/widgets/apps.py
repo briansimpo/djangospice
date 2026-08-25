@@ -6,4 +6,4 @@ class WidgetsConfig(AppConfig):
     label = "widgets"
     
     
-namespace = WidgetsConfig.label
+namespace = WidgetsConfig.namespace
