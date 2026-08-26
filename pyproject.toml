@@ -60,6 +60,7 @@ dependencies = [
     
     # Background Task Processing
     "celery>=5.4",
+    "django-celery-beat>=2.6",
     
     # Data Import/Export & Excel Support
     "django-import-export>=4.2",
