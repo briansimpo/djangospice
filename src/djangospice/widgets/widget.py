@@ -80,6 +80,70 @@ class Widget(HTMLComponent, metaclass=WidgetMetaclass):
         pass
 
     # -------------------------------------------------------------------------
+    # Metadata
+    # -------------------------------------------------------------------------
+
+    @property
+    def name(self) -> str:
+        return self._meta.name
+
+    @property
+    def app_label(self) -> str:
+        return self._meta.app_label
+
+    @property
+    def title(self) -> str:
+        return self._meta.title
+
+    @property
+    def description(self) -> str:
+        return self._meta.description
+
+    @property
+    def group(self) -> str | None:
+        return self._meta.group
+
+    @property
+    def enabled(self) -> bool:
+        return self._meta.enabled
+
+    @property
+    def permission(self) -> str | None:
+        return self._meta.permission
+
+    @property
+    def priority(self) -> int:
+        return self._meta.priority
+
+    @property
+    def lazy(self) -> bool:
+        return self._meta.lazy
+
+    @property
+    def refreshable(self) -> bool:
+        return self._meta.refreshable
+
+    @property
+    def refresh_interval(self) -> int | None:
+        return self._meta.refresh_interval
+
+    @property
+    def cache_timeout(self) -> int | None:
+        return self._meta.cache_timeout
+
+    @property
+    def cache_enabled(self) -> bool:
+        return self.cache_timeout is not None
+
+    @property
+    def widget_key(self) -> str:
+        return (
+            f"{self.app_label}.{self.name}"
+            if self.app_label
+            else self.name
+        )
+
+    # -------------------------------------------------------------------------
     # Request / User
     # -------------------------------------------------------------------------
 
@@ -181,69 +245,6 @@ class Widget(HTMLComponent, metaclass=WidgetMetaclass):
             htmx=htmx,
         )
 
-        # -------------------------------------------------------------------------
-        # Metadata
-        # -------------------------------------------------------------------------
-
-    @property
-    def name(self) -> str:
-        return self._meta.name
-
-    @property
-    def app_label(self) -> str:
-        return self._meta.app_label
-
-    @property
-    def title(self) -> str:
-        return self._meta.title
-
-    @property
-    def description(self) -> str:
-        return self._meta.description
-
-    @property
-    def group(self) -> str | None:
-        return self._meta.group
-
-    @property
-    def enabled(self) -> bool:
-        return self._meta.enabled
-
-    @property
-    def permission(self) -> str | None:
-        return self._meta.permission
-
-    @property
-    def priority(self) -> int:
-        return self._meta.priority
-
-    @property
-    def lazy(self) -> bool:
-        return self._meta.lazy
-
-    @property
-    def refreshable(self) -> bool:
-        return self._meta.refreshable
-
-    @property
-    def refresh_interval(self) -> int | None:
-        return self._meta.refresh_interval
-
-    @property
-    def cache_timeout(self) -> int | None:
-        return self._meta.cache_timeout
-
-    @property
-    def cache_enabled(self) -> bool:
-        return self.cache_timeout is not None
-
-    @property
-    def widget_key(self) -> str:
-        return (
-            f"{self.app_label}.{self.name}"
-            if self.app_label
-            else self.name
-        )
 
     # -------------------------------------------------------------------------
     # Visibility / Authorization
