@@ -1,0 +1,27 @@
+<form
+    id="{{ widget.name }}-search"
+    class="djangospice-table-search"
+    method="get"
+    action="{{ table_url }}"
+    {{ widget.search_htmx }}
+>
+    <label
+        for="{{ widget.name }}-search-input"
+        class="sr-only"
+    >
+        Search
+    </label>
+
+    <input
+        id="{{ widget.name }}-search-input"
+        type="search"
+        name="{{ widget.search_parameter }}"
+        value="{{ search_term }}"
+        placeholder="Search..."
+        autocomplete="off"
+    >
+
+    <button type="submit">
+        Search
+    </button>
+</form>

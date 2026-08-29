@@ -1,0 +1,36 @@
+<div
+    class="djangospice-table-actions"
+    role="toolbar"
+>
+    {% for action in table_actions %}
+
+        {% with context=widget.get_table_action_context %}
+
+            <button
+                type="button"
+                class="djangospice-action
+                       {{ action.css_class|default:'' }}"
+                {{ widget.action_htmx action context }}
+                {% if not action.enabled context %}
+                    disabled
+                    aria-disabled="true"
+                {% endif %}
+            >
+                {% if action.icon %}
+                    <span
+                        class="djangospice-action-icon"
+                        aria-hidden="true"
+                    >
+                        {{ action.icon }}
+                    </span>
+                {% endif %}
+
+                <span class="djangospice-action-label">
+                    {{ action.label }}
+                </span>
+            </button>
+
+        {% endwith %}
+
+    {% endfor %}
+</div>

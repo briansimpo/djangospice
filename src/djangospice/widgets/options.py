@@ -7,7 +7,7 @@ from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady
 from django.db.models import Model
 
-from djangospice.widgets.utils import slugify
+from .utils import slugify
 
 
 
@@ -36,31 +36,43 @@ class WidgetOptions:
     objects_parameter: str = "selected_ids"
 
     @classmethod
-    def from_meta(cls, meta: type | None, class_name: str, module_path: str) -> WidgetOptions:
-        """
-        Factory method to build options from an inner Meta class.
-        Applies automatic defaults for name, title, template_name, and app_label.
-        """
+    def from_meta(
+        cls,
+        meta: type | None,
+        class_name: str,
+        module_path: str,
+        class_attrs: dict[str, Any] | None = None,
+    ) -> "WidgetOptions":
+
         kwargs: dict[str, Any] = {}
-        
-        # Extract explicitly defined values from the Meta class
+
         if meta:
             for f in fields(cls):
                 if hasattr(meta, f.name):
                     kwargs[f.name] = getattr(meta, f.name)
 
-        # 1. Resolve Django App Label
-        if not kwargs.get("app_label"):
-            kwargs["app_label"] = cls._resolve_app_label(module_path)
+        if class_attrs:
+            for f in fields(cls):
+                if f.name in class_attrs:
+                    kwargs[f.name] = class_attrs[f.name]
 
-        # 2. Auto-generate Name
+        if not kwargs.get("app_label"):
+            kwargs["app_label"] = cls._resolve_app_label(
+                module_path
+            )
+
         if not kwargs.get("name"):
-            kwargs["name"] = slugify(class_name) if class_name else ""
-            
-        # 3. Auto-generate Title
+            kwargs["name"] = slugify(
+                class_name
+            ) if class_name else ""
+
         if not kwargs.get("title"):
-            kwargs["title"] = kwargs["name"].replace("_", " ").title()
-            
+            kwargs["title"] = (
+                kwargs["name"]
+                .replace("_", " ")
+                .title()
+            )
+
         return cls(**kwargs)
 
     @classmethod

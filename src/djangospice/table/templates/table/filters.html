@@ -1,0 +1,47 @@
+{% if filterset %}
+<form
+    id="{{ widget.name }}-filters"
+    class="djangospice-table-filters"
+    method="get"
+    action="{{ table_url }}"
+    {{ widget.filter_htmx }}
+>
+    {% for hidden in filterset.form.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+
+    <div class="djangospice-filter-fields">
+
+        {% for field in filterset.form.visible_fields %}
+
+            <div class="djangospice-filter-field">
+
+                {{ field.label_tag }}
+
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small>
+                        {{ field.help_text }}
+                    </small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <div class="djangospice-field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+    <div class="djangospice-filter-actions">
+        <button type="submit">
+            Apply
+        </button>
+    </div>
+</form>
+{% endif %}

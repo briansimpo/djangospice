@@ -1,10 +1,9 @@
 from django.http import HttpRequest
 from djangospice.response.response import Response
 
-from djangospice.widgets.widget import Widget
-from djangospice.widgets.exceptions import DispatcherNotFound
-
 from .dispatchers import ActionDispatcher, MethodDispatcher
+from .exceptions import DispatcherNotFound
+from .widget import Widget
 
 
 class WidgetExecutor:

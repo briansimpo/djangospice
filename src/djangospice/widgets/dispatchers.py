@@ -3,8 +3,9 @@ from django.http import HttpRequest
 
 from djangospice.response.response import Response
 
-from djangospice.widgets.widget import Widget
-from djangospice.widgets.actions.context import ActionContext
+from djangospice.widgets.actions import ActionContext
+
+from .widget import Widget
 
 
 class BaseDispatcher(ABC):

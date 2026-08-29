@@ -1,0 +1,9 @@
+<div
+    id="{{ widget.content_id }}"
+    class="djangospice-table-content"
+    {{ navigation_htmx }}
+>
+    {% include "djangospice/table/toolbar.html" %}
+
+    {% include "djangospice/table/table_body.html" %}
+</div>

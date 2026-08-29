@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import ClassVar
 
 from django.core.exceptions import PermissionDenied
 
+from djangospice.core.object import Object
 from djangospice.html.attributes import HTMXAttributes
 from djangospice.response.response import Response
 
@@ -12,7 +13,7 @@ from .metaclass import ActionMetaclass
 from .context import ActionContext
 
 
-class Action(ABC, metaclass=ActionMetaclass):
+class Action(Object, metaclass=ActionMetaclass):
     """
     Base executable widget action.
     """
@@ -33,7 +34,6 @@ class Action(ABC, metaclass=ActionMetaclass):
     css_class: ClassVar[str | None] = None
 
     order: ClassVar[int] = 100
-    groups: ClassVar[str | tuple[str, ...]] = ()
 
     # ------------------------------------------------------------------
     # Behaviour
@@ -77,19 +77,25 @@ class Action(ABC, metaclass=ActionMetaclass):
     # ------------------------------------------------------------------
 
     def htmx(self, context: ActionContext) -> HTMXAttributes:
-        """
-        Build HTMX attributes required to invoke this action.
-        """
 
-        return (
+        attributes = (
             HTMXAttributes()
             .request(
                 method=self.method,
                 url=context.widget.endpoint,
             )
-            .with_vals(action=self.name)
+            .with_vals(
+                action=self.name,
+            )
         )
-        
+
+        if context.object is not None:
+            attributes.with_vals(
+                selected_id=str(context.object.pk)
+            )
+
+        return attributes
+            
     def dispatch(self, context: ActionContext) -> Response:
 
         if not self.enabled(context):

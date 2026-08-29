@@ -156,7 +156,7 @@ class HTMXAttributes(Serializable):
         return self.request("put", url)
     
     def patch(self, url):
-        return self.request("path", url)
+        return self.request("patch", url)
     
     def delete(self, url):
         return self.request("delete", url)

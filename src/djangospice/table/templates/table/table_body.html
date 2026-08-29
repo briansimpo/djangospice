@@ -1,0 +1,12 @@
+{% load render_table from django_tables2 %}
+
+<div
+    id="{{ widget.table_id }}"
+    class="djangospice-table-container"
+>
+    {% if table.rows %}
+        {% render_table table %}
+    {% else %}
+        {% include "djangospice/table/empty.html" %}
+    {% endif %}
+</div>

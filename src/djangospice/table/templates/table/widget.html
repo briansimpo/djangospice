@@ -1,0 +1,28 @@
+{% load render_table from django_tables2 %}
+
+<div
+    id="{{ widget.name }}-widget"
+    class="djangospice-table-widget"
+    data-widget="{{ widget.widget_key }}"
+>
+    <div
+        id="{{ widget.name }}-content"
+        hx-boost="true"
+        hx-target="#{{ widget.name }}-content"
+        hx-select="#{{ widget.name }}-content"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        class="djangospice-table-content"
+    >
+
+        {% include "djangospice/table/toolbar.html" %}
+
+        <div
+            id="{{ widget.name }}-table"
+            class="djangospice-table-container"
+        >
+            {% include "djangospice/table/table.html" %}
+        </div>
+
+    </div>
+</div>

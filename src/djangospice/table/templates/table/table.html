@@ -1,0 +1,9 @@
+{% load render_table from django_tables2 %}
+
+<div
+    id="{{ widget.name }}-widget"
+    class="djangospice-table-widget"
+    data-widget="{{ widget.widget_key }}"
+>
+    {% include "djangospice/table/content.html" %}
+</div>

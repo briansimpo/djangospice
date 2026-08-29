@@ -50,17 +50,6 @@ class ActionMetaclass(type):
         # Presentation
         # ------------------------------------------------------------------
 
-        groups = getattr(cls, "groups", ())
-
-        if groups is None:
-            groups = ()
-        elif isinstance(groups, str):
-            groups = (groups,)
-        else:
-            groups = tuple(groups)
-
-        cls.groups = groups
-
         cls.order = int(getattr(cls, "order", 100))
 
         # ------------------------------------------------------------------

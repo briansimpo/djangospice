@@ -2,7 +2,7 @@ from django.views import View
 from django.http import HttpRequest, Http404
 from djangospice.response.shortcuts import render_response
 
-from .runtime import WidgetExecutor
+from .executor import WidgetExecutor
 from .registry import WidgetRegistry
 
 
