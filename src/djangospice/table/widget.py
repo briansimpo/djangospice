@@ -6,7 +6,6 @@ from typing import Any, ClassVar
 import django_tables2 as tables
 from django.db.models import Q, QuerySet
 
-from djangospice.response.response import Response
 from djangospice.table.columns import RowActionsColumn
 from djangospice.widgets.actions import (
     Action,
