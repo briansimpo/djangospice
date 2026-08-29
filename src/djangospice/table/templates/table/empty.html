@@ -1,5 +1,31 @@
-<div class="djangospice-table-empty">
-    <div class="djangospice-table-empty-message">
-       {{ widget.empty_message }}
+<div class="flex min-h-40 items-center justify-center px-6 py-10">
+    <div class="text-center">
+
+        <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+            <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 7.5h18M6 3.75h12A1.5 1.5 0 0119.5 5.25v13.5a1.5 1.5 0 01-1.5 1.5H6a1.5 1.5 0 01-1.5-1.5V5.25A1.5 1.5 0 016 3.75z"
+                />
+            </svg>
+        </div>
+
+        <p class="text-sm font-medium text-slate-700">
+            {{ empty_message }}
+        </p>
+
+        {% if search_term %}
+            <p class="mt-1 text-xs text-slate-500">
+                Try changing your search or filters.
+            </p>
+        {% endif %}
+
     </div>
 </div>

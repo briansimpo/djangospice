@@ -1,0 +1,107 @@
+{% if page.total > 1 %}
+
+<nav
+    class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-3 py-3"
+    aria-label="Pagination"
+>
+
+    <div class="text-sm text-slate-500">
+        Page
+        <span class="font-medium text-slate-700">
+            {{ page.number }}
+        </span>
+        of
+        <span class="font-medium text-slate-700">
+            {{ page.total }}
+        </span>
+    </div>
+
+
+    <div class="flex items-center gap-1">
+
+        {# First #}
+
+        {% if page.first %}
+            <a
+                href="{{ page.first.url }}"
+                {{ page.first.htmx }}
+                class="btn btn-sm btn-secondary"
+                aria-label="First page"
+            >
+                &laquo;
+            </a>
+        {% endif %}
+
+
+        {# Previous #}
+
+        {% if page.previous %}
+            <a
+                href="{{ page.previous.url }}"
+                {{ page.previous.htmx }}
+                class="btn btn-sm btn-secondary"
+            >
+                Previous
+            </a>
+        {% endif %}
+
+
+        {# Pages #}
+
+        {% for number, interaction, active in page.pages %}
+
+            {% if active %}
+
+                <span
+                    class="btn btn-sm btn-primary"
+                    aria-current="page"
+                >
+                    {{ number }}
+                </span>
+
+            {% else %}
+
+                <a
+                    href="{{ interaction.url }}"
+                    {{ interaction.htmx }}
+                    class="btn btn-sm btn-secondary"
+                >
+                    {{ number }}
+                </a>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {# Next #}
+
+        {% if page.next %}
+            <a
+                href="{{ page.next.url }}"
+                {{ page.next.htmx }}
+                class="btn btn-sm btn-secondary"
+            >
+                Next
+            </a>
+        {% endif %}
+
+
+        {# Last #}
+
+        {% if page.last %}
+            <a
+                href="{{ page.last.url }}"
+                {{ page.last.htmx }}
+                class="btn btn-sm btn-secondary"
+                aria-label="Last page"
+            >
+                &raquo;
+            </a>
+        {% endif %}
+
+    </div>
+
+</nav>
+
+{% endif %}

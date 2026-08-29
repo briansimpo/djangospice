@@ -1,0 +1,79 @@
+{% if row_context %}
+
+<div
+    id="{{ row_context.id }}"
+    x-show="contextRow === '{{ row_context.row_id }}'"
+    x-cloak
+    class="fixed inset-0 z-50"
+    role="dialog"
+    aria-modal="true"
+>
+    <div
+        class="absolute inset-0 bg-slate-900/40"
+        @click="contextRow = null"
+    ></div>
+
+    <div
+        class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-xl"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+    >
+
+        <div class="flex h-14 items-center justify-between border-b border-slate-200 px-4">
+
+            <div class="min-w-0">
+                <h2 class="truncate text-sm font-semibold text-slate-800">
+                    {{ row_context.title }}
+                </h2>
+
+                {% if row_context.description %}
+                    <p class="truncate text-xs text-slate-500">
+                        {{ row_context.description }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <button
+                type="button"
+                class="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                @click="contextRow = null"
+                aria-label="Close"
+            >
+                &times;
+            </button>
+
+        </div>
+
+        <div
+            id="{{ row_context.content_id }}"
+            class="h-[calc(100%-3.5rem)] overflow-y-auto"
+        >
+            {% if row_context.content %}
+                {{ row_context.content }}
+            {% else %}
+                <div
+                    class="flex h-full items-center justify-center"
+                    hx-get="{{ row_context.url }}"
+                    hx-trigger="load"
+                    hx-target="this"
+                    hx-swap="innerHTML"
+                    hx-indicator="#{{ row_context.id }}-loader"
+                >
+                    <div
+                        id="{{ row_context.id }}-loader"
+                        class="htmx-indicator"
+                    >
+                        Loading...
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+{% endif %}

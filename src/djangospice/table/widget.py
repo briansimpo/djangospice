@@ -7,6 +7,7 @@ import django_tables2 as tables
 from django.db.models import Q, QuerySet
 
 from djangospice.response.response import Response
+from djangospice.table.columns import RowActionsColumn
 from djangospice.widgets.actions import (
     Action,
     ActionCollection,
@@ -94,8 +95,7 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
         self.filterset = None
 
     def configure(self) -> None:
-        queryset = self.get_table_queryset()
-        self.table = self.build_table(queryset)
+        self.table = self.build_table()
 
     # ==================================================================
     # Queryset
@@ -169,39 +169,39 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
     # django-tables2
     # ==================================================================
 
-    def get_table_class(self) -> type[tables.Table]:
-        if self.table_class is None:
-            raise TypeError(
-                f"{self.__class__.__name__} must define "
-                "'table_class'."
-            )
+    def get_table_class(self):
+        table_class = self._meta.table_class
 
-        return self.table_class
+        if not self.row_actions:
+            return table_class
 
-    def get_table_kwargs(self) -> dict[str, Any]:
-        return {
-            "request": self.request,
-        }
-
-    def build_table(self, queryset: QuerySet) -> tables.Table:
-
-        table = self.get_table_class()(
-            queryset,
-            **self.get_table_kwargs(),
+        return type(
+            f"{table_class.__name__}WidgetTable",
+            (table_class,),
+            {
+                "row_actions": RowActionsColumn(
+                    verbose_name="",
+                    orderable=False,
+                ),
+            },
         )
+   
+    def build_table(self) -> tables.Table:
+        queryset = self.get_table_queryset()
+
+        table_class = self.get_table_class()
+
+        table = table_class(queryset, request=self.request)
 
         # Give custom columns access to the widget.
         table.widget = self
 
         tables.RequestConfig(
             self.request,
-            paginate={
-                "per_page": self.per_page,
-            },
+            paginate={"per_page": self.per_page},
         ).configure(table)
 
         return table
-
 
     def get_page_context(self) -> Pagination:
         page = self.table.page
@@ -301,7 +301,7 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
             if action.visible(context)
         )
 
-    def get_bound_row_actions(self, obj: Any) -> tuple[BoundAction, ...]:
+    def get_row_actions(self, obj: Any) -> tuple[BoundAction, ...]:
 
         context = self.get_row_action_context(obj)
 

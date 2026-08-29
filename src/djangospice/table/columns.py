@@ -1,3 +1,5 @@
+from typing import Any
+
 import django_tables2 as tables
 from django.utils.formats import number_format
 
@@ -36,17 +38,16 @@ class SelectionColumn(tables.CheckBoxColumn):
 
 class RowActionsColumn(tables.TemplateColumn):
     """
-    django-tables2 column for TableWidget row actions.
+    django-tables2 column for rendering TableWidget row actions.
     """
 
-    def __init__(self,*args, **kwargs):
-        super().__init__(
-            template_name = "djangospice/table/columns/actions.html",
-            *args,
-            **kwargs,
-        )
+    template_name = "djangospice/table/row_actions.html"
 
-    def render(self, record, table, value, bound_column, **kwargs):
+    def __init__(self,*args,**kwargs) -> None:
+        kwargs.setdefault("template_name", self.template_name)
+        super().__init__(*args,**kwargs )
+
+    def render(self, record: Any, table: tables.Table, value: Any, bound_column: tables.BoundColumn, **kwargs: Any) -> str:
         widget = table.widget
 
         return super().render(
@@ -54,6 +55,6 @@ class RowActionsColumn(tables.TemplateColumn):
             table,
             value,
             bound_column,
-            actions=widget.get_bound_row_actions(record),
+            actions=widget.get_row_actions(record),
             **kwargs,
         )
