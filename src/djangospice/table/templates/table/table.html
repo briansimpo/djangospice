@@ -9,10 +9,7 @@
 
     {% include "djangospice/table/bulk_actions.html" %}
 
-    <div
-        id="{{ table_id }}"
-        class="relative overflow-x-auto"
-    >
+    <div id="{{ table_id }}" class="relative overflow-x-auto">
         {% if table.rows %}
             {% render_table table %}
         {% else %}
@@ -22,36 +19,7 @@
 
     {% include "djangospice/table/pagination.html" %}
 
-    <div
-        id="{{ table_id }}-loader"
-        class="htmx-indicator absolute inset-0 z-30 flex items-center justify-center bg-white/60"
-    >
-        <div class="flex items-center gap-2 text-sm text-slate-500">
-            <svg
-                class="h-5 w-5 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-            >
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    stroke="currentColor"
-                    stroke-width="3"
-                    opacity=".25"
-                />
-                <path
-                    d="M21 12a9 9 0 0 0-9-9"
-                    stroke="currentColor"
-                    stroke-width="3"
-                    stroke-linecap="round"
-                />
-            </svg>
-            <span>Loading...</span>
-        </div>
-    </div>
-
-    {# Row context / dialogs are rendered outside the table. #}
+    {% include "djangospice/table/loader.html" %}
 
     {% if row_context %}
         {% include "djangospice/table/row_context.html" %}

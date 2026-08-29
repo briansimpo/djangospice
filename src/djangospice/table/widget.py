@@ -17,7 +17,7 @@ from djangospice.widgets.actions import (
 from djangospice.widgets.widget import Widget
 
 from .metaclass import TableWidgetMetaclass
-from .pagination import Pagination
+from .page import PageContext
 
 
 class TableWidget(Widget, metaclass=TableWidgetMetaclass):
@@ -203,13 +203,13 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
 
         return table
 
-    def get_page_context(self) -> Pagination:
+    def get_page_context(self) -> PageContext:
         page = self.table.page
         paginator = self.table.paginator
 
         navigation = self.navigation
 
-        return Pagination(
+        return PageContext(
             number=page.number,
             total=paginator.num_pages,
             has_previous=page.has_previous(),
@@ -371,13 +371,3 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
         )
 
         return context
-
-    # ==================================================================
-    # Response
-    # ==================================================================
-
-    def response(self) -> Response:
-        return Response.make(
-            self.template_name,
-            **self.get_context(),
-        )

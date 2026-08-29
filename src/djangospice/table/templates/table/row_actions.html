@@ -1,77 +1,27 @@
-<div class="relative">
+<div class="flex items-center justify-end gap-1">
 
-    <button
-        type="button"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-        aria-label="Row actions"
-        @click.stop="openRowActions('{{ row_id }}')"
-    >
-        <svg
-            class="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-        >
-            <path d="M10 4.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
-        </svg>
-    </button>
+    {% for action in actions %}
+        {% if action.enabled %}
 
-    <div
-        x-show="rowActions === '{{ row_id }}'"
-        x-cloak
-        @click.outside="rowActions = null"
-        x-transition
-        class="absolute right-0 z-40 mt-1 min-w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
-    >
-
-        {% for action in row_actions %}
-
-            {% if action.visible %}
-
-                {% if action.htmx %}
-
-                    <button
-                        type="button"
-                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50 {% if not action.enabled %}cursor-not-allowed opacity-50{% endif %}"
-                        {% if action.enabled %}
-                            {{ action.htmx }}
-                        {% else %}
-                            disabled
-                        {% endif %}
-                    >
-
-                {% else %}
-
-                    <button
-                        type="button"
-                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50 {% if not action.enabled %}cursor-not-allowed opacity-50{% endif %}"
-                        {% if not action.enabled %}disabled{% endif %}
-                    >
-
+            <button
+                type="button"
+                {{ action.htmx }}
+                {% if action.confirm %}
+                    data-confirm="{{ action.confirm }}"
+                {% endif %}
+                class="{{ action.css_class|default:'btn btn-sm btn-ghost' }}"
+                title="{{ action.label }}"
+            >
+                {% if action.icon %}
+                    {{ action.icon }}
                 {% endif %}
 
-                    {% if action.icon %}
-                        <span class="shrink-0">
-                            {{ action.icon }}
-                        </span>
-                    {% endif %}
+                <span class="sr-only">
+                    {{ action.label }}
+                </span>
+            </button>
 
-                    <span class="truncate">
-                        {{ action.label }}
-                    </span>
-
-                </button>
-
-            {% endif %}
-
-        {% empty %}
-
-            <div class="px-3 py-2 text-sm text-slate-400">
-                No actions available
-            </div>
-
-        {% endfor %}
-
-    </div>
+        {% endif %}
+    {% endfor %}
 
 </div>

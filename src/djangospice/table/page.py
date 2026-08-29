@@ -3,7 +3,7 @@ from ..widgets.interaction import Interaction
 
 
 @dataclass(frozen=True, slots=True)
-class Pagination:
+class PageContext:
     number: int
     total: int
 
