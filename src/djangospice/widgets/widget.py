@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from django.db.models import Model, QuerySet
     from django.http import HttpRequest
 
-
     from .exceptions import WidgetNotVisible
     from .actions import ActionCollection
     from .metaclass import WidgetMetaclass
@@ -48,8 +47,6 @@ class Widget(HTMLComponent, metaclass=WidgetMetaclass):
 
     request: HttpRequest | None
     kwargs: dict[str, Any]
-
-    empty_message: ClassVar[str] = "No records found."
 
     # -------------------------------------------------------------------------
     # Lifecycle
