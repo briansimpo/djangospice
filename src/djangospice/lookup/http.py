@@ -24,21 +24,14 @@ class LookupHTTPAdapter:
     PAGE_PARAMETER = "page"
     PAGE_SIZE_PARAMETER = "page_size"
 
-    def __init__(
-        self,
-        engine: LookupEngine | None = None,
-    ) -> None:
+    def __init__(self, engine: LookupEngine | None = None) -> None:
         self.engine = engine or LookupEngine()
 
     # ------------------------------------------------------------------
     # Query
     # ------------------------------------------------------------------
 
-    def build_query(
-        self,
-        request: HttpRequest,
-        definition: LookupDefinition,
-    ) -> LookupQuery:
+    def build_query(self, request: HttpRequest, definition: LookupDefinition) -> LookupQuery:
         """
         Build a LookupQuery from an HTTP request.
         """
@@ -58,36 +51,22 @@ class LookupHTTPAdapter:
     # Execute
     # ------------------------------------------------------------------
 
-    def execute(
-        self,
-        request: HttpRequest,
-        definition: LookupDefinition,
-    ) -> JsonResponse:
+    def execute(self, request: HttpRequest, definition: LookupDefinition) -> JsonResponse:
         """
         Execute a lookup request and return its HTTP response.
         """
 
-        query = self.build_query(
-            request,
-            definition,
-        )
+        query = self.build_query(request, definition)
 
-        result = self.engine.execute(
-            query,
-        )
+        result = self.engine.execute(query)
 
-        return self.response(
-            result,
-        )
+        return self.response(result)
 
     # ------------------------------------------------------------------
     # Search
     # ------------------------------------------------------------------
 
-    def get_search(
-        self,
-        request: HttpRequest,
-    ) -> str:
+    def get_search(self, request: HttpRequest) -> str:
         """
         Return the lookup search term.
         """
@@ -101,11 +80,7 @@ class LookupHTTPAdapter:
     # Dependencies
     # ------------------------------------------------------------------
 
-    def get_dependencies(
-        self,
-        request: HttpRequest,
-        definition: LookupDefinition,
-    ) -> dict[str, Any]:
+    def get_dependencies(self, request: HttpRequest, definition: LookupDefinition) -> dict[str, Any]:
         """
         Extract values for declared lookup dependencies.
 
@@ -157,9 +132,7 @@ class LookupHTTPAdapter:
         return dependencies
 
     @staticmethod
-    def clean_values(
-        values: list[str],
-    ) -> list[str]:
+    def clean_values(values: list[str]) -> list[str]:
         """
         Remove empty values and normalize whitespace.
         """
@@ -174,10 +147,7 @@ class LookupHTTPAdapter:
     # Pagination
     # ------------------------------------------------------------------
 
-    def get_page(
-        self,
-        request: HttpRequest,
-    ) -> int:
+    def get_page(self, request: HttpRequest) -> int:
         return self.parse_positive_int(
             request.GET.get(
                 self.PAGE_PARAMETER,
@@ -185,10 +155,7 @@ class LookupHTTPAdapter:
             default=1,
         )
 
-    def get_page_size(
-        self,
-        request: HttpRequest,
-    ) -> int | None:
+    def get_page_size(self, request: HttpRequest) -> int | None:
         value = request.GET.get(
             self.PAGE_SIZE_PARAMETER,
         )
@@ -202,11 +169,7 @@ class LookupHTTPAdapter:
         )
 
     @staticmethod
-    def parse_positive_int(
-        value: str | None,
-        *,
-        default: int | None,
-    ) -> int | None:
+    def parse_positive_int(value: str | None,*,default: int | None) -> int | None:
         """
         Parse a positive integer.
 
@@ -230,10 +193,7 @@ class LookupHTTPAdapter:
     # Response
     # ------------------------------------------------------------------
 
-    def response(
-        self,
-        result: LookupResult,
-    ) -> JsonResponse:
+    def response(self, result: LookupResult) -> JsonResponse:
         """
         Convert a LookupResult into an HTTP response.
 
