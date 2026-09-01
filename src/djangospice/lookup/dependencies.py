@@ -49,11 +49,7 @@ class RelationResolver:
     """
 
     @classmethod
-    def resolve_path(
-        cls,
-        source_model: type[models.Model],
-        path: str,
-    ) -> tuple[models.Field, ...]:
+    def resolve_path(cls, source_model: type[models.Model], path: str) -> tuple[models.Field, ...]:
         """
         Resolve a relationship path.
 
@@ -108,11 +104,7 @@ class RelationResolver:
         return tuple(fields)
 
     @classmethod
-    def find_relation_to_model(
-        cls,
-        source_model: type[models.Model],
-        related_model: type[models.Model],
-    ) -> models.Field:
+    def find_relation_to_model(cls, source_model: type[models.Model], related_model: type[models.Model]) -> models.Field:
         """
         Find a direct relationship from source_model to
         related_model.
@@ -157,9 +149,7 @@ class LookupDependencyResolver:
     """
 
     @classmethod
-    def normalize(
-        cls,
-        source_model: type[models.Model],
+    def normalize(cls, source_model: type[models.Model],
         depends_on: (
             LookupDependencyDeclaration
             | Iterable[LookupDependencyDeclaration]
@@ -214,18 +204,14 @@ class LookupDependencyResolver:
         )
 
     @staticmethod
-    def is_model(
-        value: object,
-    ) -> bool:
+    def is_model(value: object) -> bool:
         return (
             isinstance(value, type)
             and issubclass(value, models.Model)
         )
 
     @staticmethod
-    def _normalize_input(
-        depends_on,
-    ) -> tuple[LookupDependencyDeclaration, ...]:
+    def _normalize_input(depends_on) -> tuple[LookupDependencyDeclaration, ...]:
 
         if depends_on is None:
             return ()
@@ -247,9 +233,7 @@ class LookupDependencyResolver:
             ) from exc
 
     @staticmethod
-    def _deduplicate(
-        dependencies: list[LookupDependency],
-    ) -> tuple[LookupDependency, ...]:
+    def _deduplicate(dependencies: list[LookupDependency]) -> tuple[LookupDependency, ...]:
 
         result: list[LookupDependency] = []
         seen: set[str] = set()
