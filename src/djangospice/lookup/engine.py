@@ -5,116 +5,229 @@ from typing import Any
 from django.core.paginator import Paginator
 from django.db.models import Q, QuerySet
 
+from .dependencies import RelationResolver
+from .exceptions import (
+    InvalidLookupDependency,
+    InvalidLookupOrdering,
+    InvalidLookupQuery,
+)
 from .query import LookupQuery
 from .result import LookupOption, LookupResult
-from .search import get_search_fields
-from .resolver import RelationResolver
+from .search import validate_search_fields
 
 
 class LookupEngine:
+    """
+    Execute LookupQuery instances against Django models.
+
+    The engine contains no knowledge of:
+
+        - HTTP
+        - Forms
+        - django-filter
+        - widgets
+        - HTMX
+        - JavaScript
+    """
 
     def execute(self, query: LookupQuery) -> LookupResult:
 
-        queryset = self.get_queryset(
-            query.model
+        self.validate_query(
+            query
         )
 
-        queryset = self.apply_filters(
+        queryset = self.get_queryset(
+            query
+        )
+
+        queryset = self.apply_dependencies(
             queryset,
-            query.filters,
+            query,
         )
 
         queryset = self.apply_search(
             queryset,
-            query.search,
+            query,
         )
 
-        queryset = self.order_queryset(
+        queryset = self.apply_ordering(
             queryset,
+            query,
         )
 
-        paginator = Paginator(
+        return self.paginate(
             queryset,
-            query.normalized_page_size,
+            query,
         )
 
-        page = paginator.get_page(
-            query.normalized_page,
-        )
+    # ---------------------------------------------------------
+    # Validation
+    # ---------------------------------------------------------
 
-        return LookupResult(
-            options=tuple(
-                self.to_option(obj)
-                for obj in page.object_list
-            ),
-            page=page.number,
-            page_size=query.normalized_page_size,
-            total=paginator.count,
-            has_next=page.has_next(),
-            has_previous=page.has_previous(),
-        )
+    def validate_query(self, query: LookupQuery) -> None:
 
-    def get_queryset(self, model) -> QuerySet:
-
-        return model._default_manager.all()
-
-    def apply_filters(self, queryset: QuerySet, filters: dict[str, Any]) -> QuerySet:
-
-        for path, value in filters.items():
-
-            fields = RelationResolver.resolve(
-                queryset.model,
-                path,
+        if not isinstance(
+            query,
+            LookupQuery,
+        ):
+            raise InvalidLookupQuery(
+                "LookupEngine.execute() expects a LookupQuery."
             )
 
-            if value in (None, ""):
+        if query.page < 1:
+            raise InvalidLookupQuery(
+                "Lookup page must be greater than zero."
+            )
+
+        if query.page_size is not None:
+            if query.page_size < 1:
+                raise InvalidLookupQuery(
+                    "Lookup page size must be greater "
+                    "than zero."
+                )
+
+            if (
+                query.page_size
+                > query.definition.max_page_size
+            ):
+                raise InvalidLookupQuery(
+                    "Lookup page size exceeds the "
+                    "configured maximum."
+                )
+
+        self.validate_dependencies(
+            query
+        )
+
+        self.validate_search(
+            query
+        )
+
+        self.validate_ordering(
+            query
+        )
+
+    # ---------------------------------------------------------
+    # QuerySet
+    # ---------------------------------------------------------
+
+    def get_queryset(self, query: LookupQuery) -> QuerySet:
+        return query.model._default_manager.all()
+
+    # ---------------------------------------------------------
+    # Dependencies
+    # ---------------------------------------------------------
+
+    def validate_dependencies(self, query: LookupQuery) -> None:
+
+        declared = {
+            dependency.path
+            for dependency in query.definition.dependencies
+        }
+
+        supplied = set(
+            query.dependencies
+        )
+
+        undeclared = supplied - declared
+
+        if undeclared:
+            paths = ", ".join(
+                sorted(undeclared)
+            )
+
+            raise InvalidLookupDependency(
+                f"Undeclared lookup dependencies: {paths}."
+            )
+
+        for dependency in query.definition.dependencies:
+
+            RelationResolver.resolve_path(
+                query.model,
+                dependency.path,
+            )
+
+    def apply_dependencies(self, queryset: QuerySet, query: LookupQuery) -> QuerySet:
+
+        for dependency in query.definition.dependencies:
+
+            if dependency.path not in query.dependencies:
                 continue
 
-            lookup = self.build_relation_lookup(
-                fields,
-                path,
-                value,
-            )
+            value = query.dependencies[
+                dependency.path
+            ]
 
-            queryset = queryset.filter(
-                **lookup
+            if self.is_empty_dependency(
+                value
+            ):
+                continue
+
+            queryset = self.apply_dependency(
+                queryset,
+                dependency.path,
+                value,
             )
 
         return queryset
 
-    def build_relation_lookup(self, fields, path: str, value: Any) -> dict[str, Any]:
+    def apply_dependency(self, queryset: QuerySet, path: str, value: Any) -> QuerySet:
 
-        final_field = fields[-1]
-
-        if final_field.many_to_many:
-            return {
-                path: value,
-            }
-
-        if final_field.many_to_one:
-            return {
-                f"{path}__pk": value,
-            }
-
-        if final_field.one_to_one:
-            return {
-                f"{path}__pk": value,
-            }
-
-        raise ValueError(
-            f"Unsupported relationship type "
-            f"for lookup '{path}'."
+        RelationResolver.resolve_path(
+            queryset.model,
+            path,
         )
 
-    def apply_search(self, queryset: QuerySet, search: str) -> QuerySet:
+        return queryset.filter(
+            **{
+                path: value,
+            }
+        )
 
-        search = search.strip()
+    @staticmethod
+    def is_empty_dependency(value: Any) -> bool:
+
+        if value is None:
+            return True
+
+        if isinstance(value, str):
+            return not value.strip()
+
+        if isinstance(
+            value,
+            (
+                list,
+                tuple,
+                set,
+                frozenset,
+                dict,
+            ),
+        ):
+            return not value
+
+        return False
+
+    # ---------------------------------------------------------
+    # Search
+    # ---------------------------------------------------------
+
+    def validate_search(self, query: LookupQuery) -> None:
+
+        validate_search_fields(
+            query.model,
+            query.definition.search_fields,
+        )
+
+    def apply_search(self, queryset: QuerySet, query: LookupQuery) -> QuerySet:
+
+        search = query.search.strip()
 
         if not search:
             return queryset
 
-        fields = get_search_fields(
-            queryset.model
+        fields = validate_search_fields(
+            query.model,
+            query.definition.search_fields,
         )
 
         if not fields:
@@ -129,36 +242,117 @@ class LookupEngine:
                 }
             )
 
-        return queryset.filter(condition)
-
-    def order_queryset(self, queryset: QuerySet) -> QuerySet:
-
-        fields = get_search_fields(
-            queryset.model
+        return queryset.filter(
+            condition
         )
 
-        if "code" in fields:
-            return queryset.order_by(
-                "code"
+    # ---------------------------------------------------------
+    # Ordering
+    # ---------------------------------------------------------
+
+    def validate_ordering(self, query: LookupQuery) -> None:
+
+        for ordering in query.definition.ordering:
+
+            field_path = ordering.lstrip("-")
+
+            if not field_path:
+                raise InvalidLookupOrdering(
+                    "Ordering field cannot be empty."
+                )
+
+            self.validate_ordering_path(
+                query.model,
+                field_path,
             )
 
-        if "name" in fields:
-            return queryset.order_by(
-                "name"
+    def validate_ordering_path(self, model, path: str) -> None:
+
+        current_model = model
+
+        for index, part in enumerate(path.split("__") ):
+
+            try:
+                field = current_model._meta.get_field(
+                    part
+                )
+            except Exception as exc:
+                raise InvalidLookupOrdering(
+                    f"'{path}' is not a valid ordering "
+                    f"path on '{model._meta.label}'."
+                ) from exc
+
+            is_last = (
+                index == len(path.split("__")) - 1
             )
 
-        if "title" in fields:
+            if field.is_relation:
+
+                if is_last:
+                    raise InvalidLookupOrdering(
+                        f"Ordering path '{path}' ends on "
+                        "a relationship."
+                    )
+
+                current_model = field.related_model
+
+    def apply_ordering(self, queryset: QuerySet, query: LookupQuery) -> QuerySet:
+
+        ordering = query.definition.ordering
+
+        if ordering:
             return queryset.order_by(
-                "title"
+                *ordering
             )
 
         return queryset.order_by(
             queryset.model._meta.pk.name
         )
 
+    # ---------------------------------------------------------
+    # Pagination
+    # ---------------------------------------------------------
+
+    def paginate(self, queryset: QuerySet, query: LookupQuery) -> LookupResult:
+
+        page_size = query.get_page_size()
+
+        paginator = Paginator(
+            queryset,
+            page_size,
+        )
+
+        page = paginator.get_page(
+            query.page
+        )
+
+        return LookupResult(
+            options=tuple(
+                self.to_option(obj)
+                for obj in page.object_list
+            ),
+            page=page.number,
+            page_size=page_size,
+            total=paginator.count,
+            has_next=page.has_next(),
+            has_previous=page.has_previous(),
+        )
+
+    # ---------------------------------------------------------
+    # Option conversion
+    # ---------------------------------------------------------
+
     def to_option(self, obj) -> LookupOption:
 
         return LookupOption(
             value=str(obj.pk),
-            label=str(obj),
+            label=self.get_label(obj),
+            description=self.get_description(obj),
+            object=obj,
         )
+
+    def get_label(self, obj) -> str:
+        return str(obj)
+
+    def get_description(self, obj) -> str | None:
+        return None

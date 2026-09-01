@@ -3,34 +3,41 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from .definition import LookupDefinition
+
 
 @dataclass(frozen=True, slots=True)
 class LookupQuery:
     """
-    A framework-independent lookup request.
+    Runtime lookup request.
 
-    The HTTP layer translates request parameters into this object.
+    The definition describes what the lookup supports.
+
+    This object contains the current values supplied by the
+    caller/request.
     """
 
-    model: Any
+    definition: LookupDefinition
 
     search: str = ""
 
-    filters: Mapping[str, Any] = field(
+    dependencies: Mapping[str, Any] = field(
         default_factory=dict,
     )
 
     page: int = 1
 
-    page_size: int = 20
+    page_size: int | None = None
 
-    @property
-    def normalized_page(self) -> int:
-        return max(self.page, 1)
+    def get_page_size(self) -> int:
+        if self.page_size is None:
+            return self.definition.page_size
 
-    @property
-    def normalized_page_size(self) -> int:
         return min(
             max(self.page_size, 1),
-            100,
+            self.definition.max_page_size,
         )
+
+    @property
+    def model(self):
+        return self.definition.model

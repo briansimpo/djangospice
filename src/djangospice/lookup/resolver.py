@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 from django.apps import apps
-from django.db.models import Field
-from django.core.exceptions import FieldDoesNotExist
+from django.db import models
 
-from .exceptions import  LookupModelNotFound, InvalidLookupField
+from .definition import LookupDefinition
+from .exceptions import LookupModelNotFound
 
 
 class LookupModelResolver:
+    """
+    Resolve Django models from app/model identifiers.
+    """
 
-    @staticmethod
-    def resolve(app_label: str, model_name: str):
-        model = apps.get_model(
-            app_label,
-            model_name,
-        )
+    def resolve(self, app_label: str, model_name: str) -> type[models.Model]:
+
+        model = apps.get_model(app_label, model_name)
 
         if model is None:
             raise LookupModelNotFound(
@@ -25,54 +25,19 @@ class LookupModelResolver:
         return model
 
 
-class RelationResolver:
+class LookupDefinitionResolver:
+    """
+    Resolve the LookupDefinition for a model.
 
-    @classmethod
-    def resolve(cls, model, path: str) -> tuple[Field, ...]:
-        """
-        Resolve a Django relationship path.
+    This is the extension point for convention-over-
+    configuration lookup definitions.
+    """
 
-        Example:
+    def resolve(
+        self,
+        model: type[models.Model],
+    ) -> LookupDefinition:
 
-            department__faculty
-
-        resolves:
-
-            Program.department
-                ↓
-            Department.faculty
-        """
-
-        if not path:
-            raise InvalidLookupField(
-                "Lookup field cannot be empty."
-            )
-
-        current_model = model
-        resolved: list[Field] = []
-
-        for part in path.split("__"):
-
-            try:
-                field = current_model._meta.get_field(
-                    part
-                )
-            except FieldDoesNotExist as exc:
-                raise InvalidLookupField(
-                    f"'{path}' is not a valid "
-                    f"relationship on "
-                    f"'{model._meta.label}'."
-                ) from exc
-
-            if not field.is_relation:
-                raise InvalidLookupField(
-                    f"'{path}' is not a relationship path. "
-                    f"'{part}' on "
-                    f"'{current_model._meta.label}' "
-                    "is not relational."
-                )
-
-            resolved.append(field)
-            current_model = field.related_model
-
-        return tuple(resolved)
+        return LookupDefinition(
+            model=model,
+        )
