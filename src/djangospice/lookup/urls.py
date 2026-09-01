@@ -9,4 +9,5 @@ urlpatterns = [
         LookupView.as_view(),
         name="djangospice_lookup",
     ),
+    
 ]

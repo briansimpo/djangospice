@@ -15,7 +15,7 @@ class LookupOption:
     description: str | None = None
     object: Any = None
 
-    def as_dict(self, *, include_object: bool = True) -> dict[str, Any]:
+    def as_dict(self, *, include_object: bool = False) -> dict[str, Any]:
         data: dict[str, Any] = {
             "value": self.value,
             "label": self.label,
@@ -56,7 +56,7 @@ class LookupResult:
             self.total + self.page_size - 1
         ) // self.page_size
 
-    def as_dict(self, *, include_objects: bool = True) -> dict[str, Any]:
+    def as_dict(self, *, include_objects: bool = False) -> dict[str, Any]:
         return {
             "results": [
                 option.as_dict(

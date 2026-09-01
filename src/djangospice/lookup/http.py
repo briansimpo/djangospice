@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import render
 
 from .definition import LookupDefinition
 from .engine import LookupEngine
@@ -206,3 +207,19 @@ class LookupHTTPAdapter:
                 include_objects=False,
             )
         )
+
+
+
+class LookupWidgetHTTPAdapter(LookupHTTPAdapter):
+
+    template_name = ("djangospice/lookup/results.html")
+
+    def execute(self, request: HttpRequest, definition: LookupDefinition):
+
+        query = self.build_query(request, definition)
+
+        result = self.engine.execute(query)
+
+        context = {"result": result}
+
+        return render(request, self.template_name, context)

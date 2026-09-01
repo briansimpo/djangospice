@@ -74,17 +74,37 @@ class HTMLComponent(Serializable):
 
     @property
     def html_attributes(self) -> dict[str, Any]:
-        """Combined HTML + HTMX attributes."""
+        """
+        Combined HTML + HTMX attributes.
+
+        Subclasses may extend this through get_extra_attributes().
+        """
+
         combined = dict(self.attrs)
-        
+
+        combined.update(
+            self.get_extra_attributes()
+        )
+
         if self.id:
             combined["id"] = self.id
+
         if self.css_class:
             combined["class"] = self.css_class
-            
-        # Merge HTMX dict safely
-        combined.update(self.htmx.to_dict())
+
+        combined.update(
+            self.htmx.to_dict()
+        )
+
         return combined
+
+
+    def get_extra_attributes(self) -> dict[str, Any]:
+        """
+        Hook for components that need to contribute
+        additional HTML attributes.
+        """
+        return {}
 
     def get_template(self) -> str:
         if not self.template_name:
