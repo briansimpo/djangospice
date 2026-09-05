@@ -3,7 +3,8 @@ from slugify import slugify
 from io import BytesIO
 from django.utils import timezone
 from django.http import HttpResponse, StreamingHttpResponse
-from djangospice.files.writer import FileWriter
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 from .engine import WorkbookEngine
 from .inspection import ModelInspector
@@ -47,5 +48,9 @@ class Exporter:
         
         buffer = self.get_buffer()
         content = buffer.read()
-        
-        return FileWriter.save(full_path, content)
+
+        if isinstance(content, str):
+            content = content.encode('utf-8')
+            
+        return default_storage.save(full_path, ContentFile(content))
+   
