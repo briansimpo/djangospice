@@ -86,6 +86,27 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
     table: tables.Table
     filterset: Any | None
 
+    
+    # ==================================================================
+    # IDs
+    # ==================================================================
+
+    @property
+    def table_id(self) -> str:
+        return f"{self.name}-table"
+
+    @property
+    def content_id(self) -> str:
+        return f"{self.name}-content"
+
+    @property
+    def selection_id(self) -> str:
+        return f"{self.name}-selection"
+
+    @property
+    def htmx_target(self) -> str:
+        return f"#{self.content_id}"
+
     # ==================================================================
     # Lifecycle
     # ==================================================================
@@ -318,26 +339,6 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
             for action in self.bulk_actions
             if action.visible(context)
         )
-
-    # ==================================================================
-    # IDs
-    # ==================================================================
-
-    @property
-    def table_id(self) -> str:
-        return f"{self.name}-table"
-
-    @property
-    def content_id(self) -> str:
-        return f"{self.name}-content"
-
-    @property
-    def selection_id(self) -> str:
-        return f"{self.name}-selection"
-
-    @property
-    def htmx_target(self) -> str:
-        return f"#{self.content_id}"
 
     # ==================================================================
     # Context
