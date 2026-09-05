@@ -87,6 +87,13 @@
             this.dependencies =
                 this.parseDependencies();
 
+            /*
+             * Native event listeners attached to dependency controls
+             * must retain their exact callback references so they can
+             * be removed during destroy().
+             */
+            this.dependencyListeners = [];
+
             this.initialized = false;
 
             this.initialize();
@@ -125,9 +132,8 @@
                 return;
             }
 
-            this.$element = window.jQuery(
-                this.element
-            );
+            this.$element =
+                window.jQuery(this.element);
 
             this.initializeSelect2();
 
@@ -161,14 +167,14 @@
 
                     data(params) {
                         return controller.buildRequestData(
-                            params
+                            params,
                         );
                     },
 
                     processResults(data, params) {
                         return controller.processResults(
                             data,
-                            params
+                            params,
                         );
                     },
                 },
@@ -197,19 +203,14 @@
 
 
         bindDependencies() {
-            for (
-                const dependency
-                of this.dependencies
-            ) {
+            for (const dependency of this.dependencies) {
                 const controls =
                     this.findDependencyControls(
-                        dependency
+                        dependency,
                     );
 
                 for (const control of controls) {
-                    this.bindDependency(
-                        control
-                    );
+                    this.bindDependency(control);
                 }
             }
         }
@@ -219,27 +220,42 @@
             const $control =
                 window.jQuery(control);
 
+            /*
+             * Remove any stale DjangoSpice handler that may already
+             * exist on this control.
+             */
             $control.off(
                 `change${NAMESPACE}`,
             );
 
+            const changeHandler = () => {
+                this.handleDependencyChange();
+            };
+
+            const lookupChangeHandler = () => {
+                this.handleDependencyChange();
+            };
+
+            /*
+             * jQuery event.
+             */
             $control.on(
                 `change${NAMESPACE}`,
-                () => {
-                    this.handleDependencyChange();
-                },
+                changeHandler,
             );
 
             /*
-             * A DjangoSpice LookupWidget also emits
-             * its own lookup change event.
+             * DjangoSpice-specific lookup event.
              */
             control.addEventListener(
                 "djangospice:lookup:change",
-                () => {
-                    this.handleDependencyChange();
-                },
+                lookupChangeHandler,
             );
+
+            this.dependencyListeners.push({
+                control,
+                lookupChangeHandler,
+            });
         }
 
 
@@ -292,18 +308,18 @@
              */
             const control = controls[0];
 
+
             /*
              * DjangoSpice LookupWidget.
              */
             if (
                 control.matches(
-                    "select[data-djangospice-lookup]"
+                    "select[data-djangospice-lookup]",
                 )
             ) {
-                return this.getSelectValue(
-                    control
-                );
+                return this.getSelectValue(control);
             }
+
 
             /*
              * Native <select multiple>.
@@ -314,15 +330,16 @@
             ) {
                 const values =
                     Array.from(
-                        control.selectedOptions
+                        control.selectedOptions,
                     )
-                    .map(option => option.value)
-                    .filter(Boolean);
+                        .map(option => option.value)
+                        .filter(Boolean);
 
                 return values.length
                     ? values
                     : null;
             }
+
 
             /*
              * Checkbox groups.
@@ -332,7 +349,7 @@
                 && controls.every(
                     item =>
                         item instanceof HTMLInputElement
-                        && item.type === "checkbox"
+                        && item.type === "checkbox",
                 )
             ) {
                 const values =
@@ -376,14 +393,9 @@
         getDependencies() {
             const dependencies = {};
 
-            for (
-                const path
-                of this.dependencies
-            ) {
+            for (const path of this.dependencies) {
                 dependencies[path] =
-                    this.getDependencyValue(
-                        path
-                    );
+                    this.getDependencyValue(path);
             }
 
             return dependencies;
@@ -398,14 +410,18 @@
             this.clear();
 
             /*
-             * Select2's AJAX transport reads the dependency
-             * values dynamically on every request, so no
-             * URL reconstruction is necessary here.
+             * Select2's AJAX transport reads dependency
+             * values dynamically on every request, so
+             * no URL reconstruction is necessary here.
              */
         }
 
 
         clear() {
+            if (!this.$element) {
+                return;
+            }
+
             this.$element
                 .val(null)
                 .trigger("change");
@@ -442,11 +458,7 @@
                     continue;
                 }
 
-                if (Array.isArray(value)) {
-                    data[path] = value;
-                } else {
-                    data[path] = value;
-                }
+                data[path] = value;
             }
 
             return data;
@@ -466,15 +478,13 @@
                 results:
                     results.map(
                         result =>
-                            this.serializeResult(
-                                result
-                            )
+                            this.serializeResult(result),
                     ),
 
                 pagination: {
                     more:
                         Boolean(
-                            data.pagination?.has_next
+                            data.pagination?.has_next,
                         ),
                 },
             };
@@ -490,6 +500,74 @@
                 description:
                     result.description ?? null,
             };
+        }
+
+
+        // --------------------------------------------------------------
+        // Destruction
+        // --------------------------------------------------------------
+
+        destroy() {
+            if (!this.initialized) {
+                return;
+            }
+
+            this.initialized = false;
+
+
+            /*
+             * Remove native DjangoSpice lookup event listeners.
+             */
+            for (
+                const listener
+                of this.dependencyListeners
+            ) {
+                listener.control.removeEventListener(
+                    "djangospice:lookup:change",
+                    listener.lookupChangeHandler,
+                );
+            }
+
+            this.dependencyListeners = [];
+
+
+            /*
+             * Remove jQuery dependency listeners.
+             *
+             * The namespace ensures that only DjangoSpice's
+             * handlers are removed.
+             */
+            for (const dependency of this.dependencies) {
+                const controls =
+                    this.findDependencyControls(
+                        dependency,
+                    );
+
+                for (const control of controls) {
+                    window.jQuery(control).off(
+                        `change${NAMESPACE}`,
+                    );
+                }
+            }
+
+
+            /*
+             * Destroy Select2 and restore the original
+             * Django <select>.
+             */
+            if (this.$element) {
+                this.$element.off(NAMESPACE);
+
+                if (
+                    this.$element.hasClass(
+                        "select2-hidden-accessible",
+                    )
+                ) {
+                    this.$element.select2("destroy");
+                }
+            }
+
+            this.$element = null;
         }
     }
 
@@ -507,6 +585,7 @@
             return;
         }
 
+
         /*
          * root itself may be the select.
          */
@@ -516,6 +595,7 @@
         ) {
             initializeElement(root);
         }
+
 
         /*
          * Elements inside root.
@@ -538,10 +618,16 @@
         const controller =
             new LookupController(element);
 
-        instances.set(
-            element,
-            controller,
-        );
+        /*
+         * Only register successfully initialized
+         * controllers.
+         */
+        if (controller.initialized) {
+            instances.set(
+                element,
+                controller,
+            );
+        }
     }
 
 
@@ -552,6 +638,10 @@
 
         const elements = [];
 
+
+        /*
+         * root itself may be the select.
+         */
         if (
             root instanceof HTMLSelectElement
             && root.matches(SELECTOR)
@@ -559,17 +649,29 @@
             elements.push(root);
         }
 
+
+        /*
+         * Elements inside root.
+         */
         if (
             typeof root.querySelectorAll === "function"
         ) {
             elements.push(
                 ...root.querySelectorAll(
-                    SELECTOR
-                )
+                    SELECTOR,
+                ),
             );
         }
 
-        for (const element of elements) {
+
+        /*
+         * De-duplicate in case root is also matched
+         * by querySelectorAll in a custom DOM implementation.
+         */
+        const uniqueElements =
+            [...new Set(elements)];
+
+        for (const element of uniqueElements) {
             const controller =
                 instances.get(element);
 
@@ -577,7 +679,7 @@
                 continue;
             }
 
-            controller.destroy?.();
+            controller.destroy();
 
             instances.delete(element);
         }
@@ -628,7 +730,7 @@
         "htmx:afterSwap",
         event => {
             initialize(
-                event.target
+                event.target,
             );
         },
     );
@@ -638,14 +740,9 @@
         "htmx:oobAfterSwap",
         event => {
             initialize(
-                event.target
+                event.target,
             );
         },
     );
 
-    
-
 })();
-
-
-
