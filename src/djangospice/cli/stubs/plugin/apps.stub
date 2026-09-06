@@ -8,7 +8,4 @@ class {class_name}AppConfig(AppConfig):
     icon = None
 
    
-app_name = {class_name}AppConfig.name 
-app_label = {class_name}AppConfig.label
-verbose_name = {class_name}AppConfig.verbose_name
-
+namespace = {class_name}AppConfig.namespace 
