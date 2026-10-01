@@ -1,0 +1,87 @@
+<div 
+    x-data="{
+        activeTab: '{{ active_tab.name }}',
+        setTab(tab) {
+            this.activeTab = tab;
+            localStorage.setItem('activeTab', tab);
+        },
+        loadTab(tab) {
+            this.setTab(tab);
+            this.$nextTick(() => {
+                const btn = $el.querySelector(`[data-tab='${tab}']`);
+                if(btn) {
+                    htmx.trigger(btn, 'click');
+                }
+            });
+        }
+    }"
+    x-init="loadTab(activeTab)" 
+    @refresh-tab.window="loadTab(activeTab)">
+    
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth">
+            {% for tab in tabs %}
+            <button 
+                type="button"
+                data-tab="{{ tab.name }}"
+                @click="setTab('{{ tab.name }}')"
+                hx-get="?{{ tab_param }}={{ tab.name }}"
+                hx-target="#tab-content"
+                hx-indicator="#tab-skeleton"
+                hx-trigger="click"
+                hx-push-url="false"
+                class="inline-flex items-center justify-center py-4 px-6 transition-all duration-200 whitespace-nowrap min-w-fit"
+                :class="activeTab === '{{ tab.name }}' 
+                    ? 'border-blue-600 text-blue-600 bg-blue-50/30' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+                
+                <span class="font-bold text-xs md:text-sm tracking-wider">
+                    {{ tab.label }}
+                </span>
+            </button>
+            {% endfor %}
+        </div>
+    </nav>
+
+    <div id="tab-content" class="bg-white rounded-b-xl shadow-sm p-6 relative min-h-[300px]">
+        
+        <div id="tab-skeleton" class="htmx-indicator animate-pulse space-y-4">
+            <div class="mt-8 h-20 bg-slate-100 rounded-lg border border-slate-200"></div>
+
+            <div class="space-y-3">
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="h-4 bg-slate-200 rounded col-span-2"></div>
+                    <div class="h-4 bg-slate-200 rounded col-span-1"></div>
+                </div>
+                <div class="h-4 bg-slate-200 rounded"></div>
+                <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+            </div>
+            <div class="pt-4 space-y-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1 space-y-2 py-1">
+                        <div class="h-3 bg-slate-200 rounded"></div>
+                        <div class="h-3 bg-slate-200 rounded w-3/4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Ensure the skeleton is hidden by default */
+    .htmx-indicator {
+        display: none;
+    }
+
+    /* Show skeleton and hide content container while HTMX is working */
+    .htmx-request#tab-skeleton {
+        display: block;
+    }
+    
+    /* Hide old content while new content is loading to prevent 'jumping' */
+    .htmx-request#tab-content {
+        display: none;
+    }
+</style>

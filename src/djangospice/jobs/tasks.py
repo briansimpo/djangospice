@@ -7,7 +7,7 @@ from .worker import JobWorker
 def execute_job(self, serialized_job):
     """
     Background worker entry point.
-    Reconstructs the original Python class instance containing its database models.
+    Reconstructs the original Python class instance.
     """
     job = deserialize(serialized_job)
     

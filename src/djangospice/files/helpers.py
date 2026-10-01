@@ -5,9 +5,26 @@ from PIL import Image
 from slugify import slugify
 from django.conf import settings
 from django.http import HttpResponse, Http404
+from django.core.files.storage import default_storage
 from .storage import MediaStorage
 from .path import PathWrapper
 
+
+def file_exists(file_path):
+    return bool(file_path) and default_storage.exists(file_path)
+
+
+def file_url(file_path):
+    return default_storage.url(file_path)
+
+
+def file_path(file_path):
+    """
+    Get the local filesystem path.
+
+    Only supported by filesystem-based storage backends.
+    """
+    return default_storage.path(file_path)
 
 
 def file_upload_path(sub_path):

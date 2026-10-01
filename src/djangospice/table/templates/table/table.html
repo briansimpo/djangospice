@@ -1,28 +1,30 @@
-{% load render_table from django_tables2 %}
+{% load django_tables2 %}
 
-<div
-    id="{{ content_id }}"
-    class="relative w-full"
-    x-data="tableWidget('{{ selection_id }}')"
->
-    {% include "djangospice/table/toolbar.html" %}
+{% block table_wrapper %}
+<div 
+    id="{{ content_id }}"   
+    data-table
+    data-url="{{ table_url }}"
+    data-target="{{ htmx_target }}" 
+    class="table-container flex w-full flex-col gap-4">
 
-    {% include "djangospice/table/bulk_actions.html" %}
+    {% block table_toolbar %}
+        {% include "djangospice/table/toolbar.html" %}
+    {% endblock table_toolbar %}
 
-    <div id="{{ table_id }}" class="relative overflow-x-auto">
-        {% if table.rows %}
-            {% render_table table %}
-        {% else %}
-            {% include "djangospice/table/empty.html" %}
-        {% endif %}
-    </div>
 
-    {% include "djangospice/table/pagination.html" %}
+    {% block table_content %}
+        {% include "djangospice/table/table_container.html" %}
+    {% endblock table_content %}
 
-    {% include "djangospice/table/loader.html" %}
 
-    {% if row_context %}
-        {% include "djangospice/table/row_context.html" %}
+    {% block table_pagination %}
+        {% include "djangospice/table/pagination.html" %}
+    {% endblock table_pagination %}
+
+    {% if context_menu_enabled %}
+        {% include "djangospice/table/context_menu.html" %}
     {% endif %}
 
 </div>
+{% endblock table_wrapper %}

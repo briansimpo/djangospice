@@ -41,37 +41,34 @@ classifiers = [
 # --- Core Dependencies (Batteries Included) ---
 dependencies = [
     # Core Framework & API
-    "django>=5.0,<=6.0",
-    "djangorestframework>=3.15",
-    "django-filter>=24.0",
+    "django>=6.0",
+    "djangorestframework>=3.18",
+    "django-filter>=26.1",
     "django-tables2>=2.7",
-    "django-model-utils>=4.5",
-    "python-slugify>=8.0",
-    "asgiref>=3.8",
+    "django-model-utils>=5.0",
+    "python-slugify>=9.1",
+    "asgiref>=3.12",
     "semver>=3.0",
     "setuptools>=80.9",
     
     # Database
-    "psycopg[binary]>=3.1",
+    "psycopg[binary]>=3.3",
     
     # Async & WebSockets
-    "channels>=4.1",
-    "channels-redis>=4.2",
+    "channels>=4.3",
+    "channels-redis>=4.3",
     
     # Background Task Processing
-    "celery>=5.4",
-    "django-celery-beat>=2.6",
+    "celery>=5.6",
+    "django-celery-beat>=2.9",
     
     # Data Import/Export & Excel Support
-    "django-import-export>=4.2",
-    "tablib[all]>=3.7",
+    "django-import-export>=4.4",
+    "tablib[all]>=3.10",
     "openpyxl>=3.1",
     
     # Email Rendering
     "premailer>=3.10",
-    
-    # PDF Rendering
-    "django-renderpdf>=4.0"
 ]
 
 # --- Development Tools ---

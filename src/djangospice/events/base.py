@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from djangospice.core.serializable import Serializable
 
-
 @dataclass(kw_only=True)
 class BaseEvent(Serializable, ABC):
     """
@@ -23,5 +22,4 @@ class BaseEvent(Serializable, ABC):
 
     def __str__(self) -> str:
         return self.name
-    
     

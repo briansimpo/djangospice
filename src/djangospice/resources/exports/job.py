@@ -1,13 +1,13 @@
 from typing import Any
 from dataclasses import dataclass
 from django.core.files.storage import default_storage
-from djangospice.jobs import Job, JobStatus
-from djangospice.realtime.broadcast import Broadcast
+from djangospice.core.payload import Payload
+from djangospice.jobs import Job
 from djangospice.resources import BaseResource
 from .exporter import ResourceExporter
 
 
-@dataclass(kw_only=True)
+@dataclass
 class ResourceExportJob(Job):
     """Background job for heavy-duty data exports."""
     
@@ -35,11 +35,6 @@ class ResourceExportJob(Job):
         self.progress(100, 100, message="Export complete.")
         
         file_url = default_storage.url(file_path)
+        message = "Export completed successfully."
 
-        payload = {
-            "file_url": file_url,
-            "message": "Export completed successfully.",
-            "status": JobStatus.SUCCESS
-        }
-        
-        Broadcast.user(user=self.user_id, data=payload)
+        return Payload(file_url=file_url, message=message).to_dict()

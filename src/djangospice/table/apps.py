@@ -1,9 +1,8 @@
-from djangospice.apps import AppConfig
+from djangospice.config import AppConfig
 
 
 class TableConfig(AppConfig):
     name = "djangospice.table"
-    label = "table"
-    
+
     
 namespace = TableConfig.namespace

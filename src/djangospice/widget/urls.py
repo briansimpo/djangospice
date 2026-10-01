@@ -1,12 +1,14 @@
 from django.urls import path
 
+from .apps import namespace
 from .views import WidgetView
+from .conf import APP_NAME_URL_KEY, WIDGET_NAME_URL_KEY
 
 urlpatterns = [
     path(
-        "widgets/<slug:app_label>/<slug:name>/", 
+        f"{APP_NAME_URL_KEY}/{WIDGET_NAME_URL_KEY}/", 
         WidgetView.as_view(),
-        name="djangospice_widget",
+        name=namespace,
     ),
 
 ]

@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 
+
 class FormFieldMixin:
     """
     Mixin for dynamically setting field querysets and values.
@@ -22,7 +23,6 @@ class FormFieldMixin:
         Override in subclasses to apply per-field filtering.
         """
         pass
-    
     
 
 class FormRequestMixin:

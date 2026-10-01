@@ -5,10 +5,8 @@ from typing import TYPE_CHECKING, Any
 
 from django.http import HttpRequest
 
-from djangospice.core.payload import Payload
-
 if TYPE_CHECKING:
-    from djangospice.widgets.widget import Widget
+    from djangospice.widget.widget import Widget
 
 
 @dataclass(slots=True)
@@ -25,14 +23,14 @@ class ActionContext:
 
     objects: tuple[Any, ...] = ()
 
-    data: Payload = field(default_factory=Payload)
+    data: dict[str, Any] = field(default_factory=dict)
 
     @property
     def user(self):
         return self.request.user
 
     @property
-    def is_row(self) -> bool:
+    def is_single(self) -> bool:
         return self.object is not None
 
     @property

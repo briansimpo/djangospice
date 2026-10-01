@@ -4,7 +4,6 @@ from slugify import slugify
 from django.utils.deconstruct import deconstructible
 
 
-
 @deconstructible
 class PathWrapper:
     """

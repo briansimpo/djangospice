@@ -1,92 +1,242 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, ClassVar
 
+import django_filters
 import django_tables2 as tables
-from django.db.models import Q, QuerySet
 
-from djangospice.table.columns import RowActionsColumn
-from djangospice.widgets.actions import (
-    Action,
-    ActionCollection,
-    ActionContext,
-    BoundAction,
+from djangospice.widget.widget import Widget
+from djangospice.widget.actions import Actions
+from djangospice.widget.pagination import (
+    PaginationConfig,
+    PaginationState
 )
-from djangospice.widgets.widget import Widget
+from djangospice.widget.composers import (
+    ActionComposer,
+    FilterComposer,
+    PaginationComposer,
+    SearchComposer,
+)
 
-from .metaclass import TableWidgetMetaclass
-from .page import PageContext
+from .composers import TableComposer, TablePageComposer
 
 
-class TableWidget(Widget, metaclass=TableWidgetMetaclass):
+class TableWidget(Widget):
     """
-    Production-ready django-tables2 based widget.
+    Request-aware server-side table widget built on django-tables2.
 
-    django-tables2 owns:
-
-        - columns
-        - table rendering
-        - ordering
-        - pagination
-
-    TableWidget owns:
-
-        - queryset preparation
-        - search
-        - django-filter integration
-        - actions
-        - HTMX navigation
-        - selection state
+    The widget composes generic queryset, filtering, search, pagination,
+    and action services with table-specific django-tables2 behavior.
     """
+
+    template_name = "djangospice.table/table.html"
 
     # ------------------------------------------------------------------
     # Table
     # ------------------------------------------------------------------
 
     table_class: ClassVar[type[tables.Table] | None] = None
+    fields: ClassVar[tuple[str, ...] | str | None] = None
+    exclude: ClassVar[tuple[str, ...] | str | None] = None
 
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
 
-    table_actions: ClassVar[ActionCollection]
-    row_actions: ClassVar[ActionCollection]
-    bulk_actions: ClassVar[ActionCollection]
+    actions: ClassVar[Actions] = Actions()
+    row_actions: ClassVar[Actions] = Actions()
+    bulk_actions: ClassVar[Actions] = Actions()
+
+    context_menu: ClassVar[bool] = True
+    context_menu_actions: ClassVar[Actions | None] = None
 
     # ------------------------------------------------------------------
     # Search
     # ------------------------------------------------------------------
 
     search_fields: ClassVar[tuple[str, ...]] = ()
-    search_parameter: ClassVar[str] = "search"
+    search_parameter: ClassVar[str] = "q"
 
     # ------------------------------------------------------------------
     # Filtering
     # ------------------------------------------------------------------
 
-    filterset_class: ClassVar[Any | None] = None
+    filterset_class: ClassVar[
+        type[django_filters.FilterSet] | None
+    ] = None
 
     # ------------------------------------------------------------------
     # Pagination
     # ------------------------------------------------------------------
 
-    per_page: ClassVar[int] = 25
+    page_size_options: ClassVar[tuple[int, ...]] = (
+        10,
+        20,
+        50,
+        100,
+        500,
+    )
+
+    paginate: ClassVar[bool] = True
+    paginate_by: ClassVar[int] = 20
+    max_page_size: ClassVar[int] = 100
+
+    page_parameter: ClassVar[str] = "page"
+    page_size_parameter: ClassVar[str] = "page_size"
 
     # ------------------------------------------------------------------
-    # Messages
+    # Selection
     # ------------------------------------------------------------------
+
+    selectable: ClassVar[bool] = False
+
+    # ------------------------------------------------------------------
+    # UI
+    # ------------------------------------------------------------------
+
+    toolbar: ClassVar[bool] = True
+    show_search: ClassVar[bool] = True
+    show_filters: ClassVar[bool] = True
+
+    show_header: ClassVar[bool] = True
+    show_footer: ClassVar[bool] = True
 
     empty_message: ClassVar[str] = "No records found."
 
     # ------------------------------------------------------------------
-    # Runtime
+    # Runtime state
     # ------------------------------------------------------------------
 
     table: tables.Table
-    filterset: Any | None
+    filterset: django_filters.FilterSet | None
+    pagination_config: PaginationConfig
+    pagination_state: PaginationState
 
-    
+    # ==================================================================
+    # Lifecycle
+    # ==================================================================
+
+    def initialize(self) -> None:
+        super().initialize()
+
+        self.filterset = None
+        self.pagination_state = None
+
+        self.search = SearchComposer(
+            request=self.request,
+            fields=self.search_fields,
+            parameter=self.search_parameter,
+        )
+
+        self.filters = FilterComposer(
+            request=self.request,
+            filterset_class=self.filterset_class,
+        )
+
+        self.pagination = PaginationComposer(
+            request=self.request,
+            paginate=self.paginate,
+            default_size=self.paginate_by,
+            size_options=self.page_size_options,
+            max_size=self.max_page_size,
+            page_parameter=self.page_parameter,
+            size_parameter=self.page_size_parameter,
+        )
+
+        self.pagination_config = self.pagination.compose()
+
+        self.table_composer = TableComposer(self)
+
+    def configure(self) -> None:
+        super().configure()
+
+        self.table = self.build_table()
+
+        self.pagination_state = TablePageComposer(
+            table=self.table,
+            config=self.pagination_config,
+        ).compose()
+
+    # ==================================================================
+    # Queryset
+    # ==================================================================
+
+    def get_table_queryset(self):
+        queryset = self.get_queryset()
+        queryset = self.apply_filters(queryset)
+        queryset = self.search.apply(queryset)
+        return queryset
+
+    def apply_filters(self, queryset):
+        queryset = self.filters.apply(queryset)
+        self.filterset = self.filters.filterset
+        return queryset
+
+    # ==================================================================
+    # Table
+    # ==================================================================
+
+    def get_table_class(self) -> type[tables.Table]:
+        return self.table_composer.get_class()
+
+    def build_table(self) -> tables.Table:
+        queryset = self.get_table_queryset()
+
+        return self.table_composer.compose(queryset)
+
+    # ==================================================================
+    # Pagination
+    # ==================================================================
+
+    def get_page_size_options(self) -> tuple[int, ...]:
+        return self.pagination_config.page_size_options
+
+    def get_page_size(self) -> int:
+        return self.pagination_config.page_size
+
+    def get_page(self):
+        return self.pagination_state
+
+    # ==================================================================
+    # Actions
+    # ==================================================================
+
+    def get_table_actions(self):
+        return ActionComposer(
+            widget=self,
+            request=self.request,
+            actions=self.actions,
+            data=self.get_data(),
+        ).compose()
+
+    def get_row_actions(self, obj):
+        return ActionComposer(
+            widget=self,
+            request=self.request,
+            actions=self.row_actions,
+            object=obj,
+            objects=(obj,),
+            data=self.get_data(),
+        ).compose()
+
+    def get_bulk_actions(self):
+        return ActionComposer(
+            widget=self,
+            request=self.request,
+            actions=self.bulk_actions,
+            objects=self.get_objects(),
+            data=self.get_data(),
+        ).compose()
+
+    def get_context_menu_actions(self):
+        return (
+            self.context_menu_actions
+            or self.row_actions
+        )
+
+    def get_row_context_actions(self, obj):
+        return self.get_row_actions(obj)
+
     # ==================================================================
     # IDs
     # ==================================================================
@@ -107,238 +257,17 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
     def htmx_target(self) -> str:
         return f"#{self.content_id}"
 
-    # ==================================================================
-    # Lifecycle
-    # ==================================================================
+    @property
+    def htmx_indicator(self) -> str:
+        return f"{self.name}-loader"
 
-    def initialize(self) -> None:
-        self.filterset = None
+    @property
+    def context_menu_id(self) -> str:
+        return f"{self.name}-context-menu"
 
-    def configure(self) -> None:
-        self.table = self.build_table()
-
-    # ==================================================================
-    # Queryset
-    # ==================================================================
-
-    def get_table_queryset(self) -> QuerySet:
-        queryset = self.get_queryset()
-        queryset = self.apply_filters(queryset)
-        queryset = self.apply_search(queryset)
-
-        return queryset
-
-    # ==================================================================
-    # Filters
-    # ==================================================================
-
-    def get_filterset_class(self):
-        return self.filterset_class
-
-    def get_filterset(self, queryset: QuerySet):
-        filterset_class = self.get_filterset_class()
-
-        if filterset_class is None:
-            return None
-
-        return filterset_class(
-            data=self.request.GET if self.request else None,
-            queryset=queryset,
-            request=self.request,
-        )
-
-    def apply_filters(self, queryset: QuerySet) -> QuerySet:
-        self.filterset = self.get_filterset(queryset)
-
-        if self.filterset is None:
-            return queryset
-
-        return self.filterset.qs
-
-    # ==================================================================
-    # Search
-    # ==================================================================
-
-    def get_search_term(self) -> str:
-        if self.request is None:
-            return ""
-
-        return self.request.GET.get(
-            self.search_parameter,
-            "",
-        ).strip()
-
-    def apply_search(self, queryset: QuerySet) -> QuerySet:
-        term = self.get_search_term()
-
-        if not term or not self.search_fields:
-            return queryset
-
-        query = Q()
-
-        for field in self.search_fields:
-            query |= Q(
-                **{
-                    f"{field}__icontains": term,
-                }
-            )
-
-        return queryset.filter(query)
-
-    # ==================================================================
-    # django-tables2
-    # ==================================================================
-
-    def get_table_class(self):
-        table_class = self._meta.table_class
-
-        if not self.row_actions:
-            return table_class
-
-        return type(
-            f"{table_class.__name__}WidgetTable",
-            (table_class,),
-            {
-                "row_actions": RowActionsColumn(
-                    verbose_name="",
-                    orderable=False,
-                ),
-            },
-        )
-   
-    def build_table(self) -> tables.Table:
-        queryset = self.get_table_queryset()
-
-        table_class = self.get_table_class()
-
-        table = table_class(queryset, request=self.request)
-
-        # Give custom columns access to the widget.
-        table.widget = self
-
-        tables.RequestConfig(
-            self.request,
-            paginate={"per_page": self.per_page},
-        ).configure(table)
-
-        return table
-
-    def get_page_context(self) -> PageContext:
-        page = self.table.page
-        paginator = self.table.paginator
-
-        navigation = self.navigation
-
-        return PageContext(
-            number=page.number,
-            total=paginator.num_pages,
-            has_previous=page.has_previous(),
-            has_next=page.has_next(),
-
-            previous=(
-                navigation.page(
-                    page.previous_page_number(),
-                )
-                if page.has_previous()
-                else None
-            ),
-
-            next=(
-                navigation.page(
-                    page.next_page_number(),
-                )
-                if page.has_next()
-                else None
-            ),
-
-            first=(
-                navigation.page(1)
-                if page.number > 1
-                else None
-            ),
-
-            last=(
-                navigation.page(
-                    paginator.num_pages,
-                )
-                if page.number < paginator.num_pages
-                else None
-            ),
-
-            pages=tuple(
-                (
-                    number,
-                    navigation.page(number),
-                    number == page.number,
-                )
-                for number in paginator.page_range
-            ),
-        )
-
-    # ==================================================================
-    # Actions
-    # ==================================================================
-
-    def get_table_action_context(self) -> ActionContext:
-        return ActionContext(
-            widget=self,
-            request=self.request,
-            data=self.get_data(),
-        )
-
-    def get_row_action_context(self, obj: Any) -> ActionContext:
-
-        return ActionContext(
-            widget=self,
-            request=self.request,
-            object=obj,
-            objects=(obj,),
-            data=self.get_data(),
-        )
-
-    def get_bulk_action_context(self) -> ActionContext:
-        return ActionContext(
-            widget=self,
-            request=self.request,
-            objects=self.get_objects(),
-            data=self.get_data(),
-        )
-
-    @staticmethod
-    def bind_action(action: Action, context: ActionContext) -> BoundAction:
-
-        return BoundAction(
-            action=action,
-            context=context,
-        )
-
-    def get_table_actions(self) -> tuple[BoundAction, ...]:
-        context = self.get_table_action_context()
-
-        return tuple(
-            self.bind_action(action, context)
-            for action in self.table_actions
-            if action.visible(context)
-        )
-
-    def get_row_actions(self, obj: Any) -> tuple[BoundAction, ...]:
-
-        context = self.get_row_action_context(obj)
-
-        return tuple(
-            self.bind_action(action, context)
-            for action in self.row_actions
-            if action.visible(context)
-        )
-
-    def get_bulk_actions(self) -> tuple[BoundAction, ...]:
-        context = self.get_bulk_action_context()
-
-        return tuple(
-            self.bind_action(action, context)
-            for action in self.bulk_actions
-            if action.visible(context)
-        )
+    @property
+    def page_size_id(self) -> str:
+        return f"{self.table_id}-page-size"
 
     # ==================================================================
     # Context
@@ -351,7 +280,7 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
             table=self.table,
             filterset=self.filterset,
 
-            search_term=self.get_search_term(),
+            search_term=self.search.get_term(),
             search_parameter=self.search_parameter,
             search_enabled=bool(self.search_fields),
 
@@ -363,11 +292,37 @@ class TableWidget(Widget, metaclass=TableWidgetMetaclass):
             selection_id=self.selection_id,
 
             table_url=self.endpoint,
+
             navigation=self.navigation,
-            page=self.get_page_context(),
+            page=self.pagination_state,
 
             empty_message=self.empty_message,
+
             htmx_target=self.htmx_target,
+            htmx_indicator=self.htmx_indicator,
+
+            selectable=self.selectable,
+            objects_parameter=self.objects_parameter,
+
+            toolbar=self.toolbar,
+            show_search=self.show_search,
+            show_filters=self.show_filters,
+
+            show_header=self.show_header,
+            show_footer=self.show_footer,
+
+            context_menu_enabled=(
+                self.context_menu
+                and bool(self.get_context_menu_actions())
+            ),
+
+            context_menu_id=self.context_menu_id,
+            context_menu_actions=self.get_context_menu_actions(),
+
+            page_size=self.get_page_size(),
+            page_size_options=self.get_page_size_options(),
+            page_size_parameter=self.page_size_parameter,
+            page_size_id=self.page_size_id,
         )
 
         return context

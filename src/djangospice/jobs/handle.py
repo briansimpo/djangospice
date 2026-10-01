@@ -131,9 +131,9 @@ class JobHandle:
         if isinstance(raw_result, dict) and raw_result.get("__type__") == "dataclass":
             deserialized = deserialize(raw_result)
             if isinstance(deserialized, JobResult):
-                return deserialized.value
+                return deserialized.result
         
         if isinstance(raw_result, JobResult):
-            return raw_result.value
+            return raw_result.result
             
         return raw_result

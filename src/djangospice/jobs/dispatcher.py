@@ -8,7 +8,7 @@ from .base import Job
 from .celery import CeleryAdapter
 from .enums import JobStatus
 from .handle import JobHandle
-from .events import JobQueuedEvent
+from .events import JobQueued
 
 
 class JobDispatcher:
@@ -31,16 +31,20 @@ class JobDispatcher:
         countdown = total_seconds if total_seconds > 0 else None
 
         # 3. Freeze recursive object snapshot
-        serialized_payload = job.to_dict()
+        serialized_job = job.to_dict()
 
         def _enqueue():
             # Broadcast queued state to your WebSocket listeners safely on commit
-            Event.dispatch(JobQueuedEvent(job=job))
+            Event.dispatch(
+                JobQueued(
+                    job=job
+                )
+            )
             
             # Pass full execution context to the adapter
             celery = CeleryAdapter()
             celery.dispatch(
-                serialized_job=serialized_payload,
+                serialized_job=serialized_job,
                 queue=target_queue,
                 countdown=countdown,
                 task_id=job_id,

@@ -1,113 +1,38 @@
-<div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-3">
+{% if toolbar %}
+<div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
 
-    {# ================================================================
-       Search
-       ================================================================ #}
+    {% block toolbar_content %}
 
-    {% if search_enabled %}
-        <form
-            method="get"
-            action="{{ table_url }}"
-            hx-get="{{ table_url }}"
-            hx-target="#{{ content_id }}"
-            hx-swap="outerHTML"
-            hx-indicator="#{{ table_id }}-loader"
-            class="flex min-w-0 flex-1 items-center gap-2"
-        >
-            <div class="relative w-full max-w-sm">
+        {% block toolbar_filters %}
+            <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
 
-                <input
-                    type="search"
-                    name="{{ search_parameter }}"
-                    value="{{ search_term }}"
-                    placeholder="Search..."
-                    autocomplete="off"
-                    class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 pr-9 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                    hx-trigger="input changed delay:400ms, search"
-                >
+                {% block toolbar_search %}
+                    {% include "djangospice/table/search.html" %}
+                {% endblock toolbar_search %}
 
-                {% if search_term %}
-                    <button
-                        type="button"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                        onclick="this.previousElementSibling.value=''; this.previousElementSibling.dispatchEvent(new Event('search', {bubbles:true}))"
-                        aria-label="Clear search"
-                    >
-                        &times;
-                    </button>
-                {% endif %}
+                {% block toolbar_filterset %}
+                    {% include "djangospice/table/filters.html" %}
+                {% endblock toolbar_filterset %}
 
             </div>
-        </form>
-    {% endif %}
+        {% endblock toolbar_filters %}
 
 
-    {# ================================================================
-       Filters
-       ================================================================ #}
+        {% block toolbar_actions %}
+            <div class="flex items-center gap-2">
 
-    {% if filterset %}
-        <form
-            method="get"
-            action="{{ table_url }}"
-            hx-get="{{ table_url }}"
-            hx-target="#{{ content_id }}"
-            hx-swap="outerHTML"
-            hx-indicator="#{{ table_id }}-loader"
-            class="flex flex-wrap items-center gap-2"
-        >
-            {% for field in filterset.form %}
-                <div>
-                    {{ field }}
-                </div>
-            {% endfor %}
+                {% block toolbar_bulk_actions %}
+                    {% include "djangospice/table/bulk_actions.html" %}
+                {% endblock toolbar_bulk_actions %}
 
-            <button
-                type="submit"
-                class="btn btn-sm btn-primary"
-            >
-                Filter
-            </button>
+                {% block toolbar_table_actions %}
+                    {% include "djangospice/table/actions.html" %}
+                {% endblock toolbar_table_actions %}
 
-            <a
-                href="{{ table_url }}"
-                hx-get="{{ table_url }}"
-                hx-target="#{{ content_id }}"
-                hx-swap="outerHTML"
-                hx-indicator="#{{ table_id }}-loader"
-                class="btn btn-sm btn-secondary"
-            >
-                Reset
-            </a>
-        </form>
-    {% endif %}
+            </div>
+        {% endblock toolbar_actions %}
 
-
-    {# ================================================================
-       Table actions
-       ================================================================ #}
-
-    {% if table_actions %}
-        <div class="flex items-center gap-2">
-
-            {% for action in table_actions %}
-                <button
-                    type="{{ action.type|default:'button' }}"
-                    class="{{ action.css_class|default:'btn btn-sm btn-primary' }}"
-                    {{ action.htmx }}
-                    {% if action.confirm %}
-                        data-confirm="{{ action.confirm }}"
-                    {% endif %}
-                >
-                    {% if action.icon %}
-                        {% include action.icon %}
-                    {% endif %}
-
-                    {{ action.label }}
-                </button>
-            {% endfor %}
-
-        </div>
-    {% endif %}
+    {% endblock toolbar_content %}
 
 </div>
+{% endif %}

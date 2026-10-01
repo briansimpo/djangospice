@@ -1,5 +1,5 @@
 from typing import Any
-
+from .apps import namespace
 from .widget import Widget
 
 
@@ -8,8 +8,8 @@ class Placeholder(Widget):
     """System level specialized element creating DOM skeleton attachment points."""
     
     class Meta:
-        name = "system_htmx_placeholder"
-        template_name = "widgets/placeholder.html"
+        name = "djangospice_widget_placeholder"
+        template_name = f"{namespace}/placeholder.html"
         lazy = False
         cache_timeout = None
 

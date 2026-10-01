@@ -1,30 +1,30 @@
+from typing import Any
+
 from djangospice.realtime.broadcast import Broadcast
 
+from .events import JobEvent
 
-def broadcast_job_event(job, event_type: str, extra_data: dict = None) -> None:
-    """
-    Pipes job execution updates directly to our high-level Broadcast service.
-    """
-    if not getattr(job, "id", None):
+
+def broadcast_event(event: JobEvent, data: dict[str, Any] | None = None) -> None:
+
+    job = event.job
+
+    if not job.id:
         return
 
     payload = {
-        "job_id": job.id,
-        "job_class": job.__class__.__name__,
-        **(extra_data or {}),
+        "type": str(event),
+        "job": job.to_dict(),
+        **(data or {}),
     }
 
-    # 1. Broadcast to the job-specific group (e.g., clients watching a single import task)
-    Broadcast.event(
-        event=f"job.{event_type}",
+    Broadcast.group(
+        group=f"job_{job.id}",
         data=payload,
-        group=f"job_{job.id}"
     )
 
-    # 2. Broadcast to the user-specific feed if a user is attached to the job
-    if hasattr(job, "user") and job.user:
-        Broadcast.event(
-            event=f"job.{event_type}",
+    if job.user_id:
+        Broadcast.user(
+            user=job.user_id,
             data=payload,
-            user=job.user
         )

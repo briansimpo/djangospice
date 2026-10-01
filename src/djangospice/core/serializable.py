@@ -5,7 +5,7 @@ from copy import deepcopy
 from dataclasses import MISSING, fields, is_dataclass
 from typing import Any, TypeVar
 
-from djangospice.core.serializer import deserialize, serialize
+from .serializer import deserialize, serialize
 
 T = TypeVar("T", bound="Serializable")
 

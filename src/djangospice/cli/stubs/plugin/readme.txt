@@ -1,1 +1,0 @@
-{plugin.verbose_name} plugin

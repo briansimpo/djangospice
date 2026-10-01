@@ -29,15 +29,15 @@ class JobWorker:
 
         try:
             # 3. Execute business logic
-            result = job.handle()
+            job_result = job.handle()
 
             # Normalize return values
-            if not isinstance(result, JobResult):
-                result = JobResult(value=result)
+            if not isinstance(job_result, JobResult):
+                job_result = JobResult(job_result)
 
             # Let the reporter finalize completion
-            reporter.completed(job, result=result)
-            return result
+            reporter.completed(job, job_result)
+            return job_result
 
         except Exception as exc:
             # A. Let Celery's built-in Retry bubble up cleanly

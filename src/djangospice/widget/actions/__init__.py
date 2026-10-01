@@ -1,5 +1,5 @@
 from .action import Action
-from .collection import ActionCollection
+from .collection import Actions
 from .context import ActionContext
 from .bound import BoundAction
 
@@ -7,7 +7,7 @@ from .bound import BoundAction
 
 __all__ = [
     "Action", 
- 	"ActionCollection", 
+ 	"Actions", 
   	"ActionContext",
     "BoundAction"
       

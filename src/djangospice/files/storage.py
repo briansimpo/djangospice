@@ -6,19 +6,6 @@ from django.core.files.base import ContentFile
 
 class MediaStorage(FileSystemStorage):
 
-
-    def url(self, name):
-        """
-        Generates a URL that includes the schema name in the media URL.
-        """
-        return f"{self.base_url}{name}"
-
-    def path(self, name):
-        """
-        Ensure the path includes the schema directory when accessing the file.
-        """
-        return f"{self.base_location}{name}"
-
     def upload(self, uploaded_file, upload_path: str = "uploads", rename: bool = True) -> str:
         """
         Upload a file to media directory, optionally renaming it.

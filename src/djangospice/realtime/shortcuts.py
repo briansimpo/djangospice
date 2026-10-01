@@ -3,10 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from djangospice.core.serializer import serialize
-
 from djangospice.core.payload import Payload
 from djangospice.realtime import Broadcast
-
 
 
 def get_payload(event: str, payload: Any = None) -> dict:

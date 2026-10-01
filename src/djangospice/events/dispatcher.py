@@ -3,8 +3,9 @@ from typing import List, Type
 
 from .celery import CeleryAdapter
 from .registry import EventRegistry
-from .base import BaseEvent
 from .listener import EventListener
+
+from .base import BaseEvent
 
 logger = logging.getLogger(__name__)
 

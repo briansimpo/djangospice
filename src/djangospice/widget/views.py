@@ -1,26 +1,48 @@
-from django.views import View
-from django.http import HttpRequest, Http404
-from djangospice.response.shortcuts import render_response
+from __future__ import annotations
 
+from typing import Any
+
+from django.http import Http404, HttpRequest, HttpResponse
+from django.views import View
+from djangospice.htmx.shortcuts import render_response
+
+from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
-from .registry import WidgetRegistry
+from .resolver import WidgetResolver
 
 
 class WidgetView(View):
+    """
+    HTTP view endpoint for dynamically resolving, configuring, and executing widgets.
 
-    def dispatch(self, request: HttpRequest, app_label:str, name: str, *args, **kwargs):
-        widget_key = f"{app_label}.{name}"
-        
-        widget_cls = WidgetRegistry.get(widget_key)
+    Maps routing parameters (`app_name`, `name`) to a registered Widget, instantiates 
+    it with request query state and path variables, and delegates execution 
+    to the WidgetExecutor.
+    """
 
-        if widget_cls is None:
-            raise Http404()
+    def dispatch(self, request: HttpRequest, app_name: str, widget_name: str, *args: Any, **kwargs: Any) -> HttpResponse:
+        try:
+            widget_cls = WidgetResolver.resolve(
+                app_name,
+                widget_name,
+            )
+        except LookupError as exc:
+            raise Http404(str(exc)) from exc
+
+        widget_kwargs = {
+            **request.GET.dict(),
+            **kwargs,
+        }
 
         widget = widget_cls(
             request=request,
-            **request.GET.dict(),
+            **widget_kwargs,
         )
 
-        response = WidgetExecutor(widget, request).execute()
-
-        return render_response(response, request)
+        try:
+            response = WidgetExecutor(widget, request).execute()
+        except WidgetNotVisible:
+            raise Http404(
+                f"Widget '{app_name}:{widget_name}' is not accessible."
+            ) from None
+        return render_response(request, response)

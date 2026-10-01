@@ -1,46 +1,50 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
 from django.http import HttpRequest
+from djangospice.htmx.response import Response
 
-from djangospice.response.response import Response
+from .actions import ActionContext
 
-from djangospice.widgets.actions import ActionContext
-
-from .widget import Widget
+if TYPE_CHECKING:
+    from .widget import Widget
 
 
 class BaseDispatcher(ABC):
-    
-    def __init__(self, widget: Widget, request: HttpRequest):
+    """Abstract base class for widget dispatchers."""
+
+    def __init__(self, widget: Widget, request: HttpRequest) -> None:
         self.widget = widget
         self.request = request
-        
+
     @abstractmethod
     def can_dispatch(self) -> bool:
+        """Determine whether this dispatcher can handle the incoming request."""
         pass
-    
+
     @abstractmethod
     def dispatch(self) -> Response:
+        """Execute the dispatch logic and return a framework Response."""
         pass
-    
-    
+
+
 class ActionDispatcher(BaseDispatcher):
-    """
-    Dispatches widget actions.
-    """
+    """Dispatches custom actions declared on the widget."""
 
-    parameter = "action"
+    parameter: str = "action"
 
     def can_dispatch(self) -> bool:
-        return self.parameter in self.request.GET or self.parameter in self.request.POST
+        """Check if an action key is present in request GET or POST data."""
+        data = self.widget.request_data
+        return bool(data and self.parameter in data)
 
     def dispatch(self) -> Response:
-
-        name = (
-            self.request.POST.get(self.parameter)
-            or self.request.GET.get(self.parameter)
-        )
-
-        action = self.widget.actions.require(name)
+        """Locate and execute the requested action with full context."""
+        name = self.widget.request_value(self.parameter)
+        actions = self.widget.get_action_collection()
+        action = actions.require(name)
 
         context = ActionContext(
             widget=self.widget,
@@ -51,21 +55,18 @@ class ActionDispatcher(BaseDispatcher):
         )
 
         return action.dispatch(context)
-    
+
 
 class MethodDispatcher(BaseDispatcher):
-    """
-    Dispatches HTTP methods.
-    """
+    """Fallback dispatcher that maps request HTTP methods directly to widget handlers."""
 
     def can_dispatch(self) -> bool:
         return True
 
     def dispatch(self) -> Response:
-
         handler = getattr(self.widget, self.request.method.lower(), None)
 
-        if handler is None:
+        if handler is None or not callable(handler):
             return self.widget.method_not_allowed()
 
         return handler()

@@ -7,7 +7,7 @@ from djangospice.core.collection import ObjectCollection
 from .action import Action
 
 
-class ActionCollection(ObjectCollection[Action]):
+class Actions(ObjectCollection[Action]):
     """
     Immutable collection of widget actions.
 

@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from djangospice.apps.utils import get_app_label
+from djangospice.config.utils import get_app_label
 from djangospice.core.serializable import Serializable
 from .handle import JobHandle
 from .enums import JobStatus
@@ -20,6 +20,7 @@ class Job(Serializable):
     """
     Base executable execution unit.
     """
+    user_id: Any | None = None
     queue: str = "default"
     retries: int = 0
     backoff: int = 0 

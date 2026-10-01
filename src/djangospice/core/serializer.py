@@ -46,7 +46,7 @@ def serialize(value: Any) -> Any:
 
     # 3. Handle Framework & Custom Classes (Serializable, Payload, Django Models)
     if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
-        return value.to_dict()
+        return serialize(value.to_dict())
 
     # Convert Models and Querysets directly to Reference Representations
     if isinstance(value, models.Model):
@@ -108,7 +108,7 @@ def serialize(value: Any) -> Any:
 
     # 6. Django Serializers & Dataclasses
     if isinstance(value, ModelSerializer):
-        return value.data
+        return serialize(value.data)
 
     # Check if it is a Payload instance
     if value.__class__.__name__ == "Payload":
