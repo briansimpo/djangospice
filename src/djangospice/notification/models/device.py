@@ -20,7 +20,7 @@ class NotificationDevice(BaseModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notification_devices")
     platform = models.CharField(max_length=20, choices=Platform.choices)
     token = models.TextField(unique=True, help_text="FCM/APNs/Web Push device token.")
-    device_id = models.CharField(max_length=255,blank=True, null=True, help_text="Application-specific device identifier.")
+    device_id = models.CharField(max_length=255,blank=True, null=True, help_text="AppInstance-specific device identifier.")
     device_name = models.CharField(max_length=255,blank=True, null=True, help_text="Friendly device name (e.g. Brian's iPhone).")
     app_name = models.CharField(max_length=100, blank=True, null=True)
     app_version = models.CharField(max_length=50, blank=True, null=True)

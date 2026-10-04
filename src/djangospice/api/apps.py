@@ -1,4 +1,4 @@
-from djangospice.config import AppConfig
+from django.apps import AppConfig
 
 
 class ApiConfig(AppConfig):

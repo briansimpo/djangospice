@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from djangospice.config.utils import get_app_label
+from djangospice.app_registry.utils import get_app_label
 from djangospice.core.serializable import Serializable
 from .handle import JobHandle
 from .enums import JobStatus

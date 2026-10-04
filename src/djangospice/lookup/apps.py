@@ -1,10 +1,10 @@
-from djangospice.config import AppConfig, Module
+from djangospice.app_registry import DjangospiceConfig, Module
 
-class LookupConfig(AppConfig):
+class LookupConfig(DjangospiceConfig):
     name = "djangospice.lookup"
 
     def ready(self):
         Module.discover("lookup")
 
     
-namespace = LookupConfig.name
+namespace = LookupConfig.namespace

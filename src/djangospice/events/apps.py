@@ -1,8 +1,7 @@
-from djangospice.config import AppConfig, Module
+from djangospice.app_registry import DjangospiceConfig, Module
 
-class EventsConfig(AppConfig):
+class EventsConfig(DjangospiceConfig):
     name = "djangospice.events"
-    label = "events"
  
     def ready(self) -> None:
         Module.discover("listeners")

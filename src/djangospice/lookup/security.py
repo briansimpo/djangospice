@@ -163,7 +163,7 @@ class JWTBearerTokenAuthenticator:
 
 class WidgetCapabilityAuthenticator:
     """
-    Authenticate short-lived signed widget capabilities.
+    Authenticate short-lived signed widget.
     """
 
     def __init__(self, *, config: LookupConfig = lookup_config) -> None:

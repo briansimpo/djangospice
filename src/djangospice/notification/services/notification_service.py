@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 
 class NotificationService:
     """
-    Application service for notification operations.
+    AppInstance service for notification operations.
 
     Responsible for querying and manipulating notifications.
     Contains no UI or rendering logic.

@@ -6,7 +6,7 @@ from collections.abc import Iterator
 
 from django.core.exceptions import ImproperlyConfigured
 
-from djangospice.config.discovery import ModuleDiscovery
+from djangospice.app_registry import Module
 
 from .widget import Widget
 
@@ -50,7 +50,7 @@ class WidgetRegistry:
             if cls._initialized:
                 return
 
-            ModuleDiscovery.discover(
+            Module.discover(
                 module="widgets",
                 base_class=Widget,
                 callback=cls.register,

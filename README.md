@@ -426,7 +426,6 @@ djangospice is intended to evolve into a comprehensive runtime for modular Djang
 Areas of development include:
 
 * Application lifecycle management
-* Module discovery and registration
 * CLI tooling
 * Event-driven application architecture
 * Realtime communication

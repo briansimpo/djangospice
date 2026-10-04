@@ -1,8 +1,7 @@
-from djangospice.config import AppConfig
+from djangospice.app_registry import DjangospiceConfig
 
 
-class HTMXConfig(AppConfig):
+class HTMXConfig(DjangospiceConfig):
     name = "djangospice.htmx"
-
 
 namespace = HTMXConfig.namespace

@@ -1,8 +1,8 @@
-from djangospice.config import AppConfig
+from djangospice.app_registry import DjangospiceConfig
 
 
-class WidgetConfig(AppConfig):
+class WidgetConfig(DjangospiceConfig):
     name = "djangospice.widget"
-    
+
     
 namespace = WidgetConfig.namespace

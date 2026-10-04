@@ -125,7 +125,7 @@ class DirtyFields(models.Model):
 
 class FileFields(models.Model):
     """
-    A mixin that provides file deletion capabilities for image and file fields.
+    A mixin that provides file deletion for image and file fields.
     """
     class Meta:
         abstract = True

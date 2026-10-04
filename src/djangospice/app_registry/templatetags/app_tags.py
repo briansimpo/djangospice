@@ -23,7 +23,7 @@ def get_app_verbose_name(context):
 
 
 @register.simple_tag(takes_context=True)
-def app_url(context, view_name, *args, **kwargs):
+def url(context, view_name, *args, **kwargs):
     request = context["request"]
     resolver_match = getattr(request, "resolver_match", None)
     if resolver_match:

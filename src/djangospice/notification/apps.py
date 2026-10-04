@@ -1,9 +1,8 @@
-from djangospice.config import AppConfig
+from djangospice.app_registry import DjangospiceConfig
 
 
-class NotificationConfig(AppConfig):
+class NotificationConfig(DjangospiceConfig):
     name = "djangospice.notification"
-    label = "notification"
-    
+
     
 namespace = NotificationConfig.namespace

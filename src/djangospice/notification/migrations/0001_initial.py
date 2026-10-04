@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
                 ('last_attempt_at', models.DateTimeField(blank=True, null=True)),
                 ('error', models.TextField(blank=True)),
                 ('metadata', models.JSONField(blank=True, default=dict)),
-                ('notification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deliveries', to='djangospice.notification.notification')),
+                ('notification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deliveries', to='notification.notification')),
             ],
             options={
                 'ordering': ('-created',),
@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
                 ('id', model_utils.fields.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('platform', models.CharField(choices=[('ANDROID', 'Android'), ('IOS', 'iOS'), ('WINDOWS', 'Windows'), ('MACOS', 'macOS'), ('LINUX', 'Linux'), ('WEB', 'Web')], max_length=20)),
                 ('token', models.TextField(help_text='FCM/APNs/Web Push device token.', unique=True)),
-                ('device_id', models.CharField(blank=True, help_text='Application-specific device identifier.', max_length=255, null=True)),
+                ('device_id', models.CharField(blank=True, help_text='AppInstance-specific device identifier.', max_length=255, null=True)),
                 ('device_name', models.CharField(blank=True, help_text="Friendly device name (e.g. Brian's iPhone).", max_length=255, null=True)),
                 ('app_name', models.CharField(blank=True, max_length=100, null=True)),
                 ('app_version', models.CharField(blank=True, max_length=50, null=True)),

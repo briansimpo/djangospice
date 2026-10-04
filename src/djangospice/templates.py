@@ -6,6 +6,6 @@ def get_template_name(template_path, namespace=None):
         template_path += '.html'
         
     if namespace:
-        return os.path.join(namespace, template_path)
+        return f"{namespace}/{template_path}"
     else:
         return template_path
