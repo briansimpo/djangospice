@@ -71,7 +71,7 @@ class Widget(HTMLComponent):
     object_parameter: ClassVar[str] = "selected_id"
     objects_parameter: ClassVar[str] = "selected_ids"
 
-    namespace: ClassVar[str] = "djangospice.widget"
+    namespace: ClassVar[str] = "widget"
 
     lazy: ClassVar[bool] = False
 
