@@ -22,6 +22,7 @@ from .interaction import Interaction
 from .navigation import Navigation
 from .querystate import QueryState
 from .utils import slugify
+from .apps import namespace
 
 
 _WIDGET_SUFFIX = "Widget"
@@ -71,7 +72,7 @@ class Widget(HTMLComponent):
     object_parameter: ClassVar[str] = "selected_id"
     objects_parameter: ClassVar[str] = "selected_ids"
 
-    namespace: ClassVar[str] = "widget"
+    namespace: ClassVar[str] = namespace
 
     lazy: ClassVar[bool] = False
 
