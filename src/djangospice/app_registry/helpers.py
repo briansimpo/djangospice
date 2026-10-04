@@ -6,7 +6,7 @@ from typing import Any
 from django.apps import apps
 from django.http import HttpRequest
 from .exceptions import AppNotRegistered
-from .registry import app_registry
+from .registry import AppRegistry
 
 
 
@@ -39,7 +39,7 @@ def get_current_app(request: HttpRequest):
         return None
 
     try:
-        return app_registry.get_by_app_label(config.label)
+        return AppRegistry.get_by_app_label(config.label)
     except AppNotRegistered:
         return None
 

@@ -11,10 +11,9 @@ class AppDependencyInline(admin.TabularInline):
 
 @admin.register(AppInstance)
 class AppInstanceAdmin(admin.ModelAdmin):
-    list_display = ("key", "name", "package", "version", "status", "enabled", "updated_at")
+    list_display = ("key", "name", "package", "version", "status", "enabled")
     list_filter = ("status", "enabled")
     search_fields = ("key", "name", "package", "django_app")
-    readonly_fields = ("installed_at", "updated_at")
     inlines = (AppDependencyInline,)
 
 

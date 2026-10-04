@@ -90,7 +90,7 @@ class Metadata:
 
     @classmethod
     def from_config(cls, config: object) -> Metadata:
-        """Build metadata from a DjangospiceConfig instance."""
+        """Build metadata from a AppConfig instance."""
         return cls(
             key=config.app_key,
             name=config.verbose_name,
@@ -110,7 +110,6 @@ class Metadata:
     @classmethod
     def from_values(
         cls,
-        *,
         key: str,
         name: str,
         package: str,

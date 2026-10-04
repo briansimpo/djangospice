@@ -28,22 +28,20 @@ class AppAction(models.TextChoices):
 class AppInstance(BaseModel):
     key = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
-    app_label = models.CharField(max_length=100)
-    package = models.CharField(max_length=255, unique=True)
-    version = models.CharField(max_length=100)
+    app_label = models.CharField(max_length=100, blank=True, null=True)
+    package = models.CharField(max_length=255,blank=True, null=True)
+    version = models.CharField(max_length=100, blank=True, null=True)
 
     django_app = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    author = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True, null=True)
+    author = models.CharField(max_length=255, blank=True, null=True)
     icon = models.CharField(max_length=200, blank=True, null=True)
     url = models.CharField(max_length=200, blank=True, null=True)
-    homepage = models.URLField(blank=True)
+    homepage = models.URLField(blank=True, null=True)
 
     status = models.CharField(max_length=30, choices=AppStatus.choices, default=AppStatus.DISCOVERED)
     enabled = models.BooleanField(default=True)
-    last_error = models.TextField(blank=True)
-    installed_at = models.DateTimeField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    last_error = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ("key",)

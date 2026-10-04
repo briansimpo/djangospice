@@ -210,10 +210,6 @@ class HTMXTabMixin:
 
         return True
 
-    # ------------------------------------------------------------------
-    # Metadata
-    # ------------------------------------------------------------------
-
     @classmethod
     def get_tab_name(cls) -> str:
         name = cls.tab_name

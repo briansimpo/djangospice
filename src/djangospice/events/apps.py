@@ -1,6 +1,6 @@
-from djangospice.app_registry import DjangospiceConfig, Module
+from djangospice.app_registry import AppConfig, Module
 
-class EventsConfig(DjangospiceConfig):
+class EventsConfig(AppConfig):
     name = "djangospice.events"
  
     def ready(self) -> None:

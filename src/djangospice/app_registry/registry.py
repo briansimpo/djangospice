@@ -65,7 +65,8 @@ class AppRegistry:
         with transaction.atomic():
             return [self.register(item) for item in metadata]
 
-    def get(self, key: str) -> AppInstance:
+    @classmethod
+    def get(cl, key: str) -> AppInstance:
         try:
             return AppInstance.objects.get(key=key)
         except AppInstance.DoesNotExist as exc:
@@ -73,7 +74,8 @@ class AppRegistry:
                 f"Application '{key}' is not registered."
             ) from exc
 
-    def get_by_app_label(self, app_label: str) -> AppInstance:
+    @classmethod
+    def get_by_app_label(cls, app_label: str) -> AppInstance:
         try:
             return AppInstance.objects.get(app_label=app_label)
         except AppInstance.DoesNotExist as exc:
@@ -81,21 +83,26 @@ class AppRegistry:
                 f"No registered application has app label '{app_label}'."
             ) from exc
 
-    def exists(self, key: str) -> bool:
+    @classmethod
+    def exists(cls, key: str) -> bool:
         return AppInstance.objects.filter(key=key).exists()
 
-    def all(self) -> QuerySet[AppInstance]:
+    @classmethod
+    def all(cls) -> QuerySet[AppInstance]:
         return AppInstance.objects.all()
 
-    def installed(self) -> QuerySet[AppInstance]:
-        return self.all().filter(status=AppStatus.INSTALLED)
+    @classmethod
+    def installed(cls) -> QuerySet[AppInstance]:
+        return cls.all().filter(status=AppStatus.INSTALLED)
 
-    def enabled(self) -> QuerySet[AppInstance]:
-        return self.installed().filter(enabled=True)
+    @classmethod
+    def enabled(cls) -> QuerySet[AppInstance]:
+        return cls.installed().filter(enabled=True)
 
-    def permissions(self, key: str):
+    @classmethod
+    def permissions(cls, key: str):
         """Return the Django permission records declared by an application."""
-        app = self.get(key)
+        app = cls.get(key)
         return app.permission_records.select_related("permission").all()
 
     # ------------------------------------------------------------------
@@ -145,7 +152,7 @@ class AppRegistry:
             )
 
         app.enabled = True
-        app.save(update_fields=("enabled", "status", "updated_at"))
+        app.save(update_fields=("enabled", "status"))
 
         self._record(app, AppAction.ENABLE, successful=True)
         return app
@@ -161,7 +168,7 @@ class AppRegistry:
 
         app.enabled = False
         app.status = AppStatus.DISABLED
-        app.save(update_fields=("enabled", "status", "updated_at"))
+        app.save(update_fields=("enabled", "status"))
 
         self._record(app, AppAction.DISABLE, successful=True)
         return app
@@ -193,7 +200,7 @@ class AppRegistry:
         app.enabled = False
         app.last_error = ""
         app.save(
-            update_fields=("status", "enabled", "last_error", "updated_at")
+            update_fields=("status", "enabled", "last_error")
         )
 
         return self._record(app, AppAction.INSTALL, successful=False)
@@ -203,18 +210,14 @@ class AppRegistry:
         app = self._locked_app(key)
         self._require_status(app, key, AppStatus.INSTALLING)
 
-        now = timezone.now()
         app.status = AppStatus.INSTALLED
         app.enabled = True
         app.last_error = ""
-        app.installed_at = app.installed_at or now
         app.save(
             update_fields=(
                 "status",
                 "enabled",
                 "last_error",
-                "installed_at",
-                "updated_at",
             )
         )
 
@@ -235,7 +238,7 @@ class AppRegistry:
         app.enabled = False
         app.last_error = message
         app.save(
-            update_fields=("status", "enabled", "last_error", "updated_at")
+            update_fields=("status", "enabled", "last_error")
         )
 
         self._complete_latest(
@@ -261,7 +264,7 @@ class AppRegistry:
             )
 
         app.status = AppStatus.UPDATING
-        app.save(update_fields=("status", "updated_at"))
+        app.save(update_fields=("status"))
 
         return self._record(app, AppAction.UPDATE, successful=False)
 
@@ -299,7 +302,7 @@ class AppRegistry:
         message = str(error)
         app.status = AppStatus.INSTALLED
         app.last_error = message
-        app.save(update_fields=("status", "last_error", "updated_at"))
+        app.save(update_fields=("status", "last_error"))
 
         self._complete_latest(
             app,
@@ -358,8 +361,8 @@ class AppRegistry:
         return {
             "name": metadata.name,
             "app_label": metadata.app_label or metadata.key,
-            "package": metadata.package,
-            "version": metadata.version,
+            "package": metadata.package or "",
+            "version": metadata.version or  "",
             "django_app": metadata.django_app or "",
             "description": metadata.description or "",
             "author": metadata.author or "",
@@ -495,9 +498,5 @@ class AppRegistry:
                 "successful",
                 "completed_at",
                 "error",
-                "updated_at",
             )
         )
-
-
-app_registry = AppRegistry()

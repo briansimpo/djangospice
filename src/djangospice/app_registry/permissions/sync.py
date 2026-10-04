@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission as AuthPermission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
@@ -30,24 +30,19 @@ class PermissionSynchronizer:
         with transaction.atomic():
             records = []
             for declaration in desired.values():
-                permission, _ = Permission.objects.update_or_create(
+                permission, _ = AuthPermission.objects.update_or_create(
                     content_type=content_type,
                     codename=declaration.codename,
                     defaults={"name": declaration.name},
                 )
                 record, _ = AppPermission.objects.update_or_create(
                     app=app,
-                    codename=declaration.codename,
-                    defaults={
-                        "permission": permission,
-                        "name": declaration.name,
-                        "description": declaration.description,
-                    },
+                    permission=permission,
                 )
                 records.append(record)
 
             stale = AppPermission.objects.filter(app=app).exclude(
-                codename__in=desired,
+                permission__codename__in=desired,
             )
             stale.delete()
 
@@ -57,7 +52,7 @@ class PermissionSynchronizer:
         records = AppPermission.objects.filter(app=app)
         permission_ids = list(records.values_list("permission_id", flat=True))
         records.delete()
-        Permission.objects.filter(id__in=permission_ids).delete()
+        AuthPermission.objects.filter(id__in=permission_ids).delete()
 
         ContentType.objects.filter(
             app_label=app.app_label,

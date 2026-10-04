@@ -1,6 +1,6 @@
-from djangospice.app_registry import DjangospiceConfig, Module
+from djangospice.app_registry import AppConfig, Module
 
-class LookupConfig(DjangospiceConfig):
+class LookupConfig(AppConfig):
     name = "djangospice.lookup"
 
     def ready(self):

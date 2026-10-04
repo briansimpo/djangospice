@@ -1,7 +1,7 @@
-from .config import DjangospiceConfig
+from .config import AppConfig
 from .module import Module
 
 __all__ = [
-    "DjangospiceConfig",
+    "AppConfig",
     "Module",
 ]

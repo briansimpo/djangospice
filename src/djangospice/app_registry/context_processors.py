@@ -2,7 +2,7 @@ from typing import Any
 
 from django.http import HttpRequest
 
-from djangospice.app_registry.helpers import get_app_context
+from .helpers import get_app_context
 
 
 def app_metadata(request: HttpRequest) -> dict[str, Any]:

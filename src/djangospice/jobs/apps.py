@@ -1,4 +1,4 @@
-from djangospice.app_registry import DjangospiceConfig
+from djangospice.app_registry import AppConfig
 
-class JobsConfig(DjangospiceConfig):
+class JobsConfig(AppConfig):
     name = "djangospice.jobs"

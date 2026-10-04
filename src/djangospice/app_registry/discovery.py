@@ -1,59 +1,97 @@
 from __future__ import annotations
-
-from collections.abc import Mapping
 from importlib.metadata import PackageNotFoundError, version as package_version
+from collections.abc import Mapping
 from typing import Any
 
 from django.apps import apps
 
-from .config import DjangospiceConfig
+from .config import AppConfig 
+
 from .metadata import Dependency, Metadata, Permission
 
 
-class DjangoAppDiscovery:
-    """Discover and normalize Djangospice application metadata."""
-
-    def __init__(self, app_registry=None) -> None:
-        self.app_registry = app_registry or apps
+class AppDiscovery:
+    """Discover Django apps that declare Djangospice metadata."""
 
     def discover(self) -> tuple[Metadata, ...]:
-        """Discover all registered Django apps declaring an app_key."""
+        """Discover metadata for all registered Djangospice apps."""
+
         discovered: list[Metadata] = []
 
-        for config in self.app_registry.get_app_configs():
+        for config in apps.get_app_configs():
             metadata = self.metadata_from_config(config)
             if metadata is not None:
                 discovered.append(metadata)
 
         return tuple(discovered)
 
-    def metadata_from_config(self, config: DjangospiceConfig) -> Metadata | None:
-        """Build normalized metadata from a Djangospice configuration."""
-        key = getattr(config, "app_key", None)
+    def discover_one(
+        self,
+        config: AppConfig,
+    ) -> Metadata | None:
+        """Discover metadata for one app config or Django app label."""
+        return self.metadata_from_config(config)
 
-        if not isinstance(key, str) or not key.strip():
+    def discover_many(
+        self,
+        configs: tuple[AppConfig | str, ...] | list[AppConfig | str] | None = None,
+    ) -> tuple[Metadata, ...]:
+        """Discover metadata for multiple app configs or labels."""
+
+        if configs is None:
+            return self.discover()
+
+        discovered: list[Metadata] = []
+
+        for config in configs:
+            metadata = self.discover_one(config)
+            if metadata is not None:
+                discovered.append(metadata)
+
+        return tuple(discovered)
+
+    def metadata_from_config(
+        self,
+        config: AppConfig,
+    ) -> Metadata | None:
+        """Build metadata from an app configuration."""
+
+        # Only apps explicitly opting into Djangospice are discovered.
+        raw_key = getattr(config, "app_key", None)
+        if not isinstance(raw_key, str) or not raw_key.strip():
             return None
 
-        key = key.strip()
-        package = (
-            getattr(config, "app_package", None) or config.name
-        ).strip()
+        key = raw_key.strip()
 
-        if not package:
-            raise ValueError(
-                f"Djangospice app '{key}' must declare a valid app_package."
-            )
-
-        version = (
-            getattr(config, "app_version", None)
-            or self._distribution_version(package)
+        raw_package = getattr(config, "app_package", None)
+        declared_package = (
+            raw_package.strip()
+            if isinstance(raw_package, str) and raw_package.strip()
+            else None
         )
 
-        if not isinstance(version, str) or not version.strip():
-            raise ValueError(
-                f"Djangospice app '{key}' must declare app_version because "
-                f"the distribution version for '{package}' could not be determined."
-            )
+        # Local project apps may not have a Python distribution.
+        package = declared_package or config.name
+
+        raw_version = getattr(config, "app_version", None)
+        declared_version = (
+            raw_version.strip()
+            if isinstance(raw_version, str) and raw_version.strip()
+            else None
+        )
+
+        if declared_version:
+            version = declared_version
+        elif declared_package:
+            version = self._distribution_version(declared_package)
+            if version is None:
+                raise ValueError(
+                    f"App {key!r} declares package {declared_package!r}, "
+                    "but no app_version or installed distribution version "
+                    "could be determined."
+                )
+        else:
+            version = "0.0.0"
 
         return Metadata.from_values(
             key=key,
@@ -63,10 +101,10 @@ class DjangoAppDiscovery:
                 or config.label
             ),
             package=package,
-            version=version.strip(),
+            version=version,
             description=getattr(config, "app_description", "") or "",
             author=getattr(config, "app_author", "") or "",
-            icon=getattr(config, "app_icon", None) or "",
+            icon=getattr(config, "app_icon", "") or "",
             url=getattr(config, "app_url", None),
             homepage=getattr(config, "app_homepage", None),
             django_app=config.name,
@@ -80,16 +118,21 @@ class DjangoAppDiscovery:
         )
 
     @staticmethod
-    def _distribution_version(package: str) -> str | None:
-        """Return the installed distribution version, if available."""
+    def _distribution_version(package: str | None) -> str | None:
+        """Return an installed distribution version when available."""
+
+        if not isinstance(package, str) or not package.strip():
+            return None
+
         try:
-            return package_version(package)
+            return package_version(package.strip())
         except PackageNotFoundError:
             return None
 
     @staticmethod
     def _dependencies(value: Any) -> tuple[Dependency, ...]:
         """Normalize supported dependency declaration formats."""
+
         if not value:
             return ()
 
@@ -97,7 +140,7 @@ class DjangoAppDiscovery:
             return tuple(
                 Dependency(
                     key=str(key),
-                    version_specifier=str(spec),
+                    version_specifier=str(spec or ""),
                 )
                 for key, spec in value.items()
             )
@@ -114,7 +157,8 @@ class DjangoAppDiscovery:
             elif isinstance(dependency, Mapping):
                 if "key" not in dependency:
                     raise ValueError(
-                        f"Dependency declaration requires 'key': {dependency!r}"
+                        "Dependency declaration requires 'key': "
+                        f"{dependency!r}"
                     )
 
                 result.append(
@@ -122,7 +166,8 @@ class DjangoAppDiscovery:
                         key=str(dependency["key"]),
                         version_specifier=str(
                             dependency.get("version_specifier")
-                            or dependency.get("version", "")
+                            or dependency.get("version")
+                            or ""
                         ),
                         optional=bool(dependency.get("optional", False)),
                     )
@@ -138,6 +183,7 @@ class DjangoAppDiscovery:
     @staticmethod
     def _permissions(value: Any) -> tuple[Permission, ...]:
         """Normalize supported permission declaration formats."""
+
         if not value:
             return ()
 
@@ -150,15 +196,15 @@ class DjangoAppDiscovery:
             elif isinstance(permission, Mapping):
                 if "codename" not in permission or "name" not in permission:
                     raise ValueError(
-                        "Permission declarations require 'codename' and 'name': "
-                        f"{permission!r}"
+                        "Permission declarations require 'codename' "
+                        f"and 'name': {permission!r}"
                     )
 
                 result.append(
                     Permission(
                         codename=str(permission["codename"]),
                         name=str(permission["name"]),
-                        description=str(permission.get("description", "")),
+                        description=str(permission.get("description") or ""),
                     )
                 )
 
@@ -168,7 +214,9 @@ class DjangoAppDiscovery:
                         codename=str(permission[0]),
                         name=str(permission[1]),
                         description=(
-                            str(permission[2]) if len(permission) >= 3 else ""
+                            str(permission[2] or "")
+                            if len(permission) >= 3
+                            else ""
                         ),
                     )
                 )
