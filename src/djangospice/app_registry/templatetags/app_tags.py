@@ -1,74 +1,103 @@
-from django import template 
-from django.apps import apps
+from __future__ import annotations
+
+from django import template
 from django.urls import reverse
+from django.apps import apps
+
 from djangospice.urls import safe_reverse
 
-register = template.Library() 
-
-
-@register.filter
-def get_item(dictionary: dict, key):
-    return dictionary.get(key, None)
+register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def get_app_verbose_name(context):
-    request = context["request"]
+def app_url(context,view_name: str,*args,**kwargs):
+    request = context.get("request")
+
+    if request is None:
+        return safe_reverse(
+            view_name,
+            args=args,
+            kwargs=kwargs,
+        )
+
     resolver_match = getattr(request, "resolver_match", None)
-    if resolver_match:
-        if resolver_match.app_name:
-            app_name = resolver_match.app_name
-            app_config = apps.get_app_config(app_name)
-            return app_config.verbose_name
+
+    if resolver_match is None:
+        return safe_reverse(
+            view_name,
+            args=args,
+            kwargs=kwargs,
+        )
+
+    app_name = resolver_match.app_name
+
+    if not app_name:
+        return safe_reverse(
+            view_name,
+            args=args,
+            kwargs=kwargs,
+        )
+
+    try:
+        app_config = apps.get_app_config(app_name)
+    except LookupError:
+        return safe_reverse(
+            view_name,
+            args=args,
+            kwargs=kwargs,
+        )
+
+    namespace = getattr(
+        app_config,
+        "namespace",
+        None,
+    ) or app_config.label
+
+    return safe_reverse(
+        view_name,
+        namespace,
+        args=args,
+        kwargs=kwargs,
+    )
 
 
 @register.simple_tag(takes_context=True)
-def url(context, view_name, *args, **kwargs):
-    request = context["request"]
-    resolver_match = getattr(request, "resolver_match", None)
-    if resolver_match:
-        if resolver_match.app_name:
-            app_name = resolver_match.app_name
-            app_config = apps.get_app_config(app_name)
-            namespace = app_config.label
-            return safe_reverse(view_name, namespace, args=args)
-
-
-@register.simple_tag(takes_context=True)
-def get_app_icon(context):
-    request = context["request"]
-    resolver_match = getattr(request, "resolver_match", None)
-    if resolver_match:
-        if resolver_match.app_name:
-            app_name = resolver_match.app_name
-            app_config = apps.get_app_config(app_name)
-            if hasattr(app_config, "icon"):
-                return app_config.icon
-
-
-
-@register.simple_tag(takes_context=True)
-def app_filter_url(context):
+def app_filter_url(context) -> str:
     """
-    Returns the current view URL without GET parameters,
-    but includes any URL arguments (args and kwargs).
-    Handles namespaced URLs too.
-    """
-    request = context['request']
-    resolver_match = request.resolver_match
+    Return the current view URL without query parameters.
 
-    # Namespaces
-    namespaces = resolver_match.namespaces
+    Preserves:
+    - URL namespaces
+    - URL name
+    - positional URL arguments
+    - keyword URL arguments
+
+    Query-string parameters are intentionally excluded.
+    """
+    request = context.get("request")
+
+    if request is None:
+        return ""
+
+    resolver_match = getattr(request, "resolver_match", None)
+
+    if resolver_match is None:
+        return ""
+
     url_name = resolver_match.url_name
 
+    if not url_name:
+        return ""
+
+    namespaces = resolver_match.namespaces
+
     if namespaces:
-        namespace_prefix = ":".join(namespaces)
-        full_name = f"{namespace_prefix}:{url_name}"
+        full_name = ":".join((*namespaces, url_name))
     else:
         full_name = url_name
 
-    # Include positional and keyword arguments if any
-    args = resolver_match.args
-    kwargs = resolver_match.kwargs
-
-    return reverse(full_name, args=args, kwargs=kwargs)
+    return reverse(
+        full_name,
+        args=resolver_match.args or None,
+        kwargs=resolver_match.kwargs or None,
+    )

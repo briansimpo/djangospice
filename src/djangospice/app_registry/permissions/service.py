@@ -21,7 +21,6 @@ class AppAccess:
 
     def apps(self) -> QuerySet[AppInstance]:
         queryset = AppInstance.objects.filter(
-            status=AppStatus.INSTALLED,
             enabled=True,
         )
         if not self.is_authenticated:
@@ -82,10 +81,3 @@ class AppAccess:
         except AppInstance.DoesNotExist:
             raise AppNotRegistered(f"AppInstance '{app}' is not registered.") from None
 
-
-class AppAccessManager:
-    def for_user(self, user) -> AppAccess:
-        return AppAccess(user)
-
-
-app_access = AppAccessManager()
