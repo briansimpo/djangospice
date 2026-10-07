@@ -138,19 +138,13 @@ class Widget(HTMLComponent):
 
     @classmethod
     def _configure_identity(cls) -> None:
-        """
-        Configure the widget's identity.
-
-        ``Widget`` is an implementation suffix and is not included in
-        the public widget name or title.
-        """
-        if cls.name is None:
+        if cls.__dict__.get("name") is None:
             cls.name = cls._resolve_name()
 
-        if cls.title is None:
+        if cls.__dict__.get("title") is None:
             cls.title = cls._resolve_title()
 
-        if cls.app_label is None:
+        if cls.__dict__.get("app_label") is None:
             cls.app_label = cls._resolve_app_label(cls.__module__)
 
     @classmethod
@@ -184,11 +178,7 @@ class Widget(HTMLComponent):
             StudentAttendanceWidget -> student-attendance
             DashboardWidget -> dashboard
         """
-        return slugify(
-            camel_case_to_spaces(
-                cls._identity_class_name(),
-            ),
-        )
+        return slugify(cls._identity_class_name())
 
     @classmethod
     def _resolve_title(cls) -> str:
@@ -236,16 +226,12 @@ class Widget(HTMLComponent):
         return module_path.split(".", 1)[0]
 
     @property
+    def widget_identifier(self) -> WidgetIdentifier:
+        return WidgetIdentifier.from_widget(self)
+
+    @property
     def widget_key(self) -> str:
-        """
-        Return the canonical widget key.
-        """
-        return str(
-            WidgetIdentifier(
-                self.app_label,
-                self.name,
-            )
-        )
+        return str(self.widget_identifier)
 
     # ------------------------------------------------------------------
     # Actions

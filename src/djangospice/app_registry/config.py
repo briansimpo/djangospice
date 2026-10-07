@@ -8,7 +8,7 @@ from django.apps import AppConfig as BaseAppConfig
 from django.templatetags.static import static
 
 from djangospice.urls import get_valid_url
-
+from .module import Module
 from .metadata import Dependency, Permission
 
 
@@ -157,3 +157,6 @@ class AppConfig(BaseAppConfig):
     def has_app_key(self) -> bool:
         """Return whether this application declares a registry key."""
         return isinstance(self.app_key, str) and bool(self.app_key.strip())
+
+    def load_module(self, module):
+        Module.discover(module)

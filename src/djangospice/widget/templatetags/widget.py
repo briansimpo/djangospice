@@ -24,15 +24,16 @@ def render_widget(context: template.Context, widget_key: str, **kwargs: Any) -> 
     """
     request = context.get("request")
 
+  
     try:
         widget_class = WidgetRegistry.get(widget_key)
-    except KeyError:
-        return mark_safe("")
+    except KeyError as e:
+        return mark_safe(str(e))
 
-    widget = widget_class(request=request, **kwargs)
-
+   
     try:
-       return render(widget)
+        widget = widget_class(request=request, **kwargs)
+        return render(widget)
     except WidgetNotVisible:
         return mark_safe("")
 

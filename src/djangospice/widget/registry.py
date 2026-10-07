@@ -6,7 +6,7 @@ from collections.abc import Iterator
 
 from django.core.exceptions import ImproperlyConfigured
 
-from djangospice.app_registry import Module
+from djangospice.app_registry.module import Module
 
 from .widget import Widget
 
@@ -151,6 +151,8 @@ class WidgetRegistry:
         cls.load()
 
         with cls._lock:
+            if not cls.exists(widget_key):
+                raise Exception(f"Could not find '{widget_key}'. The widget is not registered" )
             return cls._widgets.get(widget_key)
 
     @classmethod
