@@ -36,12 +36,12 @@ class AppRegistry:
         Registration does not install the package and does not change the
         existing application's lifecycle state.
         """
-        app, created = AppInstance.objects.get_or_create(
+        app, created = AppInstance.objects.update_or_create(
             key=metadata.key,
             defaults={
                 **self._metadata_defaults(metadata),
-                "status": AppStatus.DISCOVERED,
-                "enabled": False,
+                "status": AppStatus.INSTALLED,
+                "enabled": True,
             },
         )
 
