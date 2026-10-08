@@ -1,5 +1,3 @@
-# djangospice/ui/widgets/lookup.py
-
 from __future__ import annotations
 
 from collections.abc import Iterable

@@ -143,16 +143,15 @@ class LookupEngine:
         for dependency in query.definition.dependencies:
 
             if dependency.path not in query.dependencies:
-                continue
+                return queryset.none()
 
             value = query.dependencies[
                 dependency.path
             ]
 
-            if self.is_empty_dependency(
-                value
-            ):
-                continue
+            if self.is_empty_dependency(value):
+                return queryset.none()
+
 
             queryset = self.apply_dependency(
                 queryset,
@@ -163,7 +162,6 @@ class LookupEngine:
         return queryset
 
     def apply_dependency(self, queryset: QuerySet, path: str, value: Any) -> QuerySet:
-
         RelationResolver.resolve_path(
             queryset.model,
             path,
