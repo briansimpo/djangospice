@@ -13,6 +13,7 @@ from django.utils.text import camel_case_to_spaces
 
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
+from djangospice.urls import safe_reverse
 
 from .actions import Action, Actions, ActionContext, BoundAction
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
@@ -508,8 +509,9 @@ class Widget(HTMLComponent):
 
     @property
     def endpoint(self) -> str:
-        url = reverse(
-            self.namespace,
+        url = safe_reverse(
+            view_name="widget_view",
+            namespace=self.namespace,
             kwargs={
                 APP_NAME_KEY: self.app_label,
                 WIDGET_NAME_KEY: self.name,

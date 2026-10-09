@@ -25,12 +25,3 @@ def get_admin_app_title():
     app_name = get_app_name()
     return f"{app_name} Admin"
 
-
-def get_default_site_logo():
-    logo = getattr(settings, "SITE_LOGO")
-    return static(logo)
-
-
-def get_default_site_icon():
-    logo = getattr(settings, "SITE_ICON")
-    return static(logo)

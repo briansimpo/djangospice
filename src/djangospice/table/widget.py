@@ -29,7 +29,7 @@ class TableWidget(Widget):
     and action services with table-specific django-tables2 behavior.
     """
 
-    template_name = "djangospice.table/table.html"
+    template_name = "djangospice/table/table.html"
 
     # ------------------------------------------------------------------
     # Table

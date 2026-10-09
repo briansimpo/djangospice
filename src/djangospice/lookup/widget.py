@@ -7,6 +7,8 @@ from django import forms
 from django.db import models
 from django.urls import reverse
 
+from djangospice.urls import get_valid_url, get_view_name, safe_reverse
+
 from .conf import LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
@@ -243,13 +245,10 @@ class LookupWidget(forms.Select):
         )
 
     def get_lookup_url(self) -> str:
-        return reverse(
-           namespace,
-            kwargs={
-                APP_NAME_KEY: self.identifier.app_name,
-                MODEL_NAME_KEY: self.identifier.model_name,
-            },
-        )
+        from djangospice.conf import djangospice_settings
+        prefix = djangospice_settings.URL
+        url = f"{prefix}lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
+        return get_valid_url(url)
 
     # ------------------------------------------------------------------
     # Select behaviour
