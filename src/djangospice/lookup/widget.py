@@ -246,7 +246,7 @@ class LookupWidget(forms.Select):
 
     def get_lookup_url(self) -> str:
         from djangospice.conf import djangospice_settings
-        prefix = djangospice_settings.URL
+        prefix = djangospice_settings.DJANGOSPICE_URL
         url = f"{prefix}lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
         return get_valid_url(url)
 

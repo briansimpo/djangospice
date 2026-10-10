@@ -5,15 +5,15 @@ class DjangospiceSettings:
     """Central configuration for Djangospice."""
 
     DEFAULTS = {
-        "URL": "djangospice/",
+        "DJANGOSPICE_URL": "djangospice/",
     }
 
     @property
-    def URL(self) -> str:
+    def DJANGOSPICE_URL(self) -> str:
         return getattr(
             settings,
             "DJANGOSPICE_URL",
-            self.DEFAULTS["URL"],
+            self.DEFAULTS["DJANGOSPICE_URL"],
         )
 
 
