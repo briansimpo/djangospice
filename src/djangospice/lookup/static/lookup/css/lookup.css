@@ -1,3 +1,8 @@
+/* ==========================================================================
+   Djangospice Lookup
+   Accessible, server-driven searchable select styling
+   ========================================================================== */
+
 .djangospice-lookup {
     --djangospice-lookup-border-color: #ced4da;
     --djangospice-lookup-border-focus: #86b7fe;
@@ -11,24 +16,39 @@
     --djangospice-lookup-chip-background: #e9ecef;
     --djangospice-lookup-chip-text: #212529;
     --djangospice-lookup-danger: #dc3545;
-    --djangospice-lookup-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.12);
+    --djangospice-lookup-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 
     position: relative;
+    isolation: isolate;
+    z-index: 0;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/*
+ * Raise the whole lookup above neighboring form controls while its menu is
+ * open. A child dropdown z-index cannot escape a lower sibling stacking
+ * context, so the wrapper itself must be raised.
+ */
+.djangospice-lookup.is-open {
+    z-index: 10000;
+}
+
+/* Make sizing predictable for every generated element. */
+.djangospice-lookup *,
+.djangospice-lookup *::before,
+.djangospice-lookup *::after {
     box-sizing: border-box;
 }
 
 
-/* ==================================================================
+/* ==========================================================================
    Native Django select
-   ================================================================== */
+   The native select remains the authoritative form control.
+   ========================================================================== */
 
 .djangospice-lookup__native {
-    /*
-     * The native select remains the authoritative Django form
-     * control, but the enhanced interface handles interaction.
-     */
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;
@@ -36,425 +56,415 @@
     margin: -1px !important;
     overflow: hidden !important;
     clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
     white-space: nowrap !important;
     border: 0 !important;
 }
 
 
-/* ==================================================================
+/* ==========================================================================
    Search input
-   ================================================================== */
+   ========================================================================== */
 
 .djangospice-lookup__input {
+    position: relative;
+    z-index: 1;
+
     display: block;
     width: 100%;
+    min-width: 0;
     min-height: 2.5rem;
-    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    margin: 0;
+    padding: 0.5rem 2.75rem 0.5rem 0.75rem;
 
-    box-sizing: border-box;
-
-    border: 1px solid
-        var(--djangospice-lookup-border-color);
-
+    border: 1px solid var(--djangospice-lookup-border-color);
     border-radius: 0.375rem;
 
-    background: var(
-        --djangospice-lookup-background
-    );
-
-    color: var(
-        --djangospice-lookup-text
-    );
+    background: var(--djangospice-lookup-background);
+    color: var(--djangospice-lookup-text);
 
     font: inherit;
     line-height: 1.5;
 
     outline: none;
+    appearance: none;
 
     transition:
         border-color 0.15s ease-in-out,
         box-shadow 0.15s ease-in-out;
 }
 
-
 .djangospice-lookup__input::placeholder {
-    color: var(
-        --djangospice-lookup-placeholder
-    );
-
+    color: var(--djangospice-lookup-placeholder);
     opacity: 1;
 }
 
-
 .djangospice-lookup__input:focus {
-    border-color: var(
-        --djangospice-lookup-border-focus
-    );
-
-    box-shadow:
-        0 0 0 0.2rem
-        rgba(13, 110, 253, 0.15);
+    z-index: 2;
+    border-color: var(--djangospice-lookup-border-focus);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
 
-
-.djangospice-lookup.is-open
-.djangospice-lookup__input {
-    border-bottom-left-radius: 0;
+.djangospice-lookup.is-open .djangospice-lookup__input {
     border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.djangospice-lookup__input:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    background: var(--djangospice-lookup-hover);
 }
 
 
-/* ==================================================================
+/* ==========================================================================
    Clear button
-   ================================================================== */
+   Anchored to the input's fixed 2.5rem control height. Its position does not
+   depend on result count, status text, or dropdown height.
+   ========================================================================== */
 
 .djangospice-lookup__clear {
     position: absolute;
-
-    top: 50%;
+    top: 1.25rem;
     right: 0.625rem;
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     width: 1.5rem;
     height: 1.5rem;
-
+    margin: 0;
     padding: 0;
 
     transform: translateY(-50%);
 
     border: 0;
-
+    border-radius: 0.25rem;
     background: transparent;
+    color: var(--djangospice-lookup-muted);
 
-    color:
-        var(--djangospice-lookup-muted);
-
+    font-family: inherit;
     font-size: 1.25rem;
+    font-weight: 400;
     line-height: 1;
 
     cursor: pointer;
-
-    z-index: 2;
 }
 
-
-.djangospice-lookup__clear:hover {
-    color:
-        var(--djangospice-lookup-text);
+.djangospice-lookup__clear:hover:not(:disabled) {
+    background: var(--djangospice-lookup-hover);
+    color: var(--djangospice-lookup-text);
 }
-
 
 .djangospice-lookup__clear:focus-visible {
-    outline: 2px solid
-        var(--djangospice-lookup-border-focus);
-
+    outline: 2px solid var(--djangospice-lookup-border-focus);
     outline-offset: 2px;
+}
 
-    border-radius: 0.25rem;
+.djangospice-lookup__clear:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 
-/* ==================================================================
+/* ==========================================================================
    Dropdown
-   ================================================================== */
+   ========================================================================== */
 
 .djangospice-lookup__dropdown {
     position: absolute;
-
     top: 100%;
     left: 0;
     right: 0;
-
-    z-index: 1000;
+    z-index: 10001;
 
     display: none;
-
     max-height: 18rem;
+    margin: 0;
+    padding: 0;
 
     overflow-x: hidden;
     overflow-y: auto;
 
-    box-sizing: border-box;
-
-    border: 1px solid
-        var(--djangospice-lookup-border-color);
-
+    border: 1px solid var(--djangospice-lookup-border-color);
     border-top: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
 
-    border-bottom-left-radius: 0.375rem;
-    border-bottom-right-radius: 0.375rem;
+    /*
+     * Explicit opaque paint prevents underlying controls from showing
+     * through, even when application styles set translucent backgrounds.
+     */
+    background-color: var(--djangospice-lookup-background) !important;
+    background-image: none;
+    opacity: 1;
+    color: var(--djangospice-lookup-text);
 
-    background:
-        var(--djangospice-lookup-background);
-
-    color:
-        var(--djangospice-lookup-text);
-
-    box-shadow:
-        var(--djangospice-lookup-shadow);
-
+    box-shadow: var(--djangospice-lookup-shadow);
     overscroll-behavior: contain;
+    scrollbar-gutter: stable;
 }
 
-
-.djangospice-lookup.is-open
-.djangospice-lookup__dropdown {
+.djangospice-lookup.is-open .djangospice-lookup__dropdown {
     display: block;
 }
 
+.djangospice-lookup.is-open .djangospice-lookup__dropdown,
+.djangospice-lookup.is-open .djangospice-lookup__dropdown * {
+    pointer-events: auto;
+}
 
-/* ==================================================================
+
+/* ==========================================================================
    Options
-   ================================================================== */
+   ========================================================================== */
 
 .djangospice-lookup__option {
     display: block;
-
     width: 100%;
-
-    box-sizing: border-box;
-
+    min-height: 2.5rem;
+    margin: 0;
     padding: 0.5rem 0.75rem;
 
-    color:
-        var(--djangospice-lookup-text);
+    border: 0;
+    background-color: var(--djangospice-lookup-background);
+    color: var(--djangospice-lookup-text);
 
-    background: transparent;
+    font: inherit;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: anywhere;
 
     cursor: pointer;
-
     user-select: none;
-
-    line-height: 1.5;
 }
-
 
 .djangospice-lookup__option:hover {
-    background:
-        var(--djangospice-lookup-hover);
+    background: var(--djangospice-lookup-hover);
 }
-
 
 .djangospice-lookup__option.is-highlighted {
-    background:
-        var(--djangospice-lookup-highlight);
+    background: var(--djangospice-lookup-highlight);
 }
 
-
 .djangospice-lookup__option.is-selected {
-    background:
-        var(--djangospice-lookup-selected);
-
+    background: var(--djangospice-lookup-selected);
     font-weight: 500;
 }
 
-
 .djangospice-lookup__option.is-selected::before {
     content: "✓";
-
     display: inline-block;
-
     width: 1.25rem;
-
     margin-right: 0.25rem;
 }
 
-
 .djangospice-lookup__option.is-highlighted.is-selected {
-    background:
-        var(--djangospice-lookup-selected);
+    background: var(--djangospice-lookup-selected);
 }
 
 
-/* ==================================================================
+/* ==========================================================================
+   Status row: loading, no results, and messages
+   The JS creates this as a sibling immediately after the dropdown. It is
+   absolutely positioned under the input so it does not move the clear button
+   or change the wrapper's layout.
+   ========================================================================== */
+
+.djangospice-lookup__status {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10002;
+
+    display: none;
+    width: 100%;
+    min-height: 2.5rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+
+    border: 1px solid var(--djangospice-lookup-border-color);
+    border-top: 0;
+    border-bottom-right-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+
+    background-color: var(--djangospice-lookup-background) !important;
+    background-image: none;
+    opacity: 1;
+    color: var(--djangospice-lookup-muted);
+
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+
+    cursor: default;
+    user-select: none;
+    box-shadow: var(--djangospice-lookup-shadow);
+}
+
+.djangospice-lookup__status:not([hidden]) {
+    display: block;
+}
+
+/*
+ * Keep the status visually attached to the dropdown. When the status is
+ * visible, it covers the empty dropdown border and appears as a dropdown row.
+ */
+.djangospice-lookup.is-open .djangospice-lookup__status:not([hidden]) {
+    border-top: 1px solid var(--djangospice-lookup-border-color);
+}
+
+/* Loading state */
+.djangospice-lookup.is-loading .djangospice-lookup__input {
+    cursor: progress;
+}
+
+.djangospice-lookup.is-loading .djangospice-lookup__dropdown {
+    cursor: progress;
+}
+
+.djangospice-lookup.is-loading .djangospice-lookup__status:not([hidden]) {
+    color: var(--djangospice-lookup-muted);
+}
+
+/* Error state */
+.djangospice-lookup.has-error .djangospice-lookup__input {
+    border-color: var(--djangospice-lookup-danger);
+}
+
+.djangospice-lookup.has-error .djangospice-lookup__input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+}
+
+.djangospice-lookup.has-error .djangospice-lookup__status:not([hidden]) {
+    color: var(--djangospice-lookup-danger);
+}
+
+
+/* ==========================================================================
    Multiple selection
-   ================================================================== */
+   ========================================================================== */
 
 .djangospice-lookup__selection {
     display: flex;
-
     flex-wrap: wrap;
-
     gap: 0.375rem;
 
     width: 100%;
-
-    box-sizing: border-box;
-
-    margin-bottom: 0.375rem;
+    min-width: 0;
+    margin: 0 0 0.375rem;
+    padding: 0;
 }
 
-
+.djangospice-lookup__tag,
 .djangospice-lookup__chip {
     display: inline-flex;
-
     align-items: center;
-
+    min-width: 0;
     max-width: 100%;
-
-    padding:
-        0.25rem
-        0.375rem
-        0.25rem
-        0.625rem;
+    padding: 0.25rem 0.375rem 0.25rem 0.625rem;
 
     border-radius: 999px;
-
-    background:
-        var(--djangospice-lookup-chip-background);
-
-    color:
-        var(--djangospice-lookup-chip-text);
+    background: var(--djangospice-lookup-chip-background);
+    color: var(--djangospice-lookup-chip-text);
 
     font-size: 0.875rem;
-
     line-height: 1.25;
-
-    box-sizing: border-box;
 }
 
+.djangospice-lookup__tag {
+    gap: 0.25rem;
+}
 
+.djangospice-lookup__tag-label,
 .djangospice-lookup__chip-label {
     min-width: 0;
-
     overflow: hidden;
-
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
-
+.djangospice-lookup__tag-remove,
 .djangospice-lookup__chip-remove {
+    display: inline-flex;
     flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
 
     width: 1.25rem;
     height: 1.25rem;
-
-    margin-left: 0.25rem;
-
+    margin: 0 0 0 0.125rem;
     padding: 0;
 
     border: 0;
-
     border-radius: 50%;
-
     background: transparent;
+    color: var(--djangospice-lookup-muted);
 
-    color:
-        var(--djangospice-lookup-muted);
-
+    font: inherit;
     font-size: 1rem;
-
     line-height: 1;
 
     cursor: pointer;
 }
 
-
+.djangospice-lookup__tag-remove:hover,
 .djangospice-lookup__chip-remove:hover {
-    color:
-        var(--djangospice-lookup-danger);
+    color: var(--djangospice-lookup-danger);
 }
 
-
+.djangospice-lookup__tag-remove:focus-visible,
 .djangospice-lookup__chip-remove:focus-visible {
-    outline: 2px solid
-        var(--djangospice-lookup-border-focus);
-
+    outline: 2px solid var(--djangospice-lookup-border-focus);
     outline-offset: 1px;
 }
 
 
-/* ==================================================================
-   Loading state
-   ================================================================== */
-
-.djangospice-lookup.is-loading
-.djangospice-lookup__input {
-    cursor: progress;
-}
-
-
-.djangospice-lookup.is-loading
-.djangospice-lookup__dropdown {
-    cursor: progress;
-}
-
-
-.djangospice-lookup__status {
-    padding: 0.5rem 0.75rem;
-
-    color:
-        var(--djangospice-lookup-muted);
-
-    font-size: 0.875rem;
-
-    line-height: 1.5;
-}
-
-
-.djangospice-lookup.is-loading
-.djangospice-lookup__status {
-    display: block;
-}
-
-
-/* ==================================================================
-   Error state
-   ================================================================== */
-
-.djangospice-lookup.has-error
-.djangospice-lookup__input {
-    border-color:
-        var(--djangospice-lookup-danger);
-}
-
-
-.djangospice-lookup.has-error
-.djangospice-lookup__input:focus {
-    box-shadow:
-        0 0 0 0.2rem
-        rgba(220, 53, 69, 0.15);
-}
-
-
-/* ==================================================================
+/* ==========================================================================
    Disabled state
-   ================================================================== */
+   ========================================================================== */
 
-.djangospice-lookup__input:disabled,
-.djangospice-lookup.is-disabled
-.djangospice-lookup__input {
+.djangospice-lookup.is-disabled .djangospice-lookup__input,
+.djangospice-lookup__input:disabled {
     cursor: not-allowed;
-
     opacity: 0.65;
+    background: var(--djangospice-lookup-hover);
+}
 
-    background:
-        var(--djangospice-lookup-hover);
+.djangospice-lookup.is-disabled .djangospice-lookup__clear {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.djangospice-lookup.is-disabled .djangospice-lookup__dropdown,
+.djangospice-lookup.is-disabled .djangospice-lookup__status {
+    display: none !important;
 }
 
 
-.djangospice-lookup.is-disabled
-.djangospice-lookup__dropdown {
-    display: none;
-}
-
-
-/* ==================================================================
+/* ==========================================================================
    Keyboard accessibility
-   ================================================================== */
+   ========================================================================== */
 
 .djangospice-lookup__option:focus-visible {
-    outline: 2px solid
-        var(--djangospice-lookup-border-focus);
-
+    outline: 2px solid var(--djangospice-lookup-border-focus);
     outline-offset: -2px;
 }
 
+.djangospice-lookup__input:focus-visible,
+.djangospice-lookup__clear:focus-visible {
+    outline-offset: 2px;
+}
 
-/* ==================================================================
+
+/* ==========================================================================
    Reduced motion
-   ================================================================== */
+   ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
     .djangospice-lookup__input {
@@ -463,9 +473,11 @@
 }
 
 
-/* ==================================================================
-   Dark theme hook
-   ================================================================== */
+/* ==========================================================================
+   Dark theme
+   This follows the system preference unless the application overrides these
+   custom properties on .djangospice-lookup.
+   ========================================================================== */
 
 @media (prefers-color-scheme: dark) {
     .djangospice-lookup {
