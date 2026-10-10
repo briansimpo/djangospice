@@ -6,7 +6,7 @@ from django import template
 from django.templatetags.static import static
 from django.utils.safestring import mark_safe
 
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 
 from djangospice.notification.apps import namespace
 

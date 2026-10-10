@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 from django.http import HttpRequest, HttpResponse
 
 from .renderer import ResponseRenderer

@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import ListView
 
 from djangospice.templates import get_template_name
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 
 from .apps import namespace
 from .helpers import (

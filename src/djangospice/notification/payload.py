@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from djangospice.core.serializable import Serializable
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 
 from .apps import namespace
 from .models import Notification

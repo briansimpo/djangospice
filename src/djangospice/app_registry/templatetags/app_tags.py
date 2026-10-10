@@ -4,7 +4,7 @@ from django import template
 from django.urls import reverse
 from django.apps import apps
 
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 
 register = template.Library()
 

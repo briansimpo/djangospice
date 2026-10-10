@@ -5,16 +5,13 @@ from typing import Any
 
 from django import forms
 from django.db import models
-from django.urls import reverse
 
-from djangospice.urls import get_valid_url, get_view_name, safe_reverse
-
+from djangospice.routing import get_valid_url
+from djangospice.conf import DJANGOSPICE_URL
 from .conf import LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
 from .identifier import LookupIdentifier
-from .conf import APP_NAME_KEY, MODEL_NAME_KEY
-from .apps import namespace
 
 
 class LookupWidget(forms.Select):
@@ -245,9 +242,7 @@ class LookupWidget(forms.Select):
         )
 
     def get_lookup_url(self) -> str:
-        from djangospice.conf import djangospice_settings
-        prefix = djangospice_settings.DJANGOSPICE_URL
-        url = f"{prefix}lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
+        url = f"{DJANGOSPICE_URL}/lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
         return get_valid_url(url)
 
     # ------------------------------------------------------------------

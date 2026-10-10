@@ -13,7 +13,7 @@ from django.utils.text import camel_case_to_spaces
 
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 
 from .actions import Action, Actions, ActionContext, BoundAction
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY

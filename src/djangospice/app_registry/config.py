@@ -7,7 +7,7 @@ from typing import ClassVar
 from django.apps import AppConfig as BaseAppConfig
 from django.templatetags.static import static
 
-from djangospice.urls import get_valid_url
+from djangospice.routing import get_valid_url
 from .module import Module
 from .metadata import Dependency, Permission
 

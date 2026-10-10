@@ -3,7 +3,7 @@ from django.urls import NoReverseMatch
 from django.utils.safestring import mark_safe
 from django import template
 from djangospice.templates import get_template_name
-from djangospice.urls import safe_reverse
+from djangospice.routing import safe_reverse
 from djangospice.htmx.apps import namespace
 
 register = template.Library()
