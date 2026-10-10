@@ -63,7 +63,6 @@ def get_admin_app_title():
     app_name = get_app_name()
     return f"{app_name} Admin"
 
-
 def djangospice_urls():
     from .urls import urlpatterns
     return urlpatterns, "djangospice", "djangospice"
