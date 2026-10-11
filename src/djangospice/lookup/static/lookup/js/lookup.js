@@ -574,6 +574,7 @@
             } else {
                 this.clearStatus();
             }
+            this.open();
         }
 
         renderResults(results) {
