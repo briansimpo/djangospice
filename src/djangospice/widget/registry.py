@@ -18,10 +18,6 @@ class WidgetRegistry:
     """
     Thread-safe, app-aware registry for Widget classes.
 
-    Widgets are identified by their namespaced key:
-
-        app_label.widget_name
-
     Registration is idempotent for the same class. This allows widgets to
     be registered explicitly with ``@widget`` while also being discovered
     automatically by ``ModuleDiscovery``.
@@ -36,7 +32,7 @@ class WidgetRegistry:
         """
         Resolve the registry key for a Widget class.
         """
-        return f"{widget.app_label}.{widget.name}"
+        return f"{widget.app_name}.{widget.name}"
 
     @classmethod
     def load(cls) -> None:
@@ -67,7 +63,7 @@ class WidgetRegistry:
         been registered.
 
         A conflict is raised only when another class attempts to use the
-        same ``app_label.name`` identity.
+        same ``app_name.name`` identity.
         """
         if not isinstance(widget, type):
             raise TypeError(
@@ -86,10 +82,10 @@ class WidgetRegistry:
                 "must define a name."
             )
 
-        if not widget.app_label:
+        if not widget.app_name:
             raise ImproperlyConfigured(
                 f"Widget {widget.__module__}.{widget.__qualname__} "
-                "must define an app_label."
+                "must define an app_name."
             )
 
         reg_key = cls._get_key(widget)
@@ -117,7 +113,7 @@ class WidgetRegistry:
             if existing_widget is not None:
                 raise ImproperlyConfigured(
                     f"Widget '{widget.name}' in app "
-                    f"'{widget.app_label}' is already registered by "
+                    f"'{widget.app_name}' is already registered by "
                     f"class "
                     f"`{existing_widget.__module__}."
                     f"{existing_widget.__qualname__}`. "

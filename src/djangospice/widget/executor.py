@@ -30,10 +30,11 @@ class WidgetExecutor:
         """Run the full lifecycle pipeline and dispatch the request."""
         self.widget.initialize()
         self.widget.configure()
-        self.widget.configure_htmx()
         self.widget.authorize()
 
-        return self.dispatch()
+        response = self.dispatch()
+
+        return response
 
     def dispatch(self) -> Response:
         """Iterate through registered dispatchers and invoke the first match."""

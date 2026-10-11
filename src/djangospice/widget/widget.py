@@ -11,9 +11,10 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.text import camel_case_to_spaces
 
+from djangospice.conf import DJANGOSPICE_URL
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
-from djangospice.routing import safe_reverse
+from djangospice.routing import get_valid_url
 
 from .actions import Action, Actions, ActionContext, BoundAction
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
@@ -59,7 +60,7 @@ class Widget(HTMLComponent):
 
     name: ClassVar[str | None] = None
     title: ClassVar[str | None] = None
-    app_label: ClassVar[str | None] = None
+    app_name: ClassVar[str | None] = None
     description: ClassVar[str] = ""
 
     actions: ClassVar[Actions] = Actions()
@@ -145,8 +146,8 @@ class Widget(HTMLComponent):
         if cls.__dict__.get("title") is None:
             cls.title = cls._resolve_title()
 
-        if cls.__dict__.get("app_label") is None:
-            cls.app_label = cls._resolve_app_label(cls.__module__)
+        if cls.__dict__.get("app_name") is None:
+            cls.app_name = cls._resolve_app_name(cls.__module__)
 
     @classmethod
     def _identity_class_name(cls) -> str:
@@ -197,7 +198,7 @@ class Widget(HTMLComponent):
         ).title()
 
     @classmethod
-    def _resolve_app_label(cls, module_path: str) -> str:
+    def _resolve_app_name(cls, module_path: str) -> str:
         """
         Resolve the Django application label from the widget module path.
 
@@ -227,12 +228,12 @@ class Widget(HTMLComponent):
         return module_path.split(".", 1)[0]
 
     @property
-    def widget_identifier(self) -> WidgetIdentifier:
+    def identifier(self) -> WidgetIdentifier:
         return WidgetIdentifier.from_widget(self)
 
     @property
     def widget_key(self) -> str:
-        return str(self.widget_identifier)
+        return str(self.identifier)
 
     # ------------------------------------------------------------------
     # Actions
@@ -486,6 +487,11 @@ class Widget(HTMLComponent):
     def get_data(self) -> dict:
         return self.request_data
 
+
+    def get_widget_url(self):
+        url = f"/{DJANGOSPICE_URL}/widget/{self.identifier.app_name}/{self.identifier.widget_name}/"
+        return get_valid_url(url)
+
     # ------------------------------------------------------------------
     # Navigation & HTMX
     # ------------------------------------------------------------------
@@ -509,14 +515,7 @@ class Widget(HTMLComponent):
 
     @property
     def endpoint(self) -> str:
-        url = safe_reverse(
-            view_name="widget_view",
-            namespace=self.namespace,
-            kwargs={
-                APP_NAME_KEY: self.app_label,
-                WIDGET_NAME_KEY: self.name,
-            },
-        )
+        url = self.get_widget_url()
 
         params = {
             key: value
@@ -544,7 +543,7 @@ class Widget(HTMLComponent):
         return bool(
             match
             and match.view_name == self.namespace
-            and match.kwargs.get(APP_NAME_KEY) == self.app_label
+            and match.kwargs.get(APP_NAME_KEY) == self.app_name
             and match.kwargs.get(WIDGET_NAME_KEY) == self.name
         )
 
@@ -566,32 +565,6 @@ class Widget(HTMLComponent):
 
         return self.base_url
 
-    def configure_htmx(self) -> None:
-        """
-        Configure HTMX behaviour for the widget.
-
-        This method is called immediately before rendering so that
-        request-dependent HTMX attributes are always current.
-        """
-        if self.lazy:
-            (
-                self.htmx
-                .get(self.endpoint)
-                .trigger_on("load")
-                .target_to("this")
-                .swap_to("outerHTML")
-            )
-
-        if self.refreshable and self.refresh_interval:
-            trigger = getattr(self.htmx, "trigger", None) or "load"
-
-            (
-                self.htmx
-                .trigger_on(
-                    f"{trigger}, every {self.refresh_interval}s",
-                )
-                .target_to("this")
-            )
 
     def interaction(
         self,
@@ -679,7 +652,6 @@ class Widget(HTMLComponent):
         - ``get_content()``, or
         - ``template_name`` + ``get_context()``.
         """
-        self.configure_htmx()
 
         actual_request = (
             request

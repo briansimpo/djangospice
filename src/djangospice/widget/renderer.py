@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
+
+from djangospice.templates import get_template_name
 
 from .builder import WidgetBuilder
 from .cache import WidgetCache
 from .exceptions import WidgetNotVisible
 from .widget import Widget
-from .placeholder import Placeholder
 
 
 class WidgetRenderer:
@@ -46,14 +48,15 @@ class WidgetRenderer:
         )
 
     def render_placeholder(self) -> SafeString:
-        placeholder = Placeholder(
-            request=self.widget.request,
-            target_id=self.widget.id,
-            target_url=self.widget.endpoint,
-            target_title=self.widget.title,
-        )
-
-        return WidgetRenderer(placeholder).render()
+        template_name = get_template_name("placeholder.html", "widget")
+        return render_to_string(
+            template_name=template_name,
+            context={
+                "target_id":self.widget.id,
+                "target_url":self.widget.endpoint,
+                "target_title":self.widget.title,
+            }
+        )   
 
     def build(self) -> SafeString:
         return WidgetBuilder(self.widget).build()

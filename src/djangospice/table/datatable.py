@@ -45,7 +45,7 @@ class DataTable(TableWidget):
         url = reverse(
             self.namespace,
             kwargs={
-                APP_NAME_KEY: self.app_label,
+                APP_NAME_KEY: self.app_name,
                 WIDGET_NAME_KEY: self.name,
             },
         )

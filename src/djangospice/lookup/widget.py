@@ -242,7 +242,7 @@ class LookupWidget(forms.Select):
         )
 
     def get_lookup_url(self) -> str:
-        url = f"{DJANGOSPICE_URL}/lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
+        url = f"/{DJANGOSPICE_URL}/lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
         return get_valid_url(url)
 
     # ------------------------------------------------------------------

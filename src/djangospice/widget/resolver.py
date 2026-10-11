@@ -56,11 +56,11 @@ class WidgetResolver:
         return widget_cls
 
     @classmethod
-    def instantiate(cls, app_name: str, name: str, *, expected_type: type[WidgetT] | None = None, request: Any = None, **kwargs: Any) -> WidgetT:
+    def instantiate(cls, app_name: str, widget_name: str, *, expected_type: type[WidgetT] | None = None, request: Any = None, **kwargs: Any) -> WidgetT:
         """
         Resolve and instantiate a widget.
         """
-        widget_cls = cls.resolve(app_name, name, expected_type=expected_type)
+        widget_cls = cls.resolve(app_name, widget_name, expected_type=expected_type)
 
         return widget_cls(
             request=request,
