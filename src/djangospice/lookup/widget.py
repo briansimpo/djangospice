@@ -6,13 +6,12 @@ from typing import Any
 from django import forms
 from django.db import models
 
-from djangospice.routing import get_valid_url
-from djangospice.conf import DJANGOSPICE_URL
-from .conf import LookupConfig, lookup_config
+from djangospice.routing import safe_reverse
+from .conf import APP_NAME_KEY, MODEL_NAME_KEY, LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
 from .identifier import LookupIdentifier
-
+from .apps import namespace
 
 class LookupWidget(forms.Select):
     """
@@ -131,11 +130,7 @@ class LookupWidget(forms.Select):
         self.allow_clear = allow_clear
         self.multi_select = multi_select
 
-        self.lookup_url = (
-            url
-            if url is not None
-            else self.get_lookup_url()
-        )
+        self.url = url
 
         super().__init__(
             attrs=attrs,
@@ -241,9 +236,20 @@ class LookupWidget(forms.Select):
             self.model,
         )
 
+    @property
+    def lookup_url(self):
+        return self.url or self.get_lookup_url()
+
     def get_lookup_url(self) -> str:
-        url = f"/{DJANGOSPICE_URL}/lookup/{self.identifier.app_name}/{self.identifier.model_name}/"
-        return get_valid_url(url)
+        return safe_reverse(
+            view_name="lookup_view",
+            namespace=namespace,
+            kwargs={
+                APP_NAME_KEY: self.identifier.app_name,
+                MODEL_NAME_KEY: self.identifier.model_name,
+            },
+        )
+       
 
     # ------------------------------------------------------------------
     # Select behaviour

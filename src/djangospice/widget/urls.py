@@ -8,9 +8,8 @@ app_name = namespace
 
 urlpatterns = [
     path(
-        f"{APP_NAME_URL_KEY}/{WIDGET_NAME_URL_KEY}/", 
+        f"{APP_NAME_URL_KEY}/{WIDGET_NAME_URL_KEY}/",
         WidgetView.as_view(),
         name="widget_view",
     ),
-
 ]

@@ -8,13 +8,11 @@ from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
-from django.urls import reverse
 from django.utils.text import camel_case_to_spaces
 
-from djangospice.conf import DJANGOSPICE_URL
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
-from djangospice.routing import get_valid_url
+from djangospice.routing import safe_reverse
 
 from .actions import Action, Actions, ActionContext, BoundAction
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
@@ -489,12 +487,36 @@ class Widget(HTMLComponent):
 
 
     def get_widget_url(self):
-        url = f"/{DJANGOSPICE_URL}/widget/{self.identifier.app_name}/{self.identifier.widget_name}/"
-        return get_valid_url(url)
+     
+       return safe_reverse(
+            view_name="widget_view",
+            namespace=self.namespace,
+            kwargs={
+                APP_NAME_KEY: self.identifier.app_name,
+                WIDGET_NAME_KEY: self.identifier.widget_name,
+            },
+        )
+
 
     # ------------------------------------------------------------------
     # Navigation & HTMX
     # ------------------------------------------------------------------
+
+    @property
+    def endpoint(self) -> str:
+       
+        url = self.get_widget_url()
+
+        params = {
+            key: value
+            for key, value in self.kwargs.items()
+            if key not in {"id", "app_name", "widget_name"}
+        }
+
+        if params:
+            return f"{url}?{urlencode(params)}"
+
+        return url
 
     @property
     def navigation(self) -> Navigation:
@@ -513,21 +535,7 @@ class Widget(HTMLComponent):
     def base_url(self) -> str:
         return self.endpoint.split("?", 1)[0]
 
-    @property
-    def endpoint(self) -> str:
-        url = self.get_widget_url()
-
-        params = {
-            key: value
-            for key, value in self.kwargs.items()
-            if key != "id"
-        }
-
-        if params:
-            return f"{url}?{urlencode(params)}"
-
-        return url
-
+   
     @property
     def is_lazy_fetch(self) -> bool:
         request = self.request

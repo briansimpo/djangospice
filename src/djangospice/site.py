@@ -65,4 +65,4 @@ def get_admin_app_title():
 
 def djangospice_urls():
     from .urls import urlpatterns
-    return urlpatterns, "djangospice", "djangospice"
+    return urlpatterns, None, None
