@@ -5,7 +5,6 @@ from typing import Any
 from django.http import Http404, HttpRequest, HttpResponse
 from django.views import View
 from djangospice.htmx.shortcuts import render_response
-from djangospice.core.logging import logger
 from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
 from .resolver import WidgetResolver
@@ -13,7 +12,7 @@ from .resolver import WidgetResolver
 
 class WidgetView(View):
     """
-    HTTP view endpoint for dynamically resolving, configuring, and executing widgets.
+    HTTP view for dynamically resolving, configuring, and executing widgets.
 
     Maps routing parameters (`app_name`, `name`) to a registered Widget, instantiates 
     it with request query state and path variables, and delegates execution 

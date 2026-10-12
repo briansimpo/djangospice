@@ -15,7 +15,7 @@ from .apps import namespace
 
 class LookupWidget(forms.Select):
     """
-    Django Select widget backed by a Djangospice lookup endpoint.
+    Django Select widget backed by a Djangospice lookup.
 
     The widget remains a standard Django form widget and therefore
     works with Django's normal form fields, including:

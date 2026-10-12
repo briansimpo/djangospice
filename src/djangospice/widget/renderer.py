@@ -53,7 +53,7 @@ class WidgetRenderer:
             template_name=template_name,
             context={
                 "target_id":self.widget.id,
-                "target_url":self.widget.endpoint,
+                "target_url":self.widget.url,
                 "target_title":self.widget.title,
             }
         )   

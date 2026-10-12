@@ -13,6 +13,6 @@ class Navigation:
 
     def page(self, number: int) -> Interaction:
         return self.widget.interaction(
-            url=self.widget.url(page=number),
-            target=self.widget.htmx_target,
+            url=self.widget.build_url(page=number),
+            target=self.widget.htmx.target,
         )

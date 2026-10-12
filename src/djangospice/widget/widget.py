@@ -279,11 +279,7 @@ class Widget(HTMLComponent):
     def get_action_collection(self) -> Actions:
         return self._actions
 
-    def bind_action(
-        self,
-        action: Action,
-        context: ActionContext,
-    ) -> BoundAction:
+    def bind_action(self, action: Action,context: ActionContext) -> BoundAction:
         return BoundAction(
             action=action,
             context=context,
@@ -336,10 +332,7 @@ class Widget(HTMLComponent):
 
         return widget
 
-    def add_to_slots(
-        self,
-        **slots: Widget | list[Widget] | tuple[Widget, ...],
-    ) -> None:
+    def add_to_slots(self, **slots: Widget | list[Widget] | tuple[Widget, ...]) -> None:
         for name, value in slots.items():
             if isinstance(value, Widget):
                 self.add_to_slot(name, value)
@@ -354,11 +347,7 @@ class Widget(HTMLComponent):
     def has_slot(self, name: str) -> bool:
         return bool(self.slots.get(name))
 
-    def remove_from_slot(
-        self,
-        name: str,
-        widget: Widget,
-    ) -> None:
+    def remove_from_slot(self,name: str,widget: Widget) -> None:
         widgets = self.slots.get(name)
 
         if not widgets or widget not in widgets:
@@ -497,13 +486,42 @@ class Widget(HTMLComponent):
             },
         )
 
+    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
+        state = state or self.query_state
 
-    # ------------------------------------------------------------------
-    # Navigation & HTMX
-    # ------------------------------------------------------------------
+        for name, value in params.items():
+            state = state.set(name, value)
+
+        query = state.encode()
+
+        if query:
+            return f"{self.base_url}?{query}"
+
+        return self.base_url
+    
+    
+    def interaction(self,url: str, method: str = "GET",target: str | None = None,swap: str = "outerHTML",push_url: bool = True,) -> Interaction:
+        htmx = (
+            self.htmx
+            .request(
+                method=method,
+                url=url,
+            )
+            .target_to(target or "this")
+            .swap_to(swap)
+        )
+
+        if push_url:
+            htmx.push(push_url)
+
+        return Interaction(
+            url=url,
+            htmx=htmx,
+        )
+
 
     @property
-    def endpoint(self) -> str:
+    def url(self) -> str:
        
         url = self.get_widget_url()
 
@@ -533,7 +551,7 @@ class Widget(HTMLComponent):
 
     @property
     def base_url(self) -> str:
-        return self.endpoint.split("?", 1)[0]
+        return self.url.split("?", 1)[0]
 
    
     @property
@@ -555,52 +573,7 @@ class Widget(HTMLComponent):
             and match.kwargs.get(WIDGET_NAME_KEY) == self.name
         )
 
-    def url(
-        self,
-        *,
-        state: QueryState | None = None,
-        **params: Any,
-    ) -> str:
-        state = state or self.query_state
-
-        for name, value in params.items():
-            state = state.set(name, value)
-
-        query = state.encode()
-
-        if query:
-            return f"{self.base_url}?{query}"
-
-        return self.base_url
-
-
-    def interaction(
-        self,
-        url: str,
-        *,
-        method: str = "GET",
-        target: str | None = None,
-        swap: str = "outerHTML",
-        push_url: bool = True,
-    ) -> Interaction:
-        htmx = (
-            self.htmx
-            .request(
-                method=method,
-                url=url,
-            )
-            .target_to(target or "this")
-            .swap_to(swap)
-        )
-
-        if push_url:
-            htmx = htmx.push_url(url)
-
-        return Interaction(
-            url=url,
-            htmx=htmx,
-        )
-
+  
     # ------------------------------------------------------------------
     # Caching
     # ------------------------------------------------------------------
@@ -648,10 +621,7 @@ class Widget(HTMLComponent):
 
         return context
 
-    def render(
-        self,
-        request: HttpRequest | None = None,
-    ):
+    def render(self, request: HttpRequest | None = None):
         """
         Render the widget through the HTMLComponent pipeline.
 
