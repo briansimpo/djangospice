@@ -75,6 +75,8 @@ class DataTable(Table):
     def get_configuration(self) -> dict[str, Any]:
         return {
             "selectable": self.selectable,
+            "table_url": self.url,
+            "table_id": self.table_id,
             "searchable": self.show_search and bool(self.search_fields),
             "sortable": True,
             "filterable": self.show_filters and bool(self.filterset),
