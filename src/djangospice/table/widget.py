@@ -4,7 +4,6 @@ from typing import Any, ClassVar
 
 import django_filters
 import django_tables2 as tables
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from djangospice.templates import get_template_name
 from djangospice.widget.widget import Widget
