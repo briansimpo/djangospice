@@ -1,24 +1,46 @@
-{% if show_filters and filterset %}
-<form
-    method="get"
-    action="{{ table_url }}"
-    class="flex flex-wrap items-center gap-2"
-    hx-get="{{ table_url }}"
-    hx-target="{{ htmx_target }}"
-    hx-swap="outerHTML"
-    hx-push-url="true"
-    hx-indicator="{{ htmx_indicator }}"
->
+{% load app_tags %}
+{% load widget_tweaks %}
 
-    {% block filter_fields %}
-        {% for field in filterset.form %}
-            <div>
-                {{ field }}
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center p-3">
+
+    <form
+        method="get"
+        id="{{ table_id }}-filter-form"
+        hx-get="{{ table_url }}"
+        hx-target="{{ htmx_target }}"
+        hx-swap="outerHTML"
+        hx-push-url="false"
+        hx-indicator="{{ htmx_indicator }}"
+        
+        class="flex flex-wrap items-center gap-2 relative {{table_id}}-filter"
+    >
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center p-3">
+
+            {% if filterset.form.q %}
+            <div class="relative w-full sm:w-auto lg:w-96 group">
+                {% render_field filterset.form.q class="block w-full h-10 pl-10 pr-4 placeholder-gray-400 text-sm font-medium" placeholder="Search here" %}
             </div>
-        {% endfor %}
-    {% endblock filter_fields %}
+            {% endif %}
 
-    {% block filter_buttons %}
+        </div>
+
+
+        <div class="mt-2 p-4 ">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for field in filterset.form.visible_fields %}
+                {% if field.name != 'q'%}
+                        <div class="flex flex-col gap-1.5">
+                            <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-gray-600 ml-1">{{ field.label }}</label>
+                            {{ field|add_class:"block w-full h-9 text-sm px-3" }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+        </div>
+
+        {% block filter_buttons %}
 
         <button type="submit" class="btn btn-sm btn-primary">
             Filter
@@ -29,7 +51,7 @@
             hx-get="{{ table_url }}"
             hx-target="{{ htmx_target }}"
             hx-swap="outerHTML"
-            hx-push-url="true"
+            hx-push-url="false"
             hx-indicator="{{ htmx_indicator }}"
             class="btn btn-sm btn-secondary"
         >
@@ -38,5 +60,7 @@
 
     {% endblock filter_buttons %}
 
-</form>
-{% endif %}
+    </form>
+
+</div>
+

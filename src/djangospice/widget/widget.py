@@ -20,7 +20,6 @@ from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
 from .exceptions import WidgetNotVisible
 from .identifier import WidgetIdentifier
 from .interaction import Interaction
-from .navigation import Navigation
 from .querystate import QueryState
 from .apps import namespace
 
@@ -539,10 +538,6 @@ class Widget(HTMLComponent):
             return f"{url}?{urlencode(params)}"
 
         return url
-
-    @property
-    def navigation(self) -> Navigation:
-        return Navigation(self)
 
     @property
     def query_state(self) -> QueryState:

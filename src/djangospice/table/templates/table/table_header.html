@@ -15,8 +15,7 @@
                 {% if column.orderable %}
 
                     <a 
-                        href="{{ widget.url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
-                        hx-get="{{ widget.url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
+                        hx-get="{{ table_url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
                         hx-target="{{ htmx_target }}"
                         hx-swap="outerHTML"
                         hx-push-url="false"

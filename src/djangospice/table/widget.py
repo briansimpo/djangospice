@@ -4,6 +4,8 @@ from typing import Any, ClassVar
 
 import django_filters
 import django_tables2 as tables
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
 from djangospice.templates import get_template_name
 from djangospice.widget.widget import Widget
 from djangospice.widget.actions import Actions
@@ -32,7 +34,7 @@ class Table(Widget):
     and action services with table-specific django-tables2 behavior.
     """
 
-    template_name = get_template_name("table.html", namespace)
+    template_name = get_template_name("table_wrapper.html", namespace)
 
     # ------------------------------------------------------------------
     # Table
@@ -115,6 +117,9 @@ class Table(Widget):
     pagination_config: PaginationConfig
     pagination_state: PaginationState
 
+    alphabet_parameter: ClassVar[str] = "letter"
+    alphabet_field: ClassVar[str | None] = None
+
     # ==================================================================
     # Lifecycle
     # ==================================================================
@@ -160,14 +165,30 @@ class Table(Widget):
             config=self.pagination_config,
         ).compose()
 
+    def get_alphabet_options(self) -> list[str]:
+        """Returns uppercase letters A through Z."""
+        import string
+        return list(string.ascii_uppercase)
+
+    def get_current_letter(self) -> str | None:
+        """Retrieves the currently selected letter from QueryState or request."""
+        return self.query_state.get(self.alphabet_parameter)
+
+
     # ==================================================================
     # Queryset
     # ==================================================================
-
     def get_table_queryset(self):
         queryset = self.get_queryset()
         queryset = self.apply_filters(queryset)
         queryset = self.search.apply(queryset)
+        
+        # Apply alphabet filtering if configured
+        letter = self.get_current_letter()
+        if letter and self.alphabet_field:
+            filter_kwargs = {f"{self.alphabet_field}__startswith": letter}
+            queryset = queryset.filter(**filter_kwargs)
+            
         return queryset
 
     def apply_filters(self, queryset):
@@ -249,8 +270,8 @@ class Table(Widget):
         return f"{self.name}-table"
 
     @property
-    def content_id(self) -> str:
-        return f"{self.name}-content"
+    def table_wrapper_id(self) -> str:
+        return f"{self.name}-wrapper"
 
     @property
     def selection_id(self) -> str:
@@ -258,7 +279,7 @@ class Table(Widget):
 
     @property
     def htmx_target(self) -> str:
-        return f"#{self.content_id}"
+        return f"#{self.table_wrapper_id}"
 
     @property
     def htmx_indicator(self) -> str:
@@ -266,11 +287,12 @@ class Table(Widget):
 
     @property
     def context_menu_id(self) -> str:
-        return f"{self.name}-context-menu"
+        return f"{self.name}-contextmenu"
 
     @property
     def page_size_id(self) -> str:
-        return f"{self.table_id}-page-size"
+        return f"{self.table_id}-pagesize"
+
 
     # ==================================================================
     # Context
@@ -291,12 +313,11 @@ class Table(Widget):
             bulk_actions=self.get_bulk_actions(),
 
             table_id=self.table_id,
-            content_id=self.content_id,
+            table_wrapper_id=self.table_wrapper_id,
             selection_id=self.selection_id,
 
-            table_url=self.url,
+            table_url=self.base_url,
 
-            navigation=self.navigation,
             page=self.pagination_state,
 
             empty_message=self.empty_message,
@@ -326,6 +347,10 @@ class Table(Widget):
             page_size_options=self.get_page_size_options(),
             page_size_parameter=self.page_size_parameter,
             page_size_id=self.page_size_id,
+            
+            alphabet=self.get_alphabet_options(),
+            current_letter=self.get_current_letter(),
+            alphabet_parameter=self.alphabet_parameter,
         )
 
         return context

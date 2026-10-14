@@ -1,21 +1,16 @@
 {% load django_tables2 %}
 
 {% block table_wrapper %}
-<div 
-    id="{{ content_id }}"   
-    data-table
-    data-url="{{ table_url }}"
-    data-target="{{ htmx_target }}" 
-    class="table-container flex w-full flex-col gap-4">
+<div id="{{ table_wrapper_id }}"  >
 
     {% block table_toolbar %}
         {% include "table/toolbar.html" %}
     {% endblock table_toolbar %}
 
 
-    {% block table_content %}
+    {% block table_container %}
         {% include "table/table_container.html" %}
-    {% endblock table_content %}
+    {% endblock table_container %}
 
 
     {% block table_pagination %}

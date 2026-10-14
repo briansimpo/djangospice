@@ -972,12 +972,41 @@
         }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(SELECTOR).forEach((select) => {
+   
+    function initializeLookups(root = document) {
+        // Include root itself when it is a lookup element.
+        const selects = [];
+
+        if (root instanceof Element && root.matches(SELECTOR)) {
+            selects.push(root);
+        }
+
+        if (typeof root.querySelectorAll === "function") {
+            selects.push(...root.querySelectorAll(SELECTOR));
+        }
+
+        selects.forEach((select) => {
             if (!instances.has(select)) {
                 instances.set(select, new LookupController(select));
             }
         });
+    }
+
+    // Handle scripts loaded before or after DOMContentLoaded.
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => initializeLookups(),
+            { once: true }
+        );
+    } else {
+        initializeLookups();
+    }
+
+    // Initialize lookup fields added or replaced by HTMX.
+    document.addEventListener("htmx:load", (event) => {
+        initializeLookups(event.detail.elt);
     });
+
 
 })(window, document);
