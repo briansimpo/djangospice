@@ -3,6 +3,7 @@ from __future__ import annotations
 from django import template
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.safestring import SafeString
 
 from djangospice.table.apps import namespace
 
@@ -22,7 +23,7 @@ def _table_css() -> str:
     )
 
 
-def _datatable_js() -> str:
+def _table_js() -> str:
     return format_html(
         '<script src="{}" defer></script>',
         static(DATATABLE_JS),
@@ -54,13 +55,8 @@ def contextmenu_js() -> str:
     return _contextmenu_js()
 
 
+
 @register.simple_tag
-def table_assets() -> str:
-    """Render all DjangoSpice Table assets."""
-    return "\n".join(
-        (
-            _table_css(),
-            _datatable_js(),
-            _contextmenu_js(),
-        )
-    )
+def table_assets() -> SafeString:
+    """Render all Lookup assets."""
+    return format_html("{}\n{}", _table_css(), _table_js())
