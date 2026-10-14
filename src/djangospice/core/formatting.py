@@ -80,3 +80,14 @@ def normalize(phrase: str) -> str:
     result = re.sub(r"\((.*?)\)", replace_func, interim_phrase)
     return result
 
+
+def snake_case(phrase: str) -> str:
+    """Convert CamelCase or PascalCase to snake_case."""
+
+    # XMLParser -> XML_Parser
+    name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", phrase)
+
+    # OrgUnit -> Org_Unit
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
+
+    return name.lower()

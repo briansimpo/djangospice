@@ -7,11 +7,11 @@
             <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
 
                 {% block toolbar_search %}
-                    {% include "djangospice/table/search.html" %}
+                    {% include "table/search.html" %}
                 {% endblock toolbar_search %}
 
                 {% block toolbar_filterset %}
-                    {% include "djangospice/table/filters.html" %}
+                    {% include "table/filters.html" %}
                 {% endblock toolbar_filterset %}
 
             </div>
@@ -22,11 +22,11 @@
             <div class="flex items-center gap-2">
 
                 {% block toolbar_bulk_actions %}
-                    {% include "djangospice/table/bulk_actions.html" %}
+                    {% include "table/bulk_actions.html" %}
                 {% endblock toolbar_bulk_actions %}
 
                 {% block toolbar_table_actions %}
-                    {% include "djangospice/table/actions.html" %}
+                    {% include "table/actions.html" %}
                 {% endblock toolbar_table_actions %}
 
             </div>

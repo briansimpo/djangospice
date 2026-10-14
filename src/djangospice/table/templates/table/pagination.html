@@ -1,106 +1,48 @@
-{% load i18n %}
+{% load django_tables2 %}
 
-{% if page and page.total > 1 %}
+<div class="sticky left-0 bottom-0 z-30 w-full flex items-center justify-between px-4 py-4 bg-gray-100 border-t border-gray-200">
+        
+	<div class="hidden sm:block">
+		<p class="text-sm text-gray-700">
+			Page <span class="font-medium">{{ table.page.number }}</span> of <span class="font-medium">{{ table.paginator.num_pages }}</span>
+		</p>
+	</div>
 
-<nav
-    class="flex items-center justify-between pt-2"
-    aria-label="{% trans 'Table navigation' %}"
->
+	{% if table.page and table.paginator.num_pages > 1 %}
+	<nav class="inline-flex items-center -space-x-px shadow-sm bg-white rounded-md" aria-label="Pagination">
+		{% if table.page.has_previous %}
+		<button hx-get="{% querystring_replace table.prefixed_page_field=table.page.previous_page_number %}"
+				hx-target="{{htmx_target}}" 
+				hx-indicator="{{htmx_indicator}}"
+				class="p-2 leading-tight text-gray-500 border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 transition-colors">
+				<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+				</svg>
+		</button>
+		{% endif %}
 
-    {% block pagination_summary %}
-    <span class="text-sm text-gray-500">
-        {% trans "Page" %}
-        <span class="font-semibold text-gray-900">
-            {{ page.number }}
-        </span>
+		{% for p in table.page|table_page_range:table.paginator %}
+			{% if p == '...' %}
+				<span class="px-3 py-2 leading-tight text-gray-500 border border-gray-300">...</span>
+			{% else %}
+				<button hx-get="{% querystring_replace table.prefixed_page_field=p %}"
+						hx-target="{{htmx_target}}" 
+						hx-indicator="{{htmx_indicator}}"
+						class="px-4 py-2 leading-tight border transition-colors {% if p == table.page.number %}bg-indigo-600 border-indigo-600 text-white z-10 shadow-sm{% else %}text-gray-500 border-gray-300 hover:bg-gray-100 hover:text-gray-700{% endif %}">
+					{{ p }}
+				</button>
+			{% endif %}
+		{% endfor %}
 
-        {% trans "of" %}
-
-        <span class="font-semibold text-gray-900">
-            {{ page.total }}
-        </span>
-    </span>
-    {% endblock pagination_summary %}
-
-
-    {% block pagination_navigation %}
-    <ul class="inline-flex h-8 -space-x-px text-sm">
-
-        {% if page.has_previous %}
-            {% block pagination_previous %}
-            <li>
-                <a
-                    href="{{ page.previous }}"
-                    hx-get="{{ page.previous }}"
-                    hx-target="{{ htmx_target }}"
-                    hx-swap="outerHTML"
-                    hx-push-url="true"
-                    class="flex h-8 items-center justify-center rounded-l-lg border border-gray-300 bg-white px-3 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                >
-                    {% trans "Previous" %}
-                </a>
-            </li>
-            {% endblock pagination_previous %}
-        {% endif %}
-
-
-        {% block pagination_range %}
-        {% for number, url, is_current in page.pages %}
-
-            <li>
-
-                {% if url is None or number == "..." %}
-
-                    <span
-                        class="flex h-8 items-center justify-center border border-gray-300 bg-white px-3 leading-tight text-gray-500"
-                    >
-                        {{ number }}
-                    </span>
-
-                {% else %}
-
-                    <a
-                        href="{{ url }}"
-                        hx-get="{{ url }}"
-                        hx-target="{{ htmx_target }}"
-                        hx-swap="outerHTML"
-                        hx-push-url="true"
-                        class="flex h-8 items-center justify-center border border-gray-300 px-3 leading-tight {% if is_current %}bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700{% else %}bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700{% endif %}"
-                        {% if is_current %}
-                            aria-current="page"
-                        {% endif %}
-                    >
-                        {{ number }}
-                    </a>
-
-                {% endif %}
-
-            </li>
-
-        {% endfor %}
-        {% endblock pagination_range %}
-
-
-        {% if page.has_next %}
-            {% block pagination_next %}
-            <li>
-                <a
-                    href="{{ page.next }}"
-                    hx-get="{{ page.next }}"
-                    hx-target="{{ htmx_target }}"
-                    hx-swap="outerHTML"
-                    hx-push-url="true"
-                    class="flex h-8 items-center justify-center rounded-r-lg border border-gray-300 bg-white px-3 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                >
-                    {% trans "Next" %}
-                </a>
-            </li>
-            {% endblock pagination_next %}
-        {% endif %}
-
-    </ul>
-    {% endblock pagination_navigation %}
-
-</nav>
-
-{% endif %}
+		{% if table.page.has_next %}
+		<button hx-get="{% querystring_replace table.prefixed_page_field=table.page.next_page_number %}"
+				hx-target="{{htmx_target}}" 
+				hx-indicator="{{htmx_indicator}}"
+				class="p-2 leading-tight text-gray-500 border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 transition-colors">
+			<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+			</svg>
+		{% endif %}
+	</nav>
+	{% endif %}
+</div>

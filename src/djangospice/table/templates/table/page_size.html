@@ -1,3 +1,5 @@
+{% load django_tables2 %}
+
 {% if page_size_options %}
 <div class="flex items-center gap-2">
     <label
@@ -14,8 +16,9 @@
         hx-get="{{ table_url }}"
         hx-target="{{ htmx_target }}"
         hx-swap="outerHTML"
-        hx-push-url="true"
         hx-trigger="change"
+        hx-push-url="false"  
+        
     >
         {% for size in page_size_options %}
             <option

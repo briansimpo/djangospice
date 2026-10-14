@@ -7,19 +7,20 @@ from django import forms
 from django.urls import reverse
 
 from djangospice.core.serializer import serialize
+from djangospice.routing import safe_reverse
 from djangospice.widget.conf import APP_NAME_KEY, WIDGET_NAME_KEY
 
-from .widget import TableWidget
+from .widget import Table
 
 
-class DataTable(TableWidget):
+class DataTable(Table):
     """
     Server-side dynamic table.
 
-    Extends TableWidget with a declarative representation of the current
+    Extends Table with a declarative representation of the current
     table state suitable for JSON responses and client-side rendering.
 
-    TableWidget remains responsible for:
+    Table remains responsible for:
         - queryset construction
         - filtering
         - searching
@@ -36,27 +37,15 @@ class DataTable(TableWidget):
 
     template = "djangospice/table/datatable.html"
 
-    # ------------------------------------------------------------------
-    # Endpoint
-    # ------------------------------------------------------------------
-
-    @property
-    def endpoint(self) -> str:
-        url = reverse(
-            self.namespace,
+    def get_widget_url(self):    
+        return safe_reverse(
+            view_name="datatable_view",
+            namespace=self.namespace,
             kwargs={
-                APP_NAME_KEY: self.app_name,
-                WIDGET_NAME_KEY: self.name,
+                APP_NAME_KEY: self.identifier.app_name,
+                WIDGET_NAME_KEY: self.identifier.widget_name,
             },
         )
-
-        params = {
-            key: value
-            for key, value in self.kwargs.items()
-            if key != "id"
-        }
-
-        return f"{url}?{urlencode(params)}" if params else url
 
     # ------------------------------------------------------------------
     # Definition

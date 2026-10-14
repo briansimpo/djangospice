@@ -149,22 +149,14 @@
             return this.dependencies.length > 0;
         }
        
-        renderInitialResults() {
-            // Dependent lookups must NEVER display backend-rendered defaults.
+       renderInitialResults() {
+            // Dependent lookups start empty and closed.
+            // Options are loaded only when the user opens the field.
             if (this.hasDependencies()) {
                 this.clearLookupResults();
                 this.clearDependentOptions();
                 this.syncDisabledState();
-
-                // If the parent is already selected, fetch dependent options.
-                if (this.isDependencySatisfied()) {
-                    this.load({
-                        term: "",
-                        page: 1,
-                        replace: true,
-                    });
-                }
-
+                this.close();
                 return;
             }
 
@@ -273,7 +265,38 @@
 
             this.search.addEventListener("input", this.handleSearch);
 
+            // Focusing the field alone must not open the dropdown.
             this.search.addEventListener("focus", () => {
+                // Intentionally do nothing.
+            });
+
+            // Load dependent options only when the user clicks the field.
+            this.search.addEventListener("click", () => {
+                if (this.select.disabled) {
+                    return;
+                }
+
+                if (this.hasDependencies()) {
+                    if (!this.isDependencySatisfied()) {
+                        this.clearLookupResults();
+                        this.close();
+                        this.syncDisabledState();
+                        return;
+                    }
+
+                    // Always use the currently selected parent values.
+                    this.page = 1;
+                    this.hasNext = false;
+
+                    this.clearLookupResults();
+
+                    this.load({
+                        term: "",
+                        page: 1,
+                        replace: true,
+                    });
+                }
+
                 this.open();
             });
 
@@ -374,34 +397,26 @@
                 return;
             }
 
-            // Invalidate pending requests and debounced searches.
+            // Cancel any pending request or search.
             this.requestSequence++;
             this.abortRequest();
             this.handleSearch.cancel();
 
+            this.setLoading(false);
             this.close();
 
-            // Never retain child selections or backend defaults.
-            this.clearSelection(false, { restoreInitial: false });
+            // Clear the child selection without restoring backend defaults.
+            this.clearSelection(false, {
+                restoreInitial: false,
+            });
+
             this.clearDependentOptions();
+            this.clearLookupResults();
 
             this.page = 1;
             this.hasNext = false;
 
-            const satisfied = this.isDependencySatisfied();
             this.syncDisabledState();
-
-            if (!satisfied) {
-                // Parent was cleared: keep the child empty and disabled.
-                return;
-            }
-
-            // Parent has a value: fetch options from the backend.
-            this.load({
-                term: "",
-                page: 1,
-                replace: true,
-            });
         }
 
 
@@ -454,18 +469,20 @@
 
             if (this.hasDependencies() && !this.isDependencySatisfied()) {
                 this.clearLookupResults();
+                this.close();
                 return;
             }
 
             if (term.length < this.config.minimumInputLength) {
                 if (this.hasDependencies()) {
-                    this.clearRemoteResults({ restoreInitial: false });
-                    if (this.isDependencySatisfied()) {
-                        this.load({ term: "", page: 1, replace: true });
-                    }
-                } else {
-                    this.clearRemoteResults({ restoreInitial: true });
+                    // Dependent options are loaded by an explicit field click.
+                    // Do not reload them merely because the search is empty.
+                    return;
                 }
+
+                this.clearRemoteResults({
+                    restoreInitial: true,
+                });
 
                 if (this.config.minimumInputLength) {
                     this.setStatus(
@@ -474,12 +491,18 @@
                         }.`
                     );
                 }
+
                 return;
             }
 
             this.page = 1;
             this.hasNext = false;
-            this.load({ term, page: 1, replace: true });
+
+            this.load({
+                term,
+                page: 1,
+                replace: true,
+            });
         }
 
         async load({ term = "", page = 1, replace = true }) {
@@ -574,7 +597,6 @@
             } else {
                 this.clearStatus();
             }
-            this.open();
         }
 
         renderResults(results) {
@@ -777,20 +799,6 @@
 
             this.clearRemoteResults({ restoreInitial });
 
-            // Dependent lookups must fetch fresh options after being cleared.
-            // Keep the current parent selection and use it in the request.
-            if (triggerChange && this.hasDependencies()) {
-                if (this.isDependencySatisfied()) {
-                    this.load({
-                        term: "",
-                        page: 1,
-                        replace: true,
-                    });
-                } else {
-                    this.clearDependentOptions();
-                    this.syncDisabledState();
-                }
-            }
         }
 
         syncFromSelect() {

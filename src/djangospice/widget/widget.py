@@ -3,13 +3,14 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, ClassVar
 from urllib.parse import urlencode
-
+from slugify import slugify
 from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 from django.utils.text import camel_case_to_spaces
 
+from djangospice.core.formatting import snake_case
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
 from djangospice.routing import safe_reverse
@@ -21,7 +22,6 @@ from .identifier import WidgetIdentifier
 from .interaction import Interaction
 from .navigation import Navigation
 from .querystate import QueryState
-from .utils import slugify
 from .apps import namespace
 
 
@@ -170,15 +170,19 @@ class Widget(HTMLComponent):
     @classmethod
     def _resolve_name(cls) -> str:
         """
-        Resolve the canonical widget identifier.
+        Resolve the canonical widget identifier as a snake_case slug.
 
         Examples:
-
-            UserStatsWidget -> user-stats
-            StudentAttendanceWidget -> student-attendance
-            DashboardWidget -> dashboard
+            OrgUnitWidget             -> org_unit
+            UserStatsWidget           -> user_stats
+            StudentAttendanceWidget   -> student_attendance
+            DashboardWidget           -> dashboard
+            XMLParserWidget           -> xml_parser
+            APIKeyWidget              -> api_key
         """
-        return slugify(cls._identity_class_name())
+        name = cls._identity_class_name()
+        name = snake_case(name)
+        return slugify(name, separator="_")
 
     @classmethod
     def _resolve_title(cls) -> str:

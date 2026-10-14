@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 
 import django_filters
 import django_tables2 as tables
-
+from djangospice.templates import get_template_name
 from djangospice.widget.widget import Widget
 from djangospice.widget.actions import Actions
 from djangospice.widget.pagination import (
@@ -19,9 +19,12 @@ from djangospice.widget.composers import (
 )
 
 from .composers import TableComposer, TablePageComposer
+from .fields import Field
+from .apps import namespace
 
 
-class TableWidget(Widget):
+
+class Table(Widget):
     """
     Request-aware server-side table widget built on django-tables2.
 
@@ -29,14 +32,14 @@ class TableWidget(Widget):
     and action services with table-specific django-tables2 behavior.
     """
 
-    template_name = "djangospice/table/table.html"
+    template_name = get_template_name("table.html", namespace)
 
     # ------------------------------------------------------------------
     # Table
     # ------------------------------------------------------------------
 
     table_class: ClassVar[type[tables.Table] | None] = None
-    fields: ClassVar[tuple[str, ...] | str | None] = None
+    fields: ClassVar[tuple[Field | str, ...] | str | None] = None
     exclude: ClassVar[tuple[str, ...] | str | None] = None
 
     # ------------------------------------------------------------------
@@ -291,7 +294,7 @@ class TableWidget(Widget):
             content_id=self.content_id,
             selection_id=self.selection_id,
 
-            table_url=self.endpoint,
+            table_url=self.url,
 
             navigation=self.navigation,
             page=self.pagination_state,

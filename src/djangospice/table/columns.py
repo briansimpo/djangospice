@@ -39,10 +39,10 @@ class SelectionColumn(tables.CheckBoxColumn):
 
 class RowActionsColumn(tables.TemplateColumn):
     """
-    django-tables2 column for rendering TableWidget row actions.
+    django-tables2 column for rendering Table row actions.
     """
 
-    template_name = "djangospice.table/row_actions.html"
+    template_name = "table/row_actions.html"
 
     def __init__(self,*args,**kwargs) -> None:
         kwargs.setdefault("template_name", self.template_name)

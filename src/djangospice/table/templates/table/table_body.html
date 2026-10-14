@@ -5,11 +5,11 @@
 
     {% for row in table.paginated_rows %}
 
-        {% include "djangospice/table/table_row.html" %}
+        {% include "table/table_row.html" %}
 
     {% empty %}
 
-        {% include "djangospice/table/table_empty.html" %}
+        {% include "table/table_empty.html" %}
 
     {% endfor %}
 

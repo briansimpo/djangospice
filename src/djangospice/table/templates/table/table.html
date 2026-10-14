@@ -9,21 +9,21 @@
     class="table-container flex w-full flex-col gap-4">
 
     {% block table_toolbar %}
-        {% include "djangospice/table/toolbar.html" %}
+        {% include "table/toolbar.html" %}
     {% endblock table_toolbar %}
 
 
     {% block table_content %}
-        {% include "djangospice/table/table_container.html" %}
+        {% include "table/table_container.html" %}
     {% endblock table_content %}
 
 
     {% block table_pagination %}
-        {% include "djangospice/table/pagination.html" %}
+        {% include "table/pagination.html" %}
     {% endblock table_pagination %}
 
     {% if context_menu_enabled %}
-        {% include "djangospice/table/context_menu.html" %}
+        {% include "table/context_menu.html" %}
     {% endif %}
 
 </div>
