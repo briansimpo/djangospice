@@ -148,19 +148,28 @@
         hasDependencies() {
             return this.dependencies.length > 0;
         }
-       
-       renderInitialResults() {
-            // Dependent lookups start empty and closed.
-            // Options are loaded only when the user opens the field.
+
+                
+        renderInitialResults() {
             if (this.hasDependencies()) {
+                // Preserve the options Django rendered as selected.
+                const initialSelected = this.initialOptions.filter(
+                    (option) => option.selected && option.value !== ""
+                );
+
                 this.clearLookupResults();
-                this.clearDependentOptions();
+
+                if (this.isDependencySatisfied() && initialSelected.length) {
+                    this.syncFromSelect();
+                } else {
+                    this.clearDependentOptions();
+                }
+
                 this.syncDisabledState();
                 this.close();
                 return;
             }
 
-            // Independent lookups retain their normal initial options.
             this.renderResults(
                 this.initialOptions
                     .filter((option) => option.value !== "")
@@ -169,6 +178,8 @@
                         label: option.label,
                     }))
             );
+
+            this.syncFromSelect();
         }
 
         createInterface() {
