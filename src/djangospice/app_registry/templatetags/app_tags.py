@@ -9,6 +9,11 @@ from djangospice.routing import safe_reverse
 register = template.Library()
 
 
+@register.filter
+def get_item(dictionary: dict, key):
+    return dictionary.get(key, None)
+
+
 @register.simple_tag(takes_context=True)
 def app_url(context,view_name: str,*args,**kwargs):
     request = context.get("request")

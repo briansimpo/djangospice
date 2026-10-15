@@ -17,6 +17,7 @@ class AppContext:
     app_label: str | None = None
     app_verbose: str | None = None
 
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "app": self.app,

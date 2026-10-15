@@ -33,7 +33,7 @@ class Table(Widget):
     and action services with table-specific django-tables2 behavior.
     """
 
-    template_name = get_template_name("table_wrapper.html", namespace)
+    template_name = get_template_name("table.html", namespace)
 
     # ------------------------------------------------------------------
     # Table
