@@ -14,13 +14,5 @@ class OptionFilter(django_filters.FilterSet):
 
 
 class BaseFilter(django_filters.FilterSet):
-    q = django_filters.CharFilter(method="search", label="Search")
-    
-    def evaluate(self, value):
-        return NotImplementedError
-    
-    def search(self, queryset: QuerySet, name, value):
-        value = str(value).strip().replace("/", "")
-        search_query = self.evaluate(value)
-        return queryset.filter(search_query)
+    pass
 

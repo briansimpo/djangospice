@@ -20,12 +20,12 @@ from djangospice.widget.composers import (
 )
 
 from .composers import TableComposer, TablePageComposer
-from .fields import Field
+from .fields import TableField
 from .apps import namespace
 
 
 
-class Table(Widget):
+class TableWidget(Widget):
     """
     Request-aware server-side table widget built on django-tables2.
 
@@ -33,14 +33,14 @@ class Table(Widget):
     and action services with table-specific django-tables2 behavior.
     """
 
-    template_name = get_template_name("table.html", namespace)
+    template_name = get_template_name("table_widget.html", namespace)
 
     # ------------------------------------------------------------------
     # Table
     # ------------------------------------------------------------------
 
     table_class: ClassVar[type[tables.Table] | None] = None
-    fields: ClassVar[tuple[Field | str, ...] | str | None] = None
+    fields: ClassVar[tuple[TableField | str, ...] | str | None] = None
     exclude: ClassVar[tuple[str, ...] | str | None] = None
 
     # ------------------------------------------------------------------

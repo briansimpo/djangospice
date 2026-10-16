@@ -13,10 +13,6 @@ urlpatterns = [
         include("djangospice.widget.urls"),
     ),
     path(
-        "table/",
-        include("djangospice.table.urls"),
-    ),
-    path(
         "lookup/",
         include("djangospice.lookup.urls"),
     ),

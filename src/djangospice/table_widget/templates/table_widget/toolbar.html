@@ -6,19 +6,19 @@
             <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
 
                 {% block toolbar_search %}
-                    {% include "table/search.html" %}
+                    {% include "table_widget/search.html" %}
                 {% endblock toolbar_search %}
 
                 {% block toolbar_filterset %}
-                    {% include "table/filters.html" %}
+                    {% include "table_widget/filters.html" %}
                 {% endblock toolbar_filterset %}
 
                 {% block toolbar_alphabet_filter %}
-                    {% include "table/alphabet_filter.html" %}
+                    {% include "table_widget/alphabet_filter.html" %}
                 {% endblock toolbar_alphabet_filter %}
 
                 {% block toolbar_page_size %}
-                    {% include "table/page_size.html" %}
+                    {% include "table_widget/page_size.html" %}
                 {% endblock toolbar_page_size %}
 
 
@@ -29,11 +29,11 @@
             <div class="flex items-center gap-2">
 
                 {% block toolbar_bulk_actions %}
-                    {% include "table/bulk_actions.html" %}
+                    {% include "table_widget/bulk_actions.html" %}
                 {% endblock toolbar_bulk_actions %}
 
                 {% block toolbar_table_actions %}
-                    {% include "table/actions.html" %}
+                    {% include "table_widget/actions.html" %}
                 {% endblock toolbar_table_actions %}
 
             </div>

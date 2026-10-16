@@ -5,11 +5,11 @@
 
     {% for row in table.paginated_rows %}
 
-        {% include "table/table_row.html" %}
+        {% include "table_widget/table_row.html" %}
 
     {% empty %}
 
-        {% include "table/table_empty.html" %}
+        {% include "table_widget/table_empty.html" %}
 
     {% endfor %}
 

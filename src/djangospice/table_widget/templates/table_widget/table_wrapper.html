@@ -4,21 +4,21 @@
 <div id="{{ table_wrapper_id }}"  >
 
     {% block table_toolbar %}
-        {% include "table/toolbar.html" %}
+        {% include "table_widget/toolbar.html" %}
     {% endblock table_toolbar %}
 
 
     {% block table_container %}
-        {% include "table/table_container.html" %}
+        {% include "table_widget/table_container.html" %}
     {% endblock table_container %}
 
 
     {% block table_pagination %}
-        {% include "table/pagination.html" %}
+        {% include "table_widget/pagination.html" %}
     {% endblock table_pagination %}
 
     {% if context_menu_enabled %}
-        {% include "table/context_menu.html" %}
+        {% include "table_widget/context_menu.html" %}
     {% endif %}
 
 </div>

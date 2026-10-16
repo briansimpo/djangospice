@@ -4,8 +4,8 @@ from typing import Any
 
 import django_tables2 as tables
 
-from djangospice.table.columns import RowActionsColumn
-from djangospice.table.fields import Field
+from djangospice.table_widget.columns import RowActionsColumn
+from djangospice.table_widget.fields import TableField
 
 from .page import TablePaginationComposer
 
@@ -16,19 +16,19 @@ class TableComposer:
     def __init__(self, widget: Any) -> None:
         self.widget = widget
 
-    def get_fields(self) -> tuple[Field, ...] | None:
-        """Normalize string and Field declarations."""
+    def get_fields(self) -> tuple[TableField, ...] | None:
+        """Normalize string and TableField declarations."""
 
         fields = self.widget.fields
 
         if fields is None:
             return None
 
-        if isinstance(fields, (str, Field)):
+        if isinstance(fields, (str, TableField)):
             fields = (fields,)
 
         return tuple(
-            Field.normalize(item)
+            TableField.normalize(item)
             for item in fields
         )
 
@@ -69,7 +69,7 @@ class TableComposer:
                     exclude=widget.exclude,
                 )
 
-                # Replace generated columns with configured Field columns.
+                # Replace generated columns with configured TableField columns.
                 custom_columns = {
                     item.name: tables.Column(
                         accessor=item.accessor,
@@ -79,7 +79,7 @@ class TableComposer:
                         attrs=item.attrs,
                     )
                     for item in included_fields
-                    if isinstance(item, Field)
+                    if isinstance(item, TableField)
                 }
 
                 if custom_columns:

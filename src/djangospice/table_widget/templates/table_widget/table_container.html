@@ -14,17 +14,17 @@
     <table {{ table.attrs.as_html }} id="{{table_id}}">
 
         {% block table_head %}
-            {% include "table/table_header.html" %}
+            {% include "table_widget/table_header.html" %}
         {% endblock table_head %}
 
 
         {% block table_body %}
-            {% include "table/table_body.html" %}
+            {% include "table_widget/table_body.html" %}
         {% endblock table_body %}
 
 
         {% block table_foot %}
-            {% include "table/table_footer.html" %}
+            {% include "table_widget/table_footer.html" %}
         {% endblock table_foot %}
 
     </table>

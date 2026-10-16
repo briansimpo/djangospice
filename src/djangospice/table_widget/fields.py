@@ -5,7 +5,7 @@ from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
-class Field:
+class TableField:
     name: str
     label: str | None = None
     accessor: str | None = None
@@ -28,7 +28,7 @@ class Field:
             object.__setattr__(self, "accessor", self.name)
 
     @classmethod
-    def normalize(cls, value: Field | str) -> Field:
+    def normalize(cls, value: TableField | str) -> TableField:
         if isinstance(value, cls):
             return value
 
