@@ -1,4 +1,6 @@
 from django.db.models import QuerySet
+from django.http import HttpRequest
+from django.core.exceptions import ImproperlyConfigured
 
 
 class FormFieldMixin:
@@ -27,7 +29,24 @@ class FormFieldMixin:
 
 class FormRequestMixin:
     
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"request": self.request})
-        return kwargs
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes the form with the request object and sets up filtered fields.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments, expected to include "request".
+
+        Raises:
+            ImproperlyConfigured: If the "request" argument is not provided or is not an instance of HttpRequest.
+        """
+        request = kwargs.pop("request", None)
+
+        if not isinstance(request, HttpRequest):
+            raise ImproperlyConfigured(
+                "The 'request' argument must be an HttpRequest instance."
+            )
+
+        self.request = request
+
+        super().__init__(*args, **kwargs)
