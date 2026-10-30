@@ -32,12 +32,27 @@ class Module:
     _lock = threading.Lock()
 
     @classmethod
-    def discover(
-        cls,
-        module: str,
-        callback: Callable[[type], None] | None = None,
-        base_class: type[T] | None = None,
-    ) -> None:
+    def _inspect(cls, module: ModuleType, base_class: type | None, callback: Callable[[type], None]) -> None:
+        """
+        Inspect a module for classes.
+        """
+        for _, obj in inspect.getmembers(module, inspect.isclass):
+            if base_class is not None:
+                if obj is base_class:
+                    continue
+                if not issubclass(obj, base_class):
+                    continue
+            else:
+                if obj.__module__ != module.__name__:
+                    continue
+
+            if inspect.isabstract(obj):
+                continue
+
+            callback(obj)
+
+    @classmethod
+    def discover(cls,module: str, callback: Callable[[type], None] | None = None, base_class: type[T] | None = None) -> None:
         """
         Discover modules/classes from all installed applications.
 
@@ -93,37 +108,36 @@ class Module:
             cls._discovered.add(key)
 
     @classmethod
-    def _inspect(
-        cls,
-        module: ModuleType,
-        base_class: type | None,
-        callback: Callable[[type], None],
-    ) -> None:
-        """
-        Inspect a module for classes.
-        """
-        for _, obj in inspect.getmembers(
-            module,
-            inspect.isclass,
-        ):
-            if base_class is not None:
-                if obj is base_class:
-                    continue
-                if not issubclass(obj, base_class):
-                    continue
-            else:
-                if obj.__module__ != module.__name__:
-                    continue
-
-            if inspect.isabstract(obj):
-                continue
-
-            callback(obj)
-
-    @classmethod
     def reset(cls) -> None:
         """
         Reset discovery.
         """
         with cls._lock:
             cls._discovered.clear()
+
+    @classmethod
+    def get_modules(cls, module: str) -> list[ModuleType]:
+        """Return the requested module from each installed Django app."""
+        discovered = []
+
+        for app in apps.get_app_configs():
+            module_name = f"{app.name}.{module}"
+
+            try:
+                imported = importlib.import_module(module_name)
+
+            except ModuleNotFoundError as ex:
+                if ex.name == module_name:
+                    continue
+                raise
+
+            except Exception:
+                logger.exception(
+                    "Failed importing '%s'.",
+                    module_name,
+                )
+                raise
+
+            discovered.append(imported)
+
+        return discovered

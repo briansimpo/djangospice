@@ -4,7 +4,7 @@ from typing import Any
 
 from djangospice.core.serializer import serialize
 from djangospice.core.payload import Payload
-from djangospice.realtime import Broadcast
+from djangospice.websocket import Broadcast
 
 
 def get_payload(event: str, payload: Any = None) -> dict:
@@ -28,3 +28,5 @@ def broadcast_to_group(group_name: str, event: str, payload: Any = None):
     """
     data = get_payload(event, payload)
     return Broadcast.group(group_name=str(group_name), data=data)
+
+

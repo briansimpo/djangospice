@@ -1,6 +1,6 @@
-from djangospice.realtime.consumers import BaseConsumer
-from djangospice.realtime.groups import build_group_name
-from djangospice.realtime.scopes import ChannelScope
+from djangospice.websocket.consumers import BaseConsumer
+from djangospice.websocket.groups import build_group_name
+from djangospice.websocket.scopes import ChannelScope
 
 
 class JobConsumer(BaseConsumer):

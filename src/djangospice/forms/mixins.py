@@ -8,7 +8,7 @@ class FormFieldMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.filtered_fields()
+        self.set_fields()
 
     def set_field_queryset(self, field_name: str, queryset: QuerySet):
         if field_name in self.fields:
@@ -18,7 +18,7 @@ class FormFieldMixin:
         if field_name in self.fields:
             self.fields[field_name].initial = value
 
-    def filtered_fields(self):
+    def set_fields(self):
         """
         Override in subclasses to apply per-field filtering.
         """

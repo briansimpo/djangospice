@@ -1,6 +1,6 @@
 from typing import Any
 
-from djangospice.realtime.broadcast import Broadcast
+from djangospice.websocket.broadcast import Broadcast
 
 from .events import JobEvent
 

@@ -1,5 +1,5 @@
 from djangospice.events import EventListener, listen
-from djangospice.realtime import Broadcast
+from djangospice.websocket import Broadcast
 
 from .events import (
     NotificationEvent,
