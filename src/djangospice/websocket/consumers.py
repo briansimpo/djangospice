@@ -2,6 +2,7 @@ import json
 from typing import Any
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from .groups import user_group_name
 from .serializers import dumps     
 
 
@@ -96,8 +97,9 @@ class BaseConsumer(AsyncWebsocketConsumer):
         if group in self.subscriptions:
             return
 
-        self.subscriptions.add(group)
         await self.channel_layer.group_add(group, self.channel_name)
+
+        self.subscriptions.add(group)
 
     async def unsubscribe(self, group: str) -> None:
         """Removes this connection from a specific channel layer group.
@@ -108,8 +110,9 @@ class BaseConsumer(AsyncWebsocketConsumer):
         if group not in self.subscriptions:
             return
 
+        await self.channel_layer.group_discard(group,self.channel_name)
+
         self.subscriptions.remove(group)
-        await self.channel_layer.group_discard(group, self.channel_name)
 
     # ------------------------------------------------------------------
     # Data Transmission & Serialization
@@ -151,7 +154,7 @@ class BaseConsumer(AsyncWebsocketConsumer):
             text_data (str | None): Incoming raw text frame payload. Defaults to None.
             bytes_data (bytes | None): Incoming raw binary frame payload. Defaults to None.
         """
-        if text_data:
+        if text_data is not None:
             try:
                 payload = json.loads(text_data)
             except json.JSONDecodeError:
@@ -159,7 +162,7 @@ class BaseConsumer(AsyncWebsocketConsumer):
 
             await self.receive_data(payload)
             
-        elif bytes_data:
+        elif bytes_data is not None:
             await self.receive_data(bytes_data)
 
     async def receive_data(self, data: Any) -> None:
@@ -175,6 +178,14 @@ class BaseConsumer(AsyncWebsocketConsumer):
     # ------------------------------------------------------------------
     # Channel Layer Broadcast Handlers
     # ------------------------------------------------------------------
+
+    async def channel_message(self, event: dict[str, Any]) -> None:
+        """Handles 'channel_message' typed events dispatched via `group_send`.
+
+        Args:
+            event (dict[str, Any]): The channel layer event payload map.
+        """
+        await self.send_data(event)
 
     async def broadcast_message(self, event: dict[str, Any]) -> None:
         """Handles 'broadcast_message' typed events dispatched via `group_send`.
@@ -200,3 +211,40 @@ class BaseConsumer(AsyncWebsocketConsumer):
         """
         await self.send_data(event)
         
+
+
+class DefaultConsumer(BaseConsumer):
+    """
+    Default Djangospice WebSocket consumer.
+
+    Authenticated users automatically join their personal
+    realtime group.
+    """
+
+    async def on_connect(self) -> None:
+        user = self.user
+
+        if not user or not user.is_authenticated:
+            await self.close()
+            return
+
+        group_name = user_group_name(user)
+
+        await self.subscribe(group_name)
+
+        await self.accept()
+
+    async def receive_data(self, data: Any) -> None:
+        """
+        Handle client-originated messages.
+
+        The default consumer only supports connection health checks.
+        """
+        if not isinstance(data, dict):
+            return
+
+        if data.get("event") == "ping":
+            await self.send_data({
+                "event": "pong",
+                "data": {},
+            })

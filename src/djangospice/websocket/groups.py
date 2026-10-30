@@ -1,6 +1,7 @@
 import hashlib
 from typing import Any, Optional, Sequence
 from django.utils.text import slugify
+from .scopes import ChannelScope
 
 # System Constants
 MAX_GROUP_LENGTH: int = 100
@@ -65,3 +66,20 @@ def build_group_name(scope: str, identifiers: Optional[Sequence[Any]] = None, sc
 
     # Final guard rail against Django Channels' max character limit
     return name[:MAX_GROUP_LENGTH]
+
+
+def user_group_name(user: Any, schema: str = "public") -> str:
+    """
+    Return the deterministic personal realtime group for a user.
+    """
+    if not getattr(user, "is_authenticated", False):
+        raise ValueError("An authenticated user is required.")
+
+    if user.pk is None:
+        raise ValueError("The user must be saved.")
+
+    return build_group_name(
+        scope=ChannelScope.USER,
+        identifiers=[user.pk],
+        schema=schema,
+    )
