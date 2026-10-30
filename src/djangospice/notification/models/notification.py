@@ -143,6 +143,10 @@ class Notification(BaseModel):
     @property
     def slug(self):
         return id2slug(self.id)
+
+    @property
+    def timespan(self):
+        return self.naturalday()
     
     def mark_as_deleted(self):
         if not self.deleted:

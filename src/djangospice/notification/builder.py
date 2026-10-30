@@ -54,7 +54,7 @@ class NotificationBuilder:
 
         return Notification.objects.create(
             recipient=user,
-            actor=actor,
+            actor=actor or user,
             target=target,
             verb=message.title,
             description=message.body,

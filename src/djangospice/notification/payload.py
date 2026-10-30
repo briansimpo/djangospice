@@ -50,10 +50,7 @@ class NotificationPayload(Serializable):
     )
 
     @classmethod
-    def from_model(
-        cls,
-        notification: Notification,
-    ) -> "NotificationPayload":
+    def from_model(cls, notification: Notification) -> "NotificationPayload":
         slug = notification.slug
 
         return cls(
