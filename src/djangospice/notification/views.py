@@ -257,8 +257,9 @@ def api_delete(request, slug=None):
         id=notification_id,
     )
 
-    dispatch_notification_deleted(notification)
+    payload = notification
     notification.delete()
+    dispatch_notification_deleted(payload)
 
     return JsonResponse(
         {

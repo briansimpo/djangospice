@@ -28,3 +28,10 @@ class NotificationUnread(NotificationEvent):
 @dataclass
 class NotificationDeleted(NotificationEvent):
     name = "notification_deleted"
+
+
+@dataclass
+class NotificationsMarkedRead(BaseEvent):
+    recipient_id: str
+    unread_count: int
+    name = "notifications_marked_read"
