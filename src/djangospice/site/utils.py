@@ -1,5 +1,4 @@
 from django.contrib.admin.sites import NotRegistered
-from urllib.parse import  urlsplit
 from django.contrib import admin
 from django.conf import settings
 
@@ -19,29 +18,6 @@ def get_host_name(host_name=None, port=None):
     # Construct the full host name
     return f"{scheme}://{host_name}{port_part}"
 
-def get_socket_host(request=None, host_name=None, port=None):
-    if request:
-        scheme = "wss" if request.is_secure() else "ws"
-
-        # urlsplit needs a scheme to parse correctly
-        split = urlsplit(f"//{request.get_host()}")
-        host = split.hostname
-
-        socket_port = getattr(settings, "DJANGO_SOCKET_PORT", None)
-
-        if socket_port:
-            return f"{scheme}://{host}:{socket_port}"
-
-        return f"{scheme}://{host}"
-
-    is_secure = getattr(settings, "SECURE_SSL_REDIRECT", False)
-    scheme = "wss" if is_secure else "ws"
-
-    host_name = host_name or getattr(settings, "DJANGO_SOCKET_HOST", "localhost")
-    port = port or getattr(settings, "DJANGO_SOCKET_PORT", None)
-
-    port_part = f":{port}" if port else ""
-    return f"{scheme}://{host_name}{port_part}"
 
 def admin_unregister(model):
     try:

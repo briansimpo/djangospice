@@ -6,6 +6,8 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from djangospice.package.metadata import Metadata
+
 from .exceptions import (
     AppDependencyError,
     AppNotRegistered,
@@ -18,11 +20,11 @@ from .models import (
     AppAction,
     AppStatus,
 )
-from .metadata import Metadata
-from .permissions import permission_sync
+
+from .permission import permission_sync
 
 
-class AppRegistry:
+class AppService:
     """Persistent registry for Djangospice application metadata and state."""
 
     # ------------------------------------------------------------------
@@ -57,10 +59,7 @@ class AppRegistry:
 
         return app
 
-    def register_many(
-        self,
-        metadata: Iterable[Metadata],
-    ) -> list[AppInstance]:
+    def register_many(self, metadata: Iterable[Metadata]) -> list[AppInstance]:
         """Register multiple applications atomically."""
         with transaction.atomic():
             return [self.register(item) for item in metadata]
@@ -109,12 +108,7 @@ class AppRegistry:
     # Dependencies
     # ------------------------------------------------------------------
 
-    def dependencies(
-        self,
-        key: str,
-        *,
-        include_optional: bool = True,
-    ) -> QuerySet[AppDependency]:
+    def dependencies(self, key: str, *, include_optional: bool = True) -> QuerySet[AppDependency]:
         app = self.get(key)
         queryset = app.dependencies.select_related("app")
 
@@ -225,11 +219,7 @@ class AppRegistry:
         return app
 
     @transaction.atomic
-    def fail_install(
-        self,
-        key: str,
-        error: Exception | str,
-    ) -> AppInstance:
+    def fail_install(self, key: str, error: Exception | str) -> AppInstance:
         app = self._locked_app(key)
         self._require_status(app, key, AppStatus.INSTALLING)
 
@@ -269,11 +259,7 @@ class AppRegistry:
         return self._record(app, AppAction.UPDATE, successful=False)
 
     @transaction.atomic
-    def complete_update(
-        self,
-        key: str,
-        metadata: Metadata,
-    ) -> AppInstance:
+    def complete_update(self, key: str, metadata: Metadata) -> AppInstance:
         app = self._locked_app(key)
         self._require_status(app, key, AppStatus.UPDATING)
         self._validate_identity(app, metadata)
@@ -291,11 +277,7 @@ class AppRegistry:
         return app
 
     @transaction.atomic
-    def fail_update(
-        self,
-        key: str,
-        error: Exception | str,
-    ) -> AppInstance:
+    def fail_update(self, key: str, error: Exception | str) -> AppInstance:
         app = self._locked_app(key)
         self._require_status(app, key, AppStatus.UPDATING)
 
@@ -373,7 +355,7 @@ class AppRegistry:
 
     @staticmethod
     def _apply_metadata(app: AppInstance, metadata: Metadata) -> None:
-        for field, value in AppRegistry._metadata_defaults(metadata).items():
+        for field, value in AppService._metadata_defaults(metadata).items():
             setattr(app, field, value)
 
     @staticmethod
@@ -403,22 +385,14 @@ class AppRegistry:
             ) from exc
 
     @staticmethod
-    def _require_status(
-        app: AppInstance,
-        key: str,
-        expected: str,
-    ) -> None:
+    def _require_status(app: AppInstance, key: str, expected: str) -> None:
         if app.status != expected:
             raise AppStateError(
                 f"Application '{key}' must have status '{expected}', "
                 f"not '{app.status}'."
             )
 
-    def _sync_dependencies(
-        self,
-        app: AppInstance,
-        dependencies: Sequence,
-    ) -> None:
+    def _sync_dependencies(self, app: AppInstance, dependencies: Sequence) -> None:
         desired = {item.key: item for item in dependencies}
 
         if app.key in desired:
@@ -446,13 +420,7 @@ class AppRegistry:
             app.dependencies.filter(dependency_key__in=stale).delete()
 
     @staticmethod
-    def _record(
-        app: AppInstance,
-        action: str,
-        *,
-        successful: bool,
-        error: str = "",
-    ) -> AppInstallation:
+    def _record(app: AppInstance, action: str,*, successful: bool, error: str = "") -> AppInstallation:
         now = timezone.now()
 
         return AppInstallation.objects.create(
@@ -465,14 +433,7 @@ class AppRegistry:
             error=error,
         )
 
-    def _complete_latest(
-        self,
-        app: AppInstance,
-        action: str,
-        *,
-        successful: bool,
-        error: str = "",
-    ) -> None:
+    def _complete_latest(self, app: AppInstance, action: str, *, successful: bool, error: str = "") -> None:
         record = (
             app.installation_history
             .select_for_update()
@@ -500,3 +461,7 @@ class AppRegistry:
                 "error",
             )
         )
+
+
+
+app_service = AppService()

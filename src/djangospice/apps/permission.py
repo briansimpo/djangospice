@@ -6,14 +6,19 @@ from django.contrib.auth.models import Permission as AuthPermission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
-
-from djangospice.app_registry.metadata import Permission
-from djangospice.app_registry.models import AppPermission
-
-from .default import APP_ACCESS
+from djangospice.package.metadata import Permission
+from djangospice.apps.models import AppPermission
 
 
-class PermissionSynchronizer:
+
+APP_ACCESS = Permission(
+    codename="access_application",
+    name="Can access application",
+    description="Allows the user to access the application.",
+)
+
+
+class Synchronizer:
     """Synchronize app-level declarations into Django's auth tables."""
 
     content_type_model = "__djangospice_app__"
@@ -61,4 +66,4 @@ class PermissionSynchronizer:
       
 
 
-permission_sync = PermissionSynchronizer()
+permission_sync = Synchronizer()

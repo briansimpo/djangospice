@@ -6,7 +6,7 @@ from typing import Any
 from django import forms
 from django.db import models
 
-from djangospice.routing import safe_reverse
+from djangospice.utils import safe_reverse
 from .conf import APP_NAME_KEY, MODEL_NAME_KEY, LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver

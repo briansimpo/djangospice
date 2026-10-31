@@ -1,4 +1,4 @@
-from djangospice.app_registry import AppConfig
+from djangospice.package import AppConfig
 
 class LookupConfig(AppConfig):
     name = "djangospice.lookup"

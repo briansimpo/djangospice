@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import uuid
 from django.db import transaction
-
 from djangospice.events import Event
-from .base import Job
 from .celery import CeleryAdapter
 from .enums import JobStatus
 from .handle import JobHandle
@@ -18,7 +16,7 @@ class JobDispatcher:
     """
 
     @classmethod
-    def dispatch(cls, job: Job, queue: str | None = None, seconds: int | float = 0, minutes: int | float = 0, hours: int | float = 0) -> JobHandle:
+    def dispatch(cls, job, queue: str | None = None, seconds: int | float = 0, minutes: int | float = 0, hours: int | float = 0) -> JobHandle:
         target_queue = queue or job.queue
         
         # 1. Generate unique identifier instantly on trigger side

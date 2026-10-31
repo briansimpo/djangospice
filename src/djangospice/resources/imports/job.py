@@ -2,7 +2,7 @@ import tablib
 from typing import Any
 from dataclasses import dataclass
 from djangospice.core.payload import Payload
-from djangospice.jobs import Job
+from djangospice.jobs.base import Job
 from djangospice.resources import BaseResource
 from .dataset import TemporaryDataset 
 

@@ -6,7 +6,7 @@ from collections.abc import Iterator
 
 from django.core.exceptions import ImproperlyConfigured
 
-from djangospice.app_registry.module import Module
+from djangospice.package.module import Module
 
 from .widget import Widget
 

@@ -3,33 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable, Mapping
 
-
-@dataclass(frozen=True, slots=True)
-class Permission:
-    codename: str
-    name: str
-    description: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.codename.strip():
-            raise ValueError("Permission codename cannot be empty.")
-        if not self.name.strip():
-            raise ValueError("Permission name cannot be empty.")
-
-    def qualified(self, app_key: str) -> str:
-        """Return the Djangospice-qualified permission identifier."""
-        return f"{app_key}.{self.codename}"
-
-
-@dataclass(frozen=True, slots=True)
-class Dependency:
-    key: str
-    version_specifier: str = ""
-    optional: bool = False
-
-    def __post_init__(self) -> None:
-        if not self.key.strip():
-            raise ValueError("Dependency key cannot be empty.")
+from .dependency import Dependency
+from .permission import Permission
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,7 +64,7 @@ class Metadata:
         return self.key
 
     @classmethod
-    def from_config(cls, config: object) -> Metadata:
+    def from_config(cls, config: object) -> "Metadata":
         """Build metadata from a AppConfig instance."""
         return cls(
             key=config.app_key,
@@ -125,7 +100,7 @@ class Metadata:
         permissions: Iterable[
             Permission | Mapping[str, str] | tuple[str, str]
         ] = (),
-    ) -> Metadata:
+    ) -> "Metadata":
         if isinstance(dependencies, Mapping):
             normalized_dependencies = tuple(
                 Dependency(key=k, version_specifier=v)

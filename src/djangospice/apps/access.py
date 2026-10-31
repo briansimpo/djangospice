@@ -3,10 +3,9 @@ from __future__ import annotations
 from django.contrib.auth.models import Permission
 from django.db.models import Q, QuerySet
 
-from djangospice.app_registry.models import AppStatus, AppInstance
-from djangospice.app_registry.exceptions import AppNotRegistered
-
-from .default import APP_ACCESS
+from .models import AppStatus, AppInstance
+from .exceptions import AppNotRegistered
+from .permission import APP_ACCESS
 
 
 class AppAccess:

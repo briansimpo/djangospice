@@ -1,7 +1,4 @@
 from django.urls import include, path
-from djangospice.apps import namespace
-
-app_name = namespace
 
 urlpatterns = [
     path(
@@ -17,3 +14,4 @@ urlpatterns = [
         include("djangospice.lookup.urls"),
     ),
 ]
+

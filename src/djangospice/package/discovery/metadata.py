@@ -4,13 +4,14 @@ from collections.abc import Mapping
 from typing import Any
 
 from django.apps import apps
+from djangospice.package.config import AppConfig 
+from djangospice.package.dependency import Dependency
+from djangospice.package.metadata import Metadata
+from djangospice.package.permission import Permission
 
-from .config import AppConfig 
-
-from .metadata import Dependency, Metadata, Permission
 
 
-class AppDiscovery:
+class MetadataDiscovery:
     """Discover Django apps that declare Djangospice metadata."""
 
     def discover(self) -> tuple[Metadata, ...]:
@@ -25,17 +26,11 @@ class AppDiscovery:
 
         return tuple(discovered)
 
-    def discover_one(
-        self,
-        config: AppConfig,
-    ) -> Metadata | None:
+    def discover_one(self, config: AppConfig) -> Metadata | None:
         """Discover metadata for one app config or Django app label."""
         return self.metadata_from_config(config)
 
-    def discover_many(
-        self,
-        configs: tuple[AppConfig | str, ...] | list[AppConfig | str] | None = None,
-    ) -> tuple[Metadata, ...]:
+    def discover_many(self, configs: tuple[AppConfig | str, ...] | list[AppConfig | str] | None = None) -> tuple[Metadata, ...]:
         """Discover metadata for multiple app configs or labels."""
 
         if configs is None:
@@ -50,10 +45,7 @@ class AppDiscovery:
 
         return tuple(discovered)
 
-    def metadata_from_config(
-        self,
-        config: AppConfig,
-    ) -> Metadata | None:
+    def metadata_from_config(self, config: AppConfig) -> Metadata | None:
         """Build metadata from an app configuration."""
 
         # Only apps explicitly opting into Djangospice are discovered.

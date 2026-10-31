@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Type
 from django.db import models
 
-from djangospice.jobs import Job
+from djangospice.jobs.base import Job
 from .builder import TableBuilder
 from .exporter import TableExporter
 

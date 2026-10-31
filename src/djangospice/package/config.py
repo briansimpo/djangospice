@@ -4,22 +4,23 @@ import os
 from logging import getLogger
 from typing import ClassVar
 
-from django.apps import AppConfig as BaseAppConfig
+from django.apps import AppConfig as DjangoAppConfig
 from django.templatetags.static import static
 
-from djangospice.routing import get_valid_url
+from djangospice.utils import get_valid_url
+from .dependency import Dependency
 from .module import Module
-from .metadata import Dependency, Permission
+from .permission import Permission
 
 
 logger = getLogger(__name__)
 
 
-class AppConfig(BaseAppConfig):
+class AppConfig(DjangoAppConfig):
     """Base configuration for Djangospice applications."""
 
     default = False
-
+    app_enabled: ClassVar[bool] = True
     app_key: ClassVar[str | None] = None
     app_name: ClassVar[str | None] = None
     app_version: ClassVar[str | None] = None

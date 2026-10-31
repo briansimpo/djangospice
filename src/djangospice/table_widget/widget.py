@@ -5,7 +5,7 @@ from typing import Any, ClassVar
 import django_filters
 import django_tables2 as tables
 
-from djangospice.templates import get_template_name
+from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
 from djangospice.widget.actions import Actions
 from djangospice.widget.pagination import (

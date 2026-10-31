@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 from django.core.files.storage import default_storage
 from djangospice.core.payload import Payload
-from djangospice.jobs import Job
+from djangospice.jobs.base import Job
 from djangospice.resources import BaseResource
 from .exporter import ResourceExporter
 

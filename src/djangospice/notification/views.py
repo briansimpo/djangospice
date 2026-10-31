@@ -12,8 +12,8 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import ListView
 
-from djangospice.templates import get_template_name
-from djangospice.routing import safe_reverse
+from djangospice.utils import get_template_name
+from djangospice.utils import safe_reverse
 
 from .apps import namespace
 from .helpers import (

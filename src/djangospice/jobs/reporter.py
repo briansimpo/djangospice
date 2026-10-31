@@ -5,9 +5,7 @@ from typing import Any
 
 from djangospice.events.dispatcher import Event
 
-from .base import Job
 from .enums import JobStatus
-from .result import JobResult
 
 from .events import (
     JobQueued,
@@ -38,7 +36,7 @@ class JobReporter:
                 meta=meta,
             )
 
-    def queued(self, job: Job) -> None:
+    def queued(self, job) -> None:
         job.status = JobStatus.QUEUED
 
         self._sync_celery_meta(job.status,
@@ -53,7 +51,7 @@ class JobReporter:
             )
         )
 
-    def started(self, job: Job) -> None:
+    def started(self, job) -> None:
         job.status = JobStatus.STARTED
 
         self._sync_celery_meta(
@@ -69,7 +67,7 @@ class JobReporter:
             )
         )
 
-    def progress(self,job: Job, current: int, total: int, message: str = "", **extra: Any) -> None:
+    def progress(self,job, current: int, total: int, message: str = "", **extra: Any) -> None:
         job.current = current
         job.total = total
         job.status = JobStatus.PROGRESS
@@ -93,7 +91,7 @@ class JobReporter:
             )
         )
 
-    def completed(self,job: Job, job_result: JobResult = None) -> None:
+    def completed(self,job, job_result = None) -> None:
         job.current = job.total
         job.status = JobStatus.COMPLETED
 
@@ -114,7 +112,7 @@ class JobReporter:
             )
         )
 
-    def failed(self, job: Job, exception: Exception) -> None:
+    def failed(self, job, exception) -> None:
         job.status = JobStatus.FAILURE
 
         error = str(exception)

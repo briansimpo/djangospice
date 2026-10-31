@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'ordering': ('key',),
-                'indexes': [models.Index(fields=['status'], name='app_registr_status_63bd52_idx'), models.Index(fields=['enabled'], name='app_registr_enabled_06714d_idx')],
+                'indexes': [models.Index(fields=['status'], name='apps_status_63bd52_idx'), models.Index(fields=['enabled'], name='apps_enabled_06714d_idx')],
             },
             bases=(djangospice.db.mixins.SerializesModels, models.Model),
         ),
@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
                 ('started_at', models.DateTimeField()),
                 ('completed_at', models.DateTimeField(blank=True, null=True)),
                 ('error', models.TextField(blank=True)),
-                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='installation_history', to='app_registry.appinstance')),
+                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='installation_history', to='apps.appinstance')),
             ],
             options={
                 'ordering': ('-started_at',),
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                 ('dependency_key', models.CharField(max_length=100)),
                 ('version_specifier', models.CharField(blank=True, max_length=100)),
                 ('optional', models.BooleanField(default=False)),
-                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dependencies', to='app_registry.appinstance')),
+                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dependencies', to='apps.appinstance')),
             ],
             options={
                 'ordering': ('dependency_key',),
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
                 ('id', model_utils.fields.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='permission_records', to='app_registry.appinstance')),
+                ('app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='permission_records', to='apps.appinstance')),
                 ('permission', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='app_permission', to='auth.permission')),
             ],
             options={

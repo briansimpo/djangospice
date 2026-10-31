@@ -1,6 +1,6 @@
 from django.urls import URLPattern, URLResolver, path
 
-from djangospice.app_registry.module import Module
+from djangospice.package.module import Module
 from .consumers import DefaultConsumer
 
 

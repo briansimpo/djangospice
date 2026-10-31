@@ -15,7 +15,7 @@ from .mixins import (
     HTMXTemplateMixin,
 )
 
-from djangospice.templates import get_template_name
+from djangospice.utils import get_template_name
 from djangospice.htmx.response import Response
 from djangospice.htmx.apps import namespace
 

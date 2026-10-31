@@ -12,15 +12,13 @@ logger = logging.getLogger(__name__)
 def register_installed_apps(sender, using: str, **kwargs) -> None:
     """Register discovered Djangospice apps after registry migrations."""
 
-    if sender.label != "app_registry":
+    if sender.label != "apps":
         return
 
-    # Import lazily because this handler only needs the registry
-    # service after Django has completed the registry migrations.
-    from .services import sync_apps
+    from .register import register_apps
 
     try:
-        result = sync_apps()
+        result = register_apps()
         logger.info(
             "Synchronized installed Djangospice apps: %s",
             len(result),
@@ -28,6 +26,6 @@ def register_installed_apps(sender, using: str, **kwargs) -> None:
     except Exception:
         logger.exception(
             "Failed to synchronize installed Djangospice apps "
-            "after app_registry migrations."
+            "after apps migrations."
         )
         raise

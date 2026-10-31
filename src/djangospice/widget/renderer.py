@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
 
-from djangospice.templates import get_template_name
+from djangospice.utils import get_template_name
 
 from .builder import WidgetBuilder
 from .cache import WidgetCache

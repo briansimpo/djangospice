@@ -1,5 +1,5 @@
 from djangospice.widget import Widget, widget
-from djangospice.templates import get_template_name
+from djangospice.utils import get_template_name
 
 from .apps import namespace
 

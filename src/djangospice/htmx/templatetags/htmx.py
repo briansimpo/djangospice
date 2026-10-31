@@ -1,7 +1,7 @@
 import re
 from django.utils.safestring import mark_safe
 from django import template
-from djangospice.templates import get_template_name
+from djangospice.utils import get_template_name
 from djangospice.htmx.apps import namespace
 
 register = template.Library()

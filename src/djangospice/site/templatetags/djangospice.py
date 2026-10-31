@@ -7,8 +7,8 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.templatetags.static import static
 from django.apps import apps
-from djangospice.routing import safe_reverse
-from djangospice.assets import get_assets, get_asset_path
+from djangospice.utils import safe_reverse
+from djangospice.site.assets import get_assets, get_asset_path
 
 
 register = template.Library()

@@ -1,1 +1,0 @@
-DJANGOSPICE_URL =  "djangospice/"

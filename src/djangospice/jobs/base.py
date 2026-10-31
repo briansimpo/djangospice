@@ -8,7 +8,6 @@ from .helpers import get_app_label
 from .handle import JobHandle
 from .enums import JobStatus
 from .result import JobResult
-from .dispatcher import JobDispatcher
 from .reporter import active_reporter
 
 logger = logging.getLogger(__name__)
@@ -65,6 +64,7 @@ class Job(Serializable):
         Schedules the job for execution. Delays are keyword-only to 
         preserve immediate routing ergonomics.
         """
+        from .dispatcher import JobDispatcher
         if queue is None:
             queue = self.queue
         return JobDispatcher.dispatch(
