@@ -15,8 +15,6 @@ from .events import (
 @listen(NotificationUnread)
 @listen(NotificationDeleted)
 class NotificationEventListener(EventListener):
-
-    should_queue = True
     queue_name = "broadcast-notifications"
 
     retry_on = (ConnectionResetError, TimeoutError)
