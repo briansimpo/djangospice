@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'ordering': ('key',),
-                'indexes': [models.Index(fields=['status'], name='apps_status_63bd52_idx'), models.Index(fields=['enabled'], name='apps_enabled_06714d_idx')],
+                'indexes': [models.Index(fields=['status'], name='apps_appins_status_d9e30d_idx'), models.Index(fields=['enabled'], name='apps_appins_enabled_4d2aa1_idx')],
             },
             bases=(djangospice.db.mixins.SerializesModels, models.Model),
         ),
