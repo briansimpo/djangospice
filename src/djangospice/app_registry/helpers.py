@@ -49,3 +49,4 @@ def get_app_context(request: HttpRequest) -> AppContext:
         app_label=app.label,
         app_verbose=app.verbose_name,
     )
+

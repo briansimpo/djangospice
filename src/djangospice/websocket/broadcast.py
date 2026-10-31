@@ -38,7 +38,7 @@ class Broadcast:
         Sends a message to a specific user. 
         Automatically resolves the user ID if a model instance is passed.
         """
-        user_id = getattr(user, "pk", user)
+        user_id = str(getattr(user, "pk", user) )
         channel_broadcast(
             scope=ChannelScope.USER,
             method_name=method_name,
@@ -95,7 +95,7 @@ class Broadcast:
         """
         payload = {
             "event": event,
-            "data": data or {},
+            "data": data,
         }
 
         cls.send(

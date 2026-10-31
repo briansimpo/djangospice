@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from typing import Any
-
-from djangospice.app_registry.utils import get_app_label
 from djangospice.core.serializable import Serializable
+from .helpers import get_app_label
 from .handle import JobHandle
 from .enums import JobStatus
 from .result import JobResult

@@ -4,7 +4,8 @@ from django.db import transaction
 
 from djangospice.notification.enums import Channel
 from djangospice.notification.models import  NotificationDelivery
-from djangospice.notification.registry import ChannelRegistry
+from djangospice.notification.channels import NotificationChannel
+from djangospice.notification.conf import NOTIFICATION_CHANNELS
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +29,22 @@ class DeliveryService:
             # Idempotency check
             if delivery.is_sent() or delivery.is_processing():
                 return
-
-            provider = ChannelRegistry.get_provider(Channel(delivery.channel))
-            if provider is None:
+            
+            provider_cls = NOTIFICATION_CHANNELS.get(Channel(delivery.channel))
+            if provider_cls is None:
                 raise RuntimeError(f"No provider registered for '{delivery.channel}'.")
 
             delivery.mark_processing()
 
         # Outside transaction: network I/O starts here
         try:
-            response = provider.send(
-                user=delivery.notification.recipient,
-                notification=delivery.notification
-            )
-            delivery.mark_sent(metadata=response)
+            if issubclass(provider_cls, NotificationChannel):
+                provider = provider_cls()
+                response = provider.send(
+                    user=delivery.notification.recipient,
+                    notification=delivery.notification
+                )
+                delivery.mark_sent(metadata=response)
 
         except Exception as ex:
             logger.exception("Notification delivery %s failed.", delivery.pk)

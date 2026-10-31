@@ -36,9 +36,6 @@ class NotificationPayload(Serializable):
     description: str
     level: str
 
-    actor_object_id: str | None = None
-    target_object_id: str | None = None
-
     slug: str | None = None
     text: str | None = None
 
@@ -56,18 +53,6 @@ class NotificationPayload(Serializable):
         return cls(
             id=str(notification.pk),
             recipient_id=str(notification.recipient_id),
-
-            actor_object_id=(
-                str(notification.actor_object_id)
-                if notification.actor_object_id is not None
-                else None
-            ),
-
-            target_object_id=(
-                str(notification.target_object_id)
-                if notification.target_object_id is not None
-                else None
-            ),
 
             verb=notification.verb,
             description=notification.description,

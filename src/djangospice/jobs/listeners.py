@@ -39,5 +39,5 @@ class JobEventListener(EventListener):
 
         broadcast_event(
             event=event,
-            data=payload.to_dict(),
+            data=payload,
         )

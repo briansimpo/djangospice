@@ -1,6 +1,8 @@
 from typing import Any, Optional, Sequence
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+
+from djangospice.core.serializer import serialize
 from .groups import build_group_name
 
 
@@ -30,7 +32,7 @@ def send_to_group(group_name: str, method_name: str, data: Any) -> None:
         group_name,
         {
             "type": method_name,
-            "data": data,
+            "data": serialize(data),
         },
     )
 

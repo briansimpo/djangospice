@@ -99,6 +99,7 @@ class Widget(HTMLComponent):
 
         self.request = request
         self.parent = parent
+        self.user = getattr(request, "user", None)
 
         self.children: list[Widget] = []
         self.slots: dict[str, list[Widget]] = {}
@@ -386,10 +387,6 @@ class Widget(HTMLComponent):
     # ------------------------------------------------------------------
     # Request & Visibility
     # ------------------------------------------------------------------
-
-    @property
-    def user(self) -> Any:
-        return getattr(self.request, "user", None)
 
     @property
     def request_data(self) -> Any:

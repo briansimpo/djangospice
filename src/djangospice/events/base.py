@@ -1,25 +1,35 @@
+
 from abc import ABC
-from typing import ClassVar
+from dataclasses import dataclass, field
 from slugify import slugify
-from dataclasses import dataclass
 
 from djangospice.core.serializable import Serializable
+
 
 @dataclass(kw_only=True)
 class BaseEvent(Serializable, ABC):
     """
-    Base class for all events. 
-    Auto-generates 'name' in snake_case if not provided in the subclass.
+    Base class for all events.
+
+    Subclasses can define a class-level name or have one
+    automatically generated from their class name.
     """
-    
-    name: ClassVar[str] = "base_event"
+
+    name: str = field(default="base_event")
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        
-        if 'name' not in cls.__dict__:
-            cls.name = slugify(cls.__name__, separator="_")
+
+        # Capture explicitly declared name or generate one.
+        if "name" in cls.__dict__:
+            event_name = cls.__dict__["name"]
+        else:
+            event_name = slugify(cls.__name__, separator="_")
+
+        cls.name = event_name
+
+    def __post_init__(self):
+        self.name = type(self).name
 
     def __str__(self) -> str:
         return self.name
-    

@@ -27,6 +27,7 @@ class Event:
     @classmethod
     def dispatch(cls, event: BaseEvent) -> None:
         """Dispatches the event to all registered listeners."""
+
         listeners = cls.listeners(type(event))
         
         if not listeners:

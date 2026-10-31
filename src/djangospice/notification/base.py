@@ -37,7 +37,7 @@ class BaseNotification(ABC):
     level: NotificationLevel = NotificationLevel.INFO
     category: str | None = None
     queue: str = "default"
-    required: bool = False
+    required: bool = True
     priority: int = 0
 
     # ------------------------------------------------------------------
@@ -66,6 +66,7 @@ class BaseNotification(ABC):
         """
         return (
             Channel.EMAIL,
+            Channel.SMS,
         )
 
     def supports(self, channel: Channel, user) -> bool:

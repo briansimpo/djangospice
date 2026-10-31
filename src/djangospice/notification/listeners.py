@@ -24,10 +24,9 @@ class NotificationEventListener(EventListener):
     retry_backoff = 30
 
     def handle(self, event: NotificationEvent) -> None:
+        recipient_id = event.payload.recipient_id
         Broadcast.event(
             event=event.name,
-            user=event.payload.recipient_id,
-            data={
-                "notification": event.payload.to_dict(),
-            },
+            user=recipient_id,
+            data=event.payload
         )

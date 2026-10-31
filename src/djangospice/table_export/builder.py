@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Any, Type
 from django.db import models
 
-from djangospice.core.serializer import resolve_class, deserialize
+from djangospice.core.resolver import resolve_class
+from djangospice.core.serializer import deserialize
 from djangospice.filters.helpers import dynamic_queryset
 
 
