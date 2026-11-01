@@ -209,7 +209,7 @@ def djangospice_bundle():
         tags.append(format_html('<link rel="stylesheet" href="{}">', asset_url(css)))
 
     if js:
-        tags.append(format_html('<script src="{}" defer></script>', asset_url(js)))
+        tags.append(format_html('<script src="{}" type="module"></script>', asset_url(js)))
 
     return format_html_join(
         "\n",
