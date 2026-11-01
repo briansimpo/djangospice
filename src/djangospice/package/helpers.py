@@ -1,12 +1,19 @@
+from pathlib import Path
+from typing import Iterable
+
 from djangospice.package.discovery import PackageDiscovery
 
 
-def djangospice_packages(project_dir, installed_apps, app_directories=["apps"]):
+def djangospice_packages(project_dir: str | Path, app_directories: Iterable[str] = ("apps",)) -> list[str]:
+    """
+    Discover Djangospice built-in and project applications.
 
-    packages = PackageDiscovery(
+    Returns additional INSTALLED_APPS entries.
+    """
+
+    discovery = PackageDiscovery(
         project_dir=project_dir,
-        installed_apps=installed_apps,
         app_directories=app_directories,
-    ).build()
+    )
 
-    return packages
+    return discovery.build()

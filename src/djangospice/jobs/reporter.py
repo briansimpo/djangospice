@@ -1,12 +1,12 @@
+
 from __future__ import annotations
 
-import contextvars
 from typing import Any
 
 from djangospice.events.dispatcher import Event
 
+from .context import active_reporter
 from .enums import JobStatus
-
 from .events import (
     JobQueued,
     JobStarted,
@@ -16,20 +16,16 @@ from .events import (
 )
 
 
-active_reporter: contextvars.ContextVar[JobReporter | None] = contextvars.ContextVar(
-    "active_reporter",
-    default=None,
-)
-
-
 class JobReporter:
-    """Orchestrates job status updates and dispatches native domain events."""
+    """
+    Orchestrates job status updates and dispatches lifecycle events.
+    The active_reporter  is intentionally retained because the worker lifecycle should set and reset this shared context variable.
+    """
 
     def __init__(self, task: Any = None) -> None:
         self.task = task
 
     def _sync_celery_meta(self, state: JobStatus, meta: dict[str, Any]) -> None:
-        """Sync job state and metadata back to the Celery task."""
         if self.task:
             self.task.update_state(
                 state=state,
@@ -39,35 +35,24 @@ class JobReporter:
     def queued(self, job) -> None:
         job.status = JobStatus.QUEUED
 
-        self._sync_celery_meta(job.status,
-            {
-                "status": job.status.value,
-            },
+        self._sync_celery_meta(
+            job.status,
+            {"status": job.status.value},
         )
 
-        Event.dispatch(
-            JobQueued(
-                job=job,
-            )
-        )
+        Event.dispatch(JobQueued(job=job))
 
     def started(self, job) -> None:
         job.status = JobStatus.STARTED
 
         self._sync_celery_meta(
             job.status,
-            {
-                "percent": 0,
-            },
+            {"percent": 0},
         )
 
-        Event.dispatch(
-            JobStarted(
-                job=job,
-            )
-        )
+        Event.dispatch(JobStarted(job=job))
 
-    def progress(self,job, current: int, total: int, message: str = "", **extra: Any) -> None:
+    def progress(self, job, current: int, total: int, message: str = "", **extra: Any) -> None:
         job.current = current
         job.total = total
         job.status = JobStatus.PROGRESS
@@ -91,7 +76,7 @@ class JobReporter:
             )
         )
 
-    def completed(self,job, job_result = None) -> None:
+    def completed(self, job, job_result=None) -> None:
         job.current = job.total
         job.status = JobStatus.COMPLETED
 
@@ -119,9 +104,7 @@ class JobReporter:
 
         self._sync_celery_meta(
             job.status,
-            {
-                "error": error,
-            },
+            {"error": error},
         )
 
         Event.dispatch(

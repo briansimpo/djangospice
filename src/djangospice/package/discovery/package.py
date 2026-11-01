@@ -1,8 +1,8 @@
-
 from __future__ import annotations
 
-import inspect
-from dataclasses import dataclass
+import ast
+import sys
+from dataclasses import dataclass, field
 from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -13,13 +13,13 @@ from django.core.exceptions import ImproperlyConfigured
 from djangospice.package.config import AppConfig as DjangospiceAppConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class DiscoveredPackage:
-    """A discovered Django application."""
+    """A discovered Djangospice or standard Django application."""
 
     entry: str
     config: DjangoAppConfig
-    source: Literal["builtin", "project", "extension", "explicit"]
+    source: Literal["builtin", "project", "extension"]
 
     @property
     def name(self) -> str:
@@ -40,208 +40,189 @@ class DiscoveredPackage:
 
 class PackageDiscovery:
     """
-    Discover, validate, resolve and register Django applications.
+    Discover, validate, resolve and register Django applications using AST parsing
+    to prevent premature module imports before settings are configured.
 
     Sources:
         - Built-in Djangospice applications.
         - Project-root applications.
-        - Configured project application directories.
-        - Installed Djangospice extensions.
-        - Explicit INSTALLED_APPS entries.
+        - Configured project application directories (e.g., apps/).
+        - Installed Djangospice entry-point extensions.
 
-    All discovery happens before django.setup().
+    All discovery happens safely before django.setup().
     """
 
-    ENTRY_POINT_GROUP = "djangospice.apps"
+    ENTRY_POINT_GROUP = "djangospice"
 
     def __init__(
         self,
         project_dir: str | Path,
-        installed_apps: Iterable[str] = (),
         app_directories: Iterable[str] = ("apps",),
         package_name: str = "djangospice",
-    ):
+    ) -> None:
         self.project_dir = Path(project_dir).resolve()
-        self.installed_apps = list(installed_apps)
         self.app_directories = tuple(app_directories)
-
         self.package_name = package_name
-        self.package_dir = Path(
-            import_module(package_name).__file__
-        ).resolve().parent
 
+        try:
+            package = import_module(package_name)
+        except ImportError as exc:
+            raise ImproperlyConfigured(
+                f"Could not import primary package '{package_name}': {exc}"
+            ) from exc
+
+        if not package.__file__:
+            raise ImproperlyConfigured(
+                f"Cannot locate package directory for '{package_name}'."
+            )
+
+        self.package_dir = Path(package.__file__).resolve().parent
         self._discovered: list[DiscoveredPackage] = []
+        self._is_discovered: bool = False
 
     # ---------------------------------------------------------
-    # General helpers
+    # General Helpers
     # ---------------------------------------------------------
 
-    def _is_private(self, path: Path) -> bool:
+    @staticmethod
+    def _is_private(path: Path) -> bool:
         return any(part.startswith("_") for part in path.parts)
 
     @staticmethod
-    def _is_valid_package(directory: Path, root: Path) -> bool:
+    def _is_valid_package(directory: Path, root: Path, app_directories: tuple[str, ...] = ()) -> bool:
+        """
+        Check if a directory is a valid Python package structure.
+        Container directories (like 'apps/') are allowed to lack __init__.py 
+        if they are configured app roots.
+        """
         try:
             relative = directory.relative_to(root)
         except ValueError:
             return False
 
         current = root
+        parts = relative.parts
 
-        for part in relative.parts:
+        for i, part in enumerate(parts):
             current /= part
+            
+            # If this part is a top-level container directory (e.g., 'apps'), 
+            # it doesn't strictly need an __init__.py file.
+            if i == 0 and part in app_directories:
+                continue
 
+            # Every actual app package and subpackage must have an __init__.py
             if not (current / "__init__.py").is_file():
                 return False
 
         return True
-
-    def _resolve(self, entry: str) -> DjangoAppConfig:
-        try:
-            return DjangoAppConfig.create(entry)
-        except Exception as exc:
-            raise ImproperlyConfigured(
-                f"Could not load Django application '{entry}': {exc}"
-            ) from exc
-
+    
     @staticmethod
-    def _config_path(config_class: type) -> str:
-        return (
-            f"{config_class.__module__}."
-            f"{config_class.__qualname__}"
-        )
+    def _config_path(module_path: str, class_name: str) -> str:
+        return f"{module_path}.{class_name}"
 
     def _is_internal(self, config: DjangoAppConfig) -> bool:
-        return (
-            config.name == self.package_name
-            or config.name.startswith(f"{self.package_name}.")
-        )
-
-    def _is_djangospice_config(self, config: DjangoAppConfig) -> bool:
-        return isinstance(config, DjangospiceAppConfig)
+        return config.name == self.package_name or config.name.startswith(f"{self.package_name}.")
 
     # ---------------------------------------------------------
-    # Config discovery
+    # AST-Based Config Discovery
     # ---------------------------------------------------------
 
-    def _discover_config_classes(self, module_path: str) -> list[str]:
-        module = import_module(module_path)
+    def _discover_config_classes(self, apps_file: Path, module_path: str) -> list[str]:
+        """
+        Statically parse apps.py using Python's AST module to find configuration 
+        classes without importing the module or executing any side-effects.
+        """
+        if not apps_file.is_file():
+            return []
+
+        try:
+            tree = ast.parse(apps_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            raise ImproperlyConfigured(
+                f"Failed to parse application module file '{apps_file}': {exc}"
+            ) from exc
+
         discovered = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                # Skip base DjangospiceAppConfig class if encountered in source definition
+                if node.name in ("AppConfig", "DjangospiceAppConfig"):
+                    continue
 
-        for _, cls in inspect.getmembers(
-            module,
-            inspect.isclass,
-        ):
-            if cls.__module__ != module.__name__:
-                continue
-
-            if cls is DjangospiceAppConfig:
-                continue
-
-            if not issubclass(cls, DjangospiceAppConfig):
-                continue
-
-            if inspect.isabstract(cls):
-                continue
-
-            if not getattr(cls, "name", None):
-                raise ImproperlyConfigured(
-                    f"{self._config_path(cls)} must define name."
+                # Check if it inherits from an AppConfig class or defines a 'name' attribute
+                is_config_subclass = any(
+                    (isinstance(base, ast.Name) and "AppConfig" in base.id) or
+                    (isinstance(base, ast.Attribute) and "AppConfig" in base.attr)
+                    for base in node.bases
+                )
+                has_name_assignment = any(
+                    isinstance(stmt, ast.Assign) and
+                    any(isinstance(target, ast.Name) and target.id == "name" for target in stmt.targets)
+                    for stmt in node.body
                 )
 
-            discovered.append(self._config_path(cls))
+                if is_config_subclass or has_name_assignment:
+                    discovered.append(self._config_path(module_path, node.name))
 
         return discovered
 
     # ---------------------------------------------------------
-    # Built-in Djangospice applications
+    # Discovery Sources
     # ---------------------------------------------------------
 
     def discover_builtin(self) -> list[DiscoveredPackage]:
         discovered = []
+        if not self.package_dir.is_dir():
+            return discovered
 
-        for apps_file in sorted(
-            self.package_dir.rglob("apps.py")
-        ):
+        for apps_file in sorted(self.package_dir.rglob("apps.py")):
             directory = apps_file.parent
-
-            relative = directory.relative_to(
-                self.package_dir
-            )
-
-            if not relative.parts:
+            try:
+                relative = directory.relative_to(self.package_dir)
+            except ValueError:
                 continue
 
-            if self._is_private(relative):
+            if self._is_private(relative) or not self._is_valid_package(directory, self.package_dir):
                 continue
 
-            if not self._is_valid_package(
-                directory,
-                self.package_dir,
-            ):
-                continue
-
-            # Give Django the application package, not apps.py.
-            entry = ".".join((
-                self.package_name,
-                *relative.parts,
-            ))
-
-            discovered.append(
-                DiscoveredPackage(
-                    entry=entry,
-                    config=self._resolve(entry),
-                    source="builtin",
+            module_path = ".".join((self.package_name, *relative.parts, "apps"))
+            for entry in self._discover_config_classes(apps_file, module_path):
+                discovered.append(
+                    DiscoveredPackage(
+                        entry=entry,
+                        config=self._resolve(entry),
+                        source="builtin",
+                    )
                 )
-            )
-
         return discovered
-
-    # ---------------------------------------------------------
-    # Project applications
-    # ---------------------------------------------------------
 
     def discover_project(self) -> list[DiscoveredPackage]:
         discovered = []
-        visited = set()
+        visited: set[Path] = set()
 
-        def process(apps_file: Path):
+        def process(apps_file: Path) -> None:
             directory = apps_file.parent
-
             if directory in visited:
                 return
-
             visited.add(directory)
 
             try:
-                relative = directory.relative_to(
-                    self.project_dir
-                )
+                relative = directory.relative_to(self.project_dir)
             except ValueError:
                 return
 
-            if not relative.parts:
-                return
-
-            if self._is_private(relative):
+            if not relative.parts or self._is_private(relative):
                 return
 
             if relative.parts[0] == self.package_name:
                 return
 
-            if not self._is_valid_package(
-                directory,
-                self.project_dir,
-            ):
+            if not self._is_valid_package(directory, self.project_dir, self.app_directories):
                 return
 
-            module_path = ".".join(
-                (*relative.parts, "apps")
-            )
-
-            for entry in self._discover_config_classes(
-                module_path
-            ):
+            module_path = ".".join((*relative.parts, "apps"))
+            for entry in self._discover_config_classes(apps_file, module_path):
                 discovered.append(
                     DiscoveredPackage(
                         entry=entry,
@@ -250,121 +231,60 @@ class PackageDiscovery:
                     )
                 )
 
-        # Project-root apps: users, accounts, auth, etc.
-        for directory in sorted(
-            self.project_dir.iterdir()
-        ):
-            if not directory.is_dir():
-                continue
+        # 1. Project-root level apps
+        if self.project_dir.is_dir():
+            for directory in sorted(self.project_dir.iterdir()):
+                if directory.is_dir() and not directory.name.startswith("_"):
+                    apps_file = directory / "apps.py"
+                    if apps_file.is_file():
+                        process(apps_file)
 
-            apps_file = directory / "apps.py"
-
-            if apps_file.is_file():
-                process(apps_file)
-
-        # Nested apps: apps/organization, apps/members, etc.
+        # 2. Nested app directories (e.g., apps/*)
         for app_directory in self.app_directories:
-            root = (
-                self.project_dir / app_directory
-            ).resolve()
-
-            if not root.is_dir():
+            root = (self.project_dir / app_directory).resolve()
+            if not root.is_dir() or not self._is_valid_package(root, self.project_dir, self.app_directories):
                 continue
 
-            if not self._is_valid_package(
-                root,
-                self.project_dir,
-            ):
-                continue
-
-            for apps_file in sorted(
-                root.rglob("apps.py")
-            ):
+            for apps_file in sorted(root.rglob("apps.py")):
                 process(apps_file)
 
         return discovered
-
-    # ---------------------------------------------------------
-    # Third-party extensions
-    # ---------------------------------------------------------
 
     def discover_extensions(self) -> list[DiscoveredPackage]:
+        """Discover external extensions packaged via Python entry points."""
         discovered = []
+        try:
+            eps = entry_points()
+            group_eps = eps.select(group=self.ENTRY_POINT_GROUP) if hasattr(eps, "select") else eps.get(self.ENTRY_POINT_GROUP, [])
+        except Exception:
+            return discovered
 
-        for entry_point in sorted(
-            entry_points(group=self.ENTRY_POINT_GROUP),
-            key=lambda item: item.name,
-        ):
-            config_class = entry_point.load()
-
-            if not inspect.isclass(config_class):
+        for ep in group_eps:
+            try:
+                entry = ep.value
+                config = self._resolve(entry)
+                discovered.append(
+                    DiscoveredPackage(
+                        entry=entry,
+                        config=config,
+                        source="extension",
+                    )
+                )
+            except Exception as exc:
                 raise ImproperlyConfigured(
-                    f"Invalid extension: {entry_point.name}"
-                )
-
-            if not issubclass(
-                config_class,
-                DjangospiceAppConfig,
-            ):
-                raise ImproperlyConfigured(
-                    f"{entry_point.value} must inherit "
-                    "from Djangospice AppConfig."
-                )
-
-            if inspect.isabstract(config_class):
-                continue
-
-            entry = self._config_path(config_class)
-
-            discovered.append(
-                DiscoveredPackage(
-                    entry=entry,
-                    config=self._resolve(entry),
-                    source="extension",
-                )
-            )
+                    f"Failed to load entry point extension '{ep.name}': {exc}"
+                ) from exc
 
         return discovered
 
     # ---------------------------------------------------------
-    # Explicit applications
-    # ---------------------------------------------------------
-
-    def discover_explicit(self) -> list[DiscoveredPackage]:
-        discovered = []
-
-        for entry in self.installed_apps:
-            config = self._resolve(entry)
-
-            # Built-in apps are handled by internal discovery.
-            if self._is_internal(config):
-                continue
-
-            discovered.append(
-                DiscoveredPackage(
-                    entry=entry,
-                    config=config,
-                    source="explicit",
-                )
-            )
-
-        return discovered
-
-
-    
-    # ---------------------------------------------------------
-    # Deduplication
+    # Deduplication & Dependency Resolution
     # ---------------------------------------------------------
 
     def deduplicate(self, applications: list[DiscoveredPackage]) -> list[DiscoveredPackage]:
-        """
-        Deduplicate by Django application name.
-
-        Different applications cannot share the same Django label.
-        """
         result = []
-        names = {}
-        labels = {}
+        names: dict[str, DiscoveredPackage] = {}
+        labels: dict[str, str] = {}
 
         for application in applications:
             config = application.config
@@ -372,210 +292,119 @@ class PackageDiscovery:
             if config.name in names:
                 continue
 
-            existing = labels.get(config.label)
-
-            if existing and existing != config.name:
+            existing_name = labels.get(config.label)
+            if existing_name and existing_name != config.name:
                 raise ImproperlyConfigured(
-                    f"Duplicate Django application label "
-                    f"'{config.label}': '{existing}' and "
-                    f"'{config.name}'."
+                    f"Duplicate Django application label '{config.label}': "
+                    f"shared by '{existing_name}' and '{config.name}'."
                 )
 
             names[config.name] = application
             labels[config.label] = config.name
-
             result.append(application)
 
         return result
 
-    # ---------------------------------------------------------
-    # Application dependencies
-    # ---------------------------------------------------------
-
     @staticmethod
-    def _dependency_identifier(dependency) -> str:
-        """
-        Resolve a dependency into an application identifier.
-
-        Supported values:
-            - Application key strings.
-            - Objects exposing app_key, key, name or package.
-        """
+    def _dependency_identifier(dependency: object) -> str:
         if isinstance(dependency, str):
             return dependency
 
-        for attribute in (
-            "app_key",
-            "key",
-            "name",
-            "package",
-        ):
+        for attribute in ("app_key", "key", "name", "package"):
             value = getattr(dependency, attribute, None)
-
             if isinstance(value, str) and value.strip():
                 return value.strip()
 
         raise ImproperlyConfigured(
             f"Invalid application dependency: {dependency!r}. "
-            "A dependency must be a string or expose "
-            "app_key, key, name or package."
+            "Must be a string or expose app_key, key, name, or package."
         )
 
+    def _resolve(self, entry: str) -> DjangoAppConfig:
+        try:
+            return DjangoAppConfig.create(entry)
+        except Exception as exc:
+            raise ImproperlyConfigured(
+                f"Could not load Django application config '{entry}': {exc}"
+            ) from exc
+
     def resolve_dependencies(self, applications: list[DiscoveredPackage]) -> list[DiscoveredPackage]:
-        """
-        Sort Djangospice applications by dependencies.
+        active_apps = [app for app in applications if app.enabled]
+        identifiers: dict[str, DiscoveredPackage] = {}
 
-        Detects missing dependencies and circular dependencies.
-        Preserves original discovery order when possible.
-        """
-        applications = [
-            app for app in applications if app.enabled
-        ]
-
-        identifiers = {}
-
-        for app in applications:
+        for app in active_apps:
             identifiers[app.name] = app
-
             if app.is_djangospice:
                 config = app.config
-
-                for identifier in (
-                    getattr(config, "app_key", None),
-                    app.label,
-                ):
+                for identifier in (getattr(config, "app_key", None), app.label):
                     if identifier:
                         identifiers[identifier] = app
 
-        state = {}
-        ordered = []
-        stack = []
+        state: dict[str, int] = {}  # 0: unvisited, 1: visiting, 2: visited
+        ordered: list[DiscoveredPackage] = []
+        stack: list[str] = []
 
-        def visit(app: DiscoveredPackage):
+        def visit(app: DiscoveredPackage) -> None:
             name = app.name
             status = state.get(name, 0)
 
             if status == 2:
                 return
-
             if status == 1:
-                cycle = " -> ".join(
-                    [*stack, name]
-                )
-
-                raise ImproperlyConfigured(
-                    f"Circular application dependency: {cycle}"
-                )
+                cycle = " -> ".join([*stack, name])
+                raise ImproperlyConfigured(f"Circular application dependency detected: {cycle}")
 
             state[name] = 1
             stack.append(name)
 
             if app.is_djangospice:
-                dependencies = getattr(
-                    app.config,
-                    "app_dependencies",
-                    (),
-                )
-
+                dependencies = getattr(app.config, "app_dependencies", ())
                 for dependency in dependencies:
-                    identifier = self._dependency_identifier(
-                        dependency
-                    )
-
+                    identifier = self._dependency_identifier(dependency)
                     required = identifiers.get(identifier)
-
                     if required is None:
                         raise ImproperlyConfigured(
-                            f"Application '{name}' requires "
-                            f"'{identifier}', but it is not "
-                            "registered or enabled."
+                            f"Application '{name}' requires dependency '{identifier}', "
+                            "but it is not registered or enabled."
                         )
-
                     visit(required)
 
             stack.pop()
             state[name] = 2
             ordered.append(app)
 
-        for application in applications:
+        for application in active_apps:
             visit(application)
 
         return ordered
 
     # ---------------------------------------------------------
-    # Complete discovery
+    # Public API
     # ---------------------------------------------------------
 
     def discover(self) -> list[DiscoveredPackage]:
-        """
-        Discover applications from all supported sources.
-
-        Order:
-            1. Built-in Djangospice applications.
-            2. Project applications.
-            3. Installed extensions.
-            4. Explicit Djangospice applications.
-            5. Ordinary explicit Django applications.
-        """
-        explicit = self.discover_explicit()
-
-        ordinary = [
-            app for app in explicit
-            if not app.is_djangospice
-        ]
-
-        explicit_djangospice = [
-            app for app in explicit
-            if app.is_djangospice
-        ]
+        """Execute full discovery, deduplication, and topological dependency sorting."""
+        if self._is_discovered:
+            return self._discovered
 
         builtin = self.discover_builtin()
         project = self.discover_project()
         extensions = self.discover_extensions()
 
-        # Framework applications always precede custom applications.
-        framework = self.deduplicate(builtin)
-
-        custom = self.deduplicate([
+        applications = self.deduplicate([
+            *builtin,
             *project,
             *extensions,
-            *explicit_djangospice,
         ])
 
-        # Resolve dependencies across the framework and custom apps.
-        djangospice_apps = self.resolve_dependencies([
-            *framework,
-            *custom,
-        ])
-
-        # Ordinary Django applications retain their original order.
-        result = self.deduplicate([
-            *ordinary,
-            *djangospice_apps,
-        ])
-
-        self._discovered = result
-
-        return result
-
-    # ---------------------------------------------------------
-    # Django registration
-    # ---------------------------------------------------------
+        self._discovered = self.resolve_dependencies(applications)
+        self._is_discovered = True
+        return self._discovered
 
     def build(self) -> list[str]:
-        """
-        Return the final INSTALLED_APPS list.
-
-        This must run before django.setup().
-        """
-        applications = self.discover()
-
-        return [
-            application.entry
-            for application in applications
-        ]
+        """Return entry strings for all valid, sorted discovered applications."""
+        return [app.entry for app in self.discover()]
 
     @property
     def applications(self) -> tuple[DiscoveredPackage, ...]:
-        """Return the most recently discovered applications."""
         return tuple(self._discovered)

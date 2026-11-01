@@ -1,14 +1,5 @@
 from typing import Any
-from django.conf import settings
 from django.utils.module_loading import import_string
-
-
-def setting(name: str, default: Any) -> Any:
-    return getattr(
-        settings,
-        name,
-        default,
-    )
 
 
 def resolve_callable(value: Any) -> Any | None:

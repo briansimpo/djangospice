@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -5,39 +6,41 @@ from typing import Any
 
 from djangospice.events import BaseEvent
 
-from .base import Job
 
-
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobEvent(BaseEvent):
     """Base event for job lifecycle events."""
-    job: Job
+
+    job: Any
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobQueued(JobEvent):
     name = "job_queued"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobStarted(JobEvent):
     name = "job_started"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobProgressed(JobEvent):
     name = "job_progressed"
+
     message: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobCompleted(JobEvent):
     name = "job_completed"
+
     result: Any = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass
 class JobFailed(JobEvent):
     name = "job_failed"
+
     error: str = ""
