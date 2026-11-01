@@ -18,8 +18,8 @@ logger = getLogger(__name__)
 
 class AppConfig(DjangoAppConfig):
     """Base configuration for Djangospice applications."""
-
     default = False
+    djangospice_app = True
     app_enabled: ClassVar[bool] = True
     app_key: ClassVar[str | None] = None
     app_name: ClassVar[str | None] = None
