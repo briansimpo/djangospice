@@ -8,26 +8,10 @@ from django.utils.html import format_html, format_html_join
 from django.templatetags.static import static
 from django.apps import apps
 from djangospice.utils import safe_reverse
-from djangospice.site.assets import get_assets, get_asset_path
+from djangospice.package.assets import Assets
 
 
 register = template.Library()
-
-
-def _render_styles(paths):
-    return format_html_join(
-        "\n",
-        '<link rel="stylesheet" href="{}">',
-        ((static(path),) for path in paths),
-    )
-
-
-def _render_scripts(paths):
-    return format_html_join(
-        "\n",
-        '<script type="module" src="{}"></script>',
-        ((static(path),) for path in paths),
-    )
 
 
 @register.filter
@@ -153,48 +137,51 @@ def filter_url(context) -> str:
     )
 
 
-@register.simple_tag
-def djangospice_asset(module, asset_type="js", name=None):
-    """Return an asset URL when its path can be resolved."""
-    path = get_asset_path(module, asset_type, name)
-
-    return static(path) if path else ""
-
 
 @register.simple_tag
-def djangospice_assets(module):
-    """Render all discovered CSS and JavaScript assets."""
-    assets = get_assets(module)
-    return format_html(
-        "{}\n{}",
-        _render_styles(assets["css"]),
-        _render_scripts(assets["js"]),
+def djangospice_assets(asset_type=None):
+    """
+    Automatically render CSS and JavaScript assets
+    from all installed Djangospice apps and extensions.
+
+    Usage:
+        {% djangospice_apps_assets %}
+
+    Optional:
+        {% djangospice_apps_assets "css" %}
+        {% djangospice_apps_assets "js" %}
+    """
+    if asset_type not in (None, "css", "js"):
+        raise ValueError(
+            "asset_type must be 'css', 'js' or None."
+        )
+
+    app_assets = Assets.get_apps_assets()
+
+    css_files = []
+    js_files = []
+
+    for assets in app_assets.values():
+        if asset_type in (None, "css"):
+            css_files.extend(assets["css"])
+
+        if asset_type in (None, "js"):
+            js_files.extend(assets["js"])
+
+    # Avoid duplicates while preserving discovery order.
+    css_files = list(dict.fromkeys(css_files))
+    js_files = list(dict.fromkeys(js_files))
+
+    css_html = format_html_join(
+        "\n",
+        '<link rel="stylesheet" href="{}">',
+        ((static(asset),) for asset in css_files),
     )
 
+    js_html = format_html_join(
+        "\n",
+        '<script src="{}" defer></script>',
+        ((static(asset),) for asset in js_files),
+    )
 
-@register.simple_tag
-def djangospice_style(module, name=None):
-    """Render discovered stylesheets."""
-    paths = get_assets(module, "css")
-
-    if name:
-        paths = [
-            path for path in paths
-            if path.rsplit("/", 1)[-1] == name
-        ]
-
-    return _render_styles(paths)
-
-
-@register.simple_tag
-def djangospice_script(module, name=None):
-    """Render discovered JavaScript modules."""
-    paths = get_assets(module, "js")
-
-    if name:
-        paths = [
-            path for path in paths
-            if path.rsplit("/", 1)[-1] == name
-        ]
-
-    return _render_scripts(paths)
+    return format_html("{}\n{}", css_html, js_html)
