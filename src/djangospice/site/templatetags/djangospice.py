@@ -1,14 +1,18 @@
 
 import json
 from django import template
+from django.apps import apps
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.urls import NoReverseMatch
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.templatetags.static import static
-from django.apps import apps
 from djangospice.utils import safe_reverse
-from djangospice.package.assets import Assets
+from djangospice.assets.manager import AssetManager
+from djangospice.assets.utils import asset_url
+from djangospice.assets.compiler.manifest import read_manifest
+from djangospice.assets.conf import get_build_root, get_setting
 
 
 register = template.Library()
@@ -137,7 +141,6 @@ def filter_url(context) -> str:
     )
 
 
-
 @register.simple_tag
 def djangospice_assets(asset_type=None):
     """
@@ -145,18 +148,18 @@ def djangospice_assets(asset_type=None):
     from all installed Djangospice apps and extensions.
 
     Usage:
-        {% djangospice_apps_assets %}
+        {% djangospice_assets %}
 
     Optional:
-        {% djangospice_apps_assets "css" %}
-        {% djangospice_apps_assets "js" %}
+        {% djangospice_assets "css" %}
+        {% djangospice_assets "js" %}
     """
     if asset_type not in (None, "css", "js"):
         raise ValueError(
             "asset_type must be 'css', 'js' or None."
         )
 
-    app_assets = Assets.get_apps_assets()
+    app_assets = AssetManager.get_apps_assets()
 
     css_files = []
     js_files = []
@@ -185,3 +188,31 @@ def djangospice_assets(asset_type=None):
     )
 
     return format_html("{}\n{}", css_html, js_html)
+
+
+@register.simple_tag
+def djangospice_bundle():
+    manifest_path = get_build_root() / get_setting("OUTPUT_DIR") / "manifest.json"
+    manifest = read_manifest(manifest_path)
+
+    if not manifest:
+        if settings.DEBUG:
+            raise RuntimeError("Djangospice assets have not been built. Run python manage.py djangospice_assets build.")
+        return ""
+
+    tags = []
+
+    css = manifest.get("css", {}).get("main")
+    js = manifest.get("js", {}).get("main")
+
+    if css:
+        tags.append(format_html('<link rel="stylesheet" href="{}">', asset_url(css)))
+
+    if js:
+        tags.append(format_html('<script src="{}" defer></script>', asset_url(js)))
+
+    return format_html_join(
+        "\n",
+        "{}",
+        ((tag,) for tag in tags),
+    )

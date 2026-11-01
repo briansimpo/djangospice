@@ -7,7 +7,7 @@ from django.apps import AppConfig, apps
 from django.contrib.staticfiles import finders
 
 
-class Assets:
+class AssetManager:
     """
     Automatic static asset discovery for Djangospice apps
     and independently installed extensions.
@@ -61,7 +61,7 @@ class Assets:
     def _discover(prefix: str) -> dict[str, tuple[str, ...]]:
         assets = {
             asset_type: set()
-            for asset_type in Assets.TYPES
+            for asset_type in AssetManager.TYPES
         }
 
         for finder in finders.get_finders():
@@ -81,7 +81,7 @@ class Assets:
 
                 asset_type = relative.parts[0]
 
-                if asset_type not in Assets.TYPES:
+                if asset_type not in AssetManager.TYPES:
                     continue
 
                 if relative.suffix.lower() != f".{asset_type}":
