@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -48,8 +48,6 @@ class PackageDiscovery:
         - Project-root applications.
         - Configured project application directories (e.g., apps/).
         - Installed Djangospice entry-point extensions.
-
-    All discovery happens safely before django.setup().
     """
 
     ENTRY_POINT_GROUP = "djangospice"
