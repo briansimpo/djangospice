@@ -3,45 +3,57 @@ from __future__ import annotations
 from typing import ClassVar
 
 from django.http import HttpRequest
+
 from djangospice.htmx.response import Response
 
-from .dispatchers import ActionDispatcher, BaseDispatcher, MethodDispatcher
+from .dispatchers import (
+    ActionDispatcher,
+    BaseDispatcher,
+    HttpDispatcher,
+    MethodDispatcher,
+    UnknownActionDispatcher,
+)
 from .exceptions import DispatcherNotFound
 from .widget import Widget
 
 
 class WidgetExecutor:
     """
-    Orchestrates the lifecycle, authorization, and dispatching pipeline 
-    for an incoming widget request.
+    Orchestrates widget initialization, authorization,
+    and request dispatching.
     """
 
     dispatchers: ClassVar[tuple[type[BaseDispatcher], ...]] = (
         ActionDispatcher,
         MethodDispatcher,
+        UnknownActionDispatcher,
+        HttpDispatcher,
     )
 
     def __init__(self, widget: Widget, request: HttpRequest) -> None:
         self.widget = widget
         self.request = request
-        self.widget.request = request
 
     def execute(self) -> Response:
-        """Run the full lifecycle pipeline and dispatch the request."""
+        self.widget.request = self.request
+        self.widget.user = getattr(self.request, "user", None)
+
         self.widget.initialize()
         self.widget.configure()
         self.widget.authorize()
 
-        response = self.dispatch()
-
-        return response
+        return self.dispatch()
 
     def dispatch(self) -> Response:
-        """Iterate through registered dispatchers and invoke the first match."""
         for dispatcher_cls in self.dispatchers:
-            dispatcher = dispatcher_cls(self.widget, self.request)
+            dispatcher = dispatcher_cls(
+                self.widget,
+                self.request,
+            )
 
             if dispatcher.can_dispatch():
                 return dispatcher.dispatch()
 
-        raise DispatcherNotFound("No valid dispatcher found for this request.")
+        raise DispatcherNotFound(
+            "No valid dispatcher found for this request."
+        )

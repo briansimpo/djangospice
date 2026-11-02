@@ -129,7 +129,7 @@
                                 <div class="flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:flex-wrap sm:items-center">
 
                                     <button type="submit"
-                                            class="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-blue-600 px-4 font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                                            class="btn btn-sm btn-primary">
                                         <svg class="h-4 w-4"
                                             viewBox="0 0 24 24"
                                             fill="none"
@@ -146,7 +146,7 @@
                                     hx-swap="outerHTML"
                                     hx-push-url="false"
                                     hx-indicator="{{ htmx_indicator }}"
-                                    class="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 font-medium text-slate-700 transition hover:bg-slate-50">
+                                    class="btn btn-sm">
                                         {% trans "Reset filters" %}
                                     </a>
 
@@ -169,7 +169,7 @@
                             <a 
                             hx-get="{{ table_url }}{% querystring_replace alphabet_parameter="" %}"
                             hx-target="{{ htmx_target }}" hx-swap="outerHTML" hx-push-url="false"
-                            class="inline-flex h-8 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-semibold transition {% if not current_letter %}bg-blue-600 text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                            class="inline-flex h-8 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-semibold transition {% if not current_letter %}bg-blue-100 shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
                                 {% trans "All" %}
                             </a>
                             {% for letter in alphabet %}
@@ -213,8 +213,7 @@
                             <option value="{{ action.name }}">{{ action.label }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" :disabled="selected.length === 0"
-                                class="h-9 rounded-full bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="submit" :disabled="selected.length === 0" class="btn btn-sm btn-primary">
                             {% trans "Apply" %}
                         </button>
                     </form>
@@ -228,7 +227,7 @@
                     {% for action in table_actions %}
                     <button type="button"
                             {{ action.htmx }}
-                            class="{{ action.css_class|default:'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100' }}"
+                            class="{{ action.css_class|default:'btn btn-sm btn-primary' }}"
                             title="{{ action.label }}"
                             aria-label="{{ action.label }}">
                         {% if action.icon %}{{ action.icon }}{% else %}{{ action.label }}{% endif %}

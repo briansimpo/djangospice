@@ -14,6 +14,7 @@ from djangospice.core.formatting import snake_case
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
+from djangospice.widget.methods import Method
 
 from .actions import Action, Actions, ActionContext, BoundAction
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
@@ -669,3 +670,46 @@ class Widget(HTMLComponent):
 
     def method_not_allowed(self) -> Response:
         return Response.empty(status=405)
+
+
+    # ------------------------------------------------------------------
+    # Methods & Actions
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def get_methods(cls) -> dict[str, Method]:
+        """
+        Discover methods declared on this widget and its parents.
+
+        Child classes override inherited methods with the same name.
+        """
+        methods: dict[str, Method] = {}
+
+        for base in reversed(cls.__mro__):
+            for name, value in base.__dict__.items():
+                if isinstance(value, Method):
+                    methods[name] = value
+
+        return methods
+
+    def get_method(self, name: str) -> Method:
+        """
+        Resolve a registered widget method.
+        """
+        try:
+            return self.get_methods()[name]
+        except KeyError:
+            raise AttributeError(
+                f"Widget method '{name}' is not registered."
+            ) from None
+
+    def get_method_url(self, name: str) -> str:
+        """
+        Build the URL for a registered widget method.
+        """
+        if name not in self.get_methods():
+            raise AttributeError(
+                f"Widget method '{name}' is not registered."
+            )
+
+        return self.build_url(action=name)

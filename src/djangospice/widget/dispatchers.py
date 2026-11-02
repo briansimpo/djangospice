@@ -21,28 +21,28 @@ class BaseDispatcher(ABC):
 
     @abstractmethod
     def can_dispatch(self) -> bool:
-        """Determine whether this dispatcher can handle the incoming request."""
-        pass
+        ...
 
     @abstractmethod
     def dispatch(self) -> Response:
-        """Execute the dispatch logic and return a framework Response."""
-        pass
+        ...
 
 
 class ActionDispatcher(BaseDispatcher):
     """Dispatches custom actions declared on the widget."""
+   
+    parameter = "action"
 
-    parameter: str = "action"
+    def can_dispatch(self):
+        name = self.request.GET.get(self.parameter)
 
-    def can_dispatch(self) -> bool:
-        """Check if an action key is present in request GET or POST data."""
-        data = self.widget.request_data
-        return bool(data and self.parameter in data)
+        return bool(
+            name and self.widget.get_action_collection().get(name)
+        )
 
-    def dispatch(self) -> Response:
-        """Locate and execute the requested action with full context."""
-        name = self.widget.request_value(self.parameter)
+    def dispatch(self):
+        name = self.request.GET.get(self.parameter)
+
         actions = self.widget.get_action_collection()
         action = actions.require(name)
 
@@ -58,15 +58,68 @@ class ActionDispatcher(BaseDispatcher):
 
 
 class MethodDispatcher(BaseDispatcher):
-    """Fallback dispatcher that maps request HTTP methods directly to widget handlers."""
+    """Dispatches registered widget methods through the action parameter."""
+
+    parameter = "action"
+
+    def can_dispatch(self):
+        name = self.request.GET.get(self.parameter)
+
+        return bool(
+            name and name in self.widget.get_methods()
+        )
+
+    def dispatch(self):
+        name = self.request.GET.get(self.parameter)
+
+        methods = self.widget.get_methods()
+        method = methods.get(name)
+
+        if method is None:
+            from django.http import HttpResponseNotFound
+            return HttpResponseNotFound("Widget method not found.")
+
+        return method.execute(
+            self.widget,
+            self.request,
+        )
+
+
+class UnknownActionDispatcher(BaseDispatcher):
+    """Rejects unregistered widget actions."""
+
+    parameter = "action"
+
+    def can_dispatch(self) -> bool:
+        name = self.request.GET.get(self.parameter)
+
+        return bool(
+            name and name in self.widget.get_methods()
+        )
+        
+
+    def dispatch(self) -> Response:
+        from django.http import HttpResponseNotFound
+
+        return HttpResponseNotFound(
+            "Widget action not found."
+        )
+
+
+class HttpDispatcher(BaseDispatcher):
+    """Dispatches standard HTTP methods to widget handlers."""
 
     def can_dispatch(self) -> bool:
         return True
 
     def dispatch(self) -> Response:
-        handler = getattr(self.widget, self.request.method.lower(), None)
+        handler = getattr(
+            self.widget,
+            self.request.method.lower(),
+            None,
+        )
 
-        if handler is None or not callable(handler):
+        if not callable(handler):
             return self.widget.method_not_allowed()
 
         return handler()
