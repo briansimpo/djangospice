@@ -4,6 +4,13 @@
 
     const Djangospice = global.Djangospice ??= {};
 
+    const EVENT_TYPES = [
+        "notification_created",
+        "notification_read",
+        "notification_unread",
+        "notification_deleted",
+    ];
+
     class Notification {
         constructor() {
             this.listeners = new Map();
@@ -21,6 +28,41 @@
             return this;
         }
 
+        /**
+         * Normalize serialized Python values recursively.
+         */
+        normalize(value) {
+            if (value === null || value === undefined) {
+                return value;
+            }
+
+            if (Array.isArray(value)) {
+                return value.map(item => this.normalize(item));
+            }
+
+            if (typeof value !== "object") {
+                return value;
+            }
+
+            if (value.__type__ === "dataclass") {
+                return this.normalize(value.data);
+            }
+
+            if (value.__type__ === "uuid_primitive") {
+                return value.value;
+            }
+
+            return Object.fromEntries(
+                Object.entries(value).map(([key, item]) => [
+                    key,
+                    this.normalize(item),
+                ])
+            );
+        }
+
+        /**
+         * Subscribe to original server event names.
+         */
         bindRealtimeEvents() {
             const realtime = Djangospice.Realtime;
 
@@ -28,27 +70,40 @@
 
             this.realtime = realtime;
 
-            const handler = event => {
-                const notification =
-                    event?.notification ??
-                    event?.data?.notification ??
-                    event?.data ??
-                    event;
+            for (const eventName of EVENT_TYPES) {
+                const handler = event => {
+                    this.handleRealtimeEvent(eventName, event);
+                };
 
-                if (!notification) return;
+                realtime.on(eventName, handler);
 
-                this.emit("created", notification);
-            };
+                this.realtimeHandlers.push([
+                    eventName,
+                    handler,
+                ]);
+            }
+        }
 
-            realtime.on("notification_created", handler);
+        /**
+         * Forward the complete normalized server payload.
+         */
+        handleRealtimeEvent(eventName, event) {
+            const payload = this.normalize(event?.data ?? event);
 
-            this.realtimeHandlers.push([
-                "notification_created",
-                handler,
-            ]);
+            if (!payload || typeof payload !== "object") {
+                return;
+            }
+
+            this.emit(eventName, payload);
         }
 
         on(event, callback) {
+            if (typeof callback !== "function") {
+                throw new TypeError(
+                    "Notification listener must be a function."
+                );
+            }
+
             if (!this.listeners.has(event)) {
                 this.listeners.set(event, new Set());
             }
@@ -93,5 +148,3 @@
     Djangospice.Notification ??= new Notification();
 
 })(globalThis);
-
-

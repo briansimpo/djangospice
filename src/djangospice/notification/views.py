@@ -19,6 +19,7 @@ from .apps import namespace
 from .helpers import (
     dispatch_notification_deleted,
     dispatch_notification_read,
+    dispatch_notification_read_all,
     dispatch_notification_unread,
     serialize_notification,
     serialize_notifications,
@@ -69,7 +70,7 @@ def mark_all_as_read(request):
 
         for notification in notifications:
             notification.mark_as_read()
-            dispatch_notification_read(notification)
+    dispatch_notification_read_all(request.user)
 
     return _redirect_next(request, "unread")
 
@@ -87,7 +88,7 @@ def mark_as_read(request, slug=None):
 
     if notification.unread:
         notification.mark_as_read()
-        dispatch_notification_read(notification)
+        dispatch_notification_read(notification, request.user)
 
     return _redirect_next(request, "unread")
 
@@ -105,7 +106,7 @@ def mark_as_unread(request, slug=None):
 
     if not notification.unread:
         notification.mark_as_unread()
-        dispatch_notification_unread(notification)
+        dispatch_notification_unread(notification, request.user)
 
     return _redirect_next(request, "unread")
 
@@ -193,7 +194,7 @@ def api_mark_as_read(request, slug=None):
 
     if notification.unread:
         notification.mark_as_read()
-        dispatch_notification_read(notification)
+        dispatch_notification_read(notification, request.user)
 
     return JsonResponse(
         {
@@ -216,7 +217,7 @@ def api_mark_as_unread(request, slug=None):
 
     if not notification.unread:
         notification.mark_as_unread()
-        dispatch_notification_unread(notification)
+        dispatch_notification_unread(notification, request.user)
 
     return JsonResponse(
         {
@@ -236,7 +237,7 @@ def api_mark_all_as_read(request):
 
         for notification in notifications:
             notification.mark_as_read()
-            dispatch_notification_read(notification)
+        dispatch_notification_read_all(request.user)
 
     return JsonResponse(
         {

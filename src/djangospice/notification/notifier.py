@@ -123,6 +123,7 @@ class Notifier:
 
         return deliveries
 
+
     @classmethod
     def send(cls, users: UserCollection, notification: NotificationInput, actor: models.Model | None = None,  target: models.Model | None = None, notification_kwargs: dict[str, Any] | None = None) -> list[Notification]:
 
@@ -158,7 +159,7 @@ class Notifier:
                 cls.create_deliveries(notification_record, channels)
 
                 # 6. Dispatch event
-                dispatch_notification_created(notification_record)
+                dispatch_notification_created(notification_record, user)
 
                 notifications.append(notification_record)
 

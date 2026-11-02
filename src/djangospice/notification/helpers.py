@@ -10,18 +10,16 @@ from .events import (
     NotificationCreated,
     NotificationDeleted,
     NotificationRead,
+    NotificationReadAll,
     NotificationUnread,
 )
 from .models import Notification
-from .payload import NotificationPayload
+from .payload import payload
 
-
-def notification_payload(notification: Notification) -> NotificationPayload:
-    return NotificationPayload.from_model(notification)
 
 
 def serialize_notification(notification: Notification) -> dict:
-    return notification_payload(notification).to_dict()
+    return payload(notification).to_dict()
 
 
 def serialize_notifications(notifications: Iterable[Notification]) -> list[dict]:
@@ -30,50 +28,76 @@ def serialize_notifications(notifications: Iterable[Notification]) -> list[dict]
         for notification in notifications
     ]
 
+def get_unread_notification_count(user):
+    if user is not None:
+        notifications = user.notifications.unread()
+        return notifications.count()
+    return 0
 
-def dispatch_notification_created(notification: Notification) -> None:
-    payload = notification_payload(notification)
+
+def dispatch_notification_created(notification: Notification, user=None) -> None:
+    notification = payload(notification)
+    unread_count = get_unread_notification_count(user)
 
     transaction.on_commit(
         lambda: Event.dispatch(
             NotificationCreated(
-                payload=payload,
+                notification=notification,
+                unread_count=unread_count
             )
         )
     )
 
 
-def dispatch_notification_read(notification: Notification) -> None:
-    payload = notification_payload(notification)
+def dispatch_notification_read(notification: Notification, user=None) -> None:
+    notification = payload(notification)
+    unread_count = get_unread_notification_count(user)
 
     transaction.on_commit(
         lambda: Event.dispatch(
             NotificationRead(
-                payload=payload,
+                notification=notification,
+                unread_count=unread_count
             )
         )
     )
 
 
-def dispatch_notification_unread(notification: Notification) -> None:
-    payload = notification_payload(notification)
+
+def dispatch_notification_read_all(user=None) -> None:
+    unread_count = get_unread_notification_count(user)
+    
+    transaction.on_commit(
+        lambda: Event.dispatch(
+            NotificationReadAll(
+                unread_count=unread_count
+            )
+        )
+    )
+
+
+
+def dispatch_notification_unread(notification: Notification, user=None) -> None:
+    notification = payload(notification)
+    unread_count = get_unread_notification_count(user)
 
     transaction.on_commit(
         lambda: Event.dispatch(
             NotificationUnread(
-                payload=payload,
+                notification=notification,
+                unread_count=unread_count
             )
         )
     )
 
 
 def dispatch_notification_deleted(notification: Notification) -> None:
-    payload = notification_payload(notification)
+    notification = payload(notification)
 
     transaction.on_commit(
         lambda: Event.dispatch(
             NotificationDeleted(
-                payload=payload,
+                notification=notification,
             )
         )
     )
