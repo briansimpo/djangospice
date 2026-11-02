@@ -9,13 +9,13 @@ from django.http import HttpRequest
 
 
 @dataclass(frozen=True, slots=True)
-class AppContext:
+class AppMetadata:
     """Current Djangospice application context for a request."""
 
     app: Any | None = None
     app_name: str | None = None
     app_label: str | None = None
-    app_verbose: str | None = None
+    app_title: str | None = None
 
 
     def as_dict(self) -> dict[str, Any]:
@@ -23,7 +23,7 @@ class AppContext:
             "app": self.app,
             "app_name": self.app_name,
             "app_label": self.app_label,
-            "app_verbose": self.app_verbose,
+            "app_title": self.app_title,
         }
 
 
@@ -38,15 +38,15 @@ def get_current_app(request: HttpRequest):
         return None
 
 
-def get_app_context(request: HttpRequest) -> AppContext:
+def get_app_metadata(request: HttpRequest) -> AppMetadata:
     app = get_current_app(request)
     if app is None:
-        return AppContext()
+        return AppMetadata()
 
-    return AppContext(
+    return AppMetadata(
         app=app,
         app_name=app.name,
         app_label=app.label,
-        app_verbose=app.verbose_name,
+        app_title=app.verbose_name,
     )
 
