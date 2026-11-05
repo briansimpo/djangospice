@@ -38,6 +38,7 @@ class WidgetExecutor:
         self.widget.request = self.request
         self.widget.user = getattr(self.request, "user", None)
         
+        self.widget.initialize()
         self.widget.configure()
         self.widget.authorize()
 

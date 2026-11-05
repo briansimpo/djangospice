@@ -40,12 +40,13 @@ class NotificationBuilder:
         
         message = notification.to_database(user)
         messages = cls.messages(user, notification, channels)
+        actions = [action.to_dict() for action in message.actions]
 
         metadata = Metadata(
             type=notification.type,
             category=notification.category,
             url=message.url,
-            actions=message.actions,
+            actions=actions,
             icon=message.icon,
             image=message.image,
             context=message.context,

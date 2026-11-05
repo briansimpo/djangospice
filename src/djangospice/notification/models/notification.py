@@ -132,6 +132,37 @@ class Notification(BaseModel):
             return _('%(actor)s %(verb)s %(action_object)s %(timesince)s ago') % ctx
         return _('%(actor)s %(verb)s %(timesince)s ago') % ctx
 
+    
+    def __getattr__(self, name):
+        """
+        Expose JSON data keys as notification attributes.
+
+        Example:
+            notification.data = {"url": "/messages/", "message": "Hello"}
+
+            notification.url
+            notification.message
+        """
+        if name.startswith("_"):
+            raise AttributeError(
+                f"{self.__class__.__name__!s} has no attribute {name!r}"
+            )
+
+        try:
+            data = object.__getattribute__(self, "data")
+        except AttributeError:
+            raise AttributeError(
+                f"{self.__class__.__name__!s} has no attribute {name!r}"
+            ) from None
+
+        if isinstance(data, dict) and name in data:
+            return data[name]
+
+        raise AttributeError(
+            f"{self.__class__.__name__!s} has no attribute {name!r}"
+        )
+
+
     def timesince(self, now=None):
         """
         Shortcut for the ``django.utils.timesince.timesince`` function of the

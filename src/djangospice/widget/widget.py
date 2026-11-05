@@ -118,6 +118,9 @@ class Widget(HTMLComponent):
         cls._configure_identity()
         cls._normalize_actions()
 
+    def initialize(self):
+        pass
+
     @classmethod
     def _configure_identity(cls) -> None:
         if cls.__dict__.get("name") is None:

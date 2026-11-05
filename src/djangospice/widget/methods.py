@@ -1,5 +1,5 @@
-
 from functools import update_wrapper
+from inspect import Parameter, signature
 from typing import Callable
 
 
@@ -36,10 +36,22 @@ class Method:
         return instance.get_method_url(self.name)
 
     def execute(self, widget, request, *args, **kwargs):
-        if request.method.upper() not in self.methods:
-            from django.http import HttpResponseNotAllowed
+        from django.http import HttpResponseNotAllowed
 
+        if request.method.upper() not in self.methods:
             return HttpResponseNotAllowed(self.methods)
 
-        return self.func(widget, request, *args, **kwargs)
+        parameters = signature(self.func).parameters
 
+        accepts_request = (
+            "request" in parameters
+            or any(
+                parameter.kind == Parameter.VAR_POSITIONAL
+                for parameter in parameters.values()
+            )
+        )
+
+        if accepts_request:
+            return self.func(widget, request, *args, **kwargs)
+
+        return self.func(widget, *args, **kwargs)

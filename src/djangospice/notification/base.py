@@ -66,7 +66,6 @@ class BaseNotification(ABC):
         """
         return (
             Channel.EMAIL,
-            Channel.SMS,
         )
 
     def supports(self, channel: Channel, user) -> bool:

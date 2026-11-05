@@ -197,7 +197,7 @@ def djangospice_bundle():
 
     if not manifest:
         if settings.DEBUG:
-            raise RuntimeError("Djangospice assets have not been built. Run python manage.py djangospice_assets build.")
+            raise RuntimeError("Djangospice assets have not been built. Run python manage.py assets build.")
         return ""
 
     tags = []
