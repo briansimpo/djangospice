@@ -224,7 +224,7 @@ class Widget(HTMLComponent):
 
     @property
     def id(self) -> str:
-        return f"{self.name}-widget"
+        return f"{self.name}_widget"
     
 
     # ------------------------------------------------------------------

@@ -4,8 +4,8 @@ from typing import Any
 
 import django_tables2 as tables
 
-from djangospice.table_widget.columns import RowActionsColumn
-from djangospice.table_widget.fields import TableField
+from djangospice.table.columns import RowActionsColumn
+from djangospice.table.fields import TableField
 
 from .page import TablePaginationComposer
 
