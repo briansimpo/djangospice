@@ -7,23 +7,13 @@ from djangospice.core.serializable import Serializable
 
 
 @dataclass(frozen=True, slots=True)
-class Link(Serializable):
-    """
-    Describes where a notification should take the user.
-    """
-
-    url: str
-    parameters: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True, slots=True)
 class Action(Serializable):
     """
     Represents an action available to the user from a notification.
     """
 
     label: str
-    link: Link
+    url: str
     icon: str | None = None
     style: Literal[
         "primary",
@@ -45,7 +35,7 @@ class Metadata(Serializable):
     type: str
     category: str
 
-    link: Link | None = None
+    url: str | None = None
     actions: list[Action] = field(default_factory=list)
 
     icon: str | None = None

@@ -44,7 +44,7 @@ class NotificationBuilder:
         metadata = Metadata(
             type=notification.type,
             category=notification.category,
-            link=message.link,
+            url=message.url,
             actions=message.actions,
             icon=message.icon,
             image=message.image,

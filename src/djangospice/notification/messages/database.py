@@ -1,5 +1,5 @@
 from dataclasses import  dataclass, field
-from djangospice.notification.metadata import Action, Link
+from djangospice.notification.metadata import Action
 from .base import Message
 
 
@@ -21,7 +21,7 @@ class DatabaseMessage(Message):
     icon: str | None = None
     image: str | None = None
     # Executed when the notification itself is clicked.
-    link: Link | None = None
+    url: str | None = None
     # Optional actions rendered by the client.
     actions: list[Action] = field(default_factory=list)
 
