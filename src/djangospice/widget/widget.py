@@ -4,12 +4,13 @@ from copy import deepcopy
 from typing import Any, ClassVar
 from urllib.parse import urlencode
 
+from slugify import slugify
+
 from django.apps import apps
-from django.core.exceptions import AppRegistryNotReady
+from django.core.exceptions import AppRegistryNotReady, PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 from django.utils.text import camel_case_to_spaces
-from slugify import slugify
 
 from djangospice.core.formatting import snake_case
 from djangospice.htmx.component import HTMLComponent
@@ -82,6 +83,10 @@ class Widget(HTMLComponent):
     cache_timeout: ClassVar[int | None] = None
 
     template_name: ClassVar[str | None] = None
+
+    login_required: ClassVar[bool] = False
+    admin_required: ClassVar[bool] = False
+    permissions: ClassVar[tuple[str, ...]] = ()
 
     # ------------------------------------------------------------------
     # Initialization & Subclass Configuration
@@ -403,8 +408,19 @@ class Widget(HTMLComponent):
         return data.getlist(name)
 
     def authorize(self) -> None:
+        user = self.user
+
         if not self.visible():
             raise WidgetNotVisible
+
+        if self.login_required and not user.is_authenticated:
+            raise PermissionDenied
+
+        if self.admin_required and not user.is_staff:
+            raise PermissionDenied
+
+        if self.permissions and not user.has_perms(self.permissions):
+            raise PermissionDenied
 
     def visible(self) -> bool:
         if not self.enabled:

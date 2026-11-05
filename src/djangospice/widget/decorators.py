@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
@@ -70,3 +69,4 @@ def patch(func):
 
 def delete(func):
     return Method(func, methods=("DELETE",))
+
