@@ -166,19 +166,16 @@ class Response:
         self._htmx.refresh = enabled
         return self
 
-    def event(self, event: Any, detail: Any = None, **values: Any) -> Self:
-        detail = values if values else detail
-        self._htmx.trigger(event, detail)
+    def emit(self, event: str,  **kwargs: Any) -> Self:
+        self._htmx.trigger(event, **kwargs)
         return self
 
-    def after_swap(self, event: Any, detail: Any = None, **values: Any) -> Self:
-        detail = values if values else detail
-        self._htmx.after_swap(event, detail)
+    def after_swap(self, event: Any, **kwargs: Any) -> Self:
+        self._htmx.after_swap(event, **kwargs)
         return self
 
-    def after_settle(self, event: Any, detail: Any = None, **values: Any) -> Self:
-        detail = values if values else detail
-        self._htmx.after_settle(event, detail)
+    def after_settle(self, event: Any, **kwargs: Any) -> Self:
+        self._htmx.after_settle(event, **kwargs)
         return self
 
     def fragment(self,template: str, **context: Any) -> Self:

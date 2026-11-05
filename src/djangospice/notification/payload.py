@@ -3,9 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from djangospice.core.serializable import Serializable
-from djangospice.utils import safe_reverse
-
-from .apps import namespace
 from .models import Notification
 
 
@@ -23,12 +20,13 @@ class Payload(Serializable):
     verb: str
     description: str
     level: str
+    slug: str | None = None
     text: str | None = None
     unread: bool | None = None
     public: bool | None = None
-    urls: dict[str, str] = None
+    timespan: str | None = None
 
-    
+
     @classmethod
     def from_model(cls, notification: Notification) -> "Payload":
         slug = str(notification.slug)
@@ -42,25 +40,10 @@ class Payload(Serializable):
             unread=notification.unread,
             public=notification.public,
             text=str(notification),
-            urls={
-                "read":safe_reverse(
-                    "api-mark-read",
-                    namespace,
-                    kwargs={"slug": slug},
-                ),
-                "unread":safe_reverse(
-                    "api-mark-unread",
-                    namespace,
-                    kwargs={"slug": slug},
-                ),
-                "delete":safe_reverse(
-                    "api-delete",
-                    namespace,
-                    kwargs={"slug": slug},
-                ),
-            },
+            slug=slug,
+            timespan=notification.timespan,
         )
-
+            
 
 def payload(notification: Notification):
     return Payload.from_model(notification)

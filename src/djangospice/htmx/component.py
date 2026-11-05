@@ -122,6 +122,40 @@ class HTMLComponent(Serializable):
             state.encode()
         ).hexdigest()[:8]
 
+    
+    def get_extra_attributes(self) -> dict[str, Any]:
+        """
+        Hook for subclasses to provide additional HTML attributes.
+        """
+        return {}
+
+    
+    def get_html_attributes(self) -> dict[str, Any]:
+        """
+        Return the complete attribute mapping for the component.
+
+        This method composes standard HTML attributes, subclass-provided
+        attributes, and HTMX attributes. It does not render HTML.
+        """
+        attributes = dict(self.attrs)
+
+        attributes.update(
+            self.get_extra_attributes()
+        )
+
+        if self.id:
+            attributes["id"] = self.id
+
+        if self.css_class:
+            attributes["class"] = self.css_class
+
+        attributes.update(
+            self.htmx.to_dict()
+        )
+
+        return attributes
+
+
     @property
     def id(self) -> str:
         """
@@ -154,49 +188,19 @@ class HTMLComponent(Serializable):
     # HTML Attributes
     # ------------------------------------------------------------------
 
-    @property
-    def html_attributes(self) -> dict[str, Any]:
-        """
-        Return the complete attribute mapping for the component.
-
-        This method composes standard HTML attributes, subclass-provided
-        attributes, and HTMX attributes. It does not render HTML.
-        """
-        attributes = dict(self.attrs)
-
-        attributes.update(
-            self.get_extra_attributes()
-        )
-
-        if self.id:
-            attributes["id"] = self.id
-
-        if self.css_class:
-            attributes["class"] = self.css_class
-
-        attributes.update(
-            self.htmx.to_dict()
-        )
-
-        return attributes
 
     @property
-    def rendered_attributes(self) -> SafeString:
+    def html_attr(self) -> SafeString:
         """
         Return the component's attributes rendered as safe HTML.
         """
         return mark_safe(
             HTMLAttributeRenderer.render(
-                self.html_attributes
+                self.get_html_attributes()
             )
         )
  
-    def get_extra_attributes(self) -> dict[str, Any]:
-        """
-        Hook for subclasses to provide additional HTML attributes.
-        """
-        return {}
-
+   
     # ------------------------------------------------------------------
     # Template & Context
     # ------------------------------------------------------------------
@@ -219,11 +223,10 @@ class HTMLComponent(Serializable):
         """
         context = dict(self.context)
 
-        context["html_attrs"] = self.rendered_attributes
-
         context.update(self.kwargs)
 
         return context
+
 
     # ------------------------------------------------------------------
     # Content
@@ -240,26 +243,7 @@ class HTMLComponent(Serializable):
         """
         return None
 
-    # ------------------------------------------------------------------
-    # Assets
-    # ------------------------------------------------------------------
-
-    def get_assets(self) -> dict[str, list[str]]:
-        """
-        Return assets required by the component.
-
-        Example::
-
-            return {
-                "js": ["js/chart.js"],
-                "css": ["css/chart.css"],
-            }
-        """
-        return {
-            "js": [],
-            "css": [],
-        }
-
+   
     # ------------------------------------------------------------------
     # Rendering
     # ------------------------------------------------------------------

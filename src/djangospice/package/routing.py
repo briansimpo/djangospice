@@ -7,6 +7,7 @@ from typing import Iterable
 from django.apps import AppConfig, apps
 from django.urls import URLPattern, URLResolver, include, path
 
+from djangospice.package.helpers import is_djangospice_app
 from djangospice.package.module import Module
 
 
@@ -44,13 +45,6 @@ class Routing:
         return urlpatterns
 
     @staticmethod
-    def is_djangospice_app(config: AppConfig) -> bool:
-        """
-        Identify Djangospice applications and extensions.
-        """
-        return getattr(config, "djangospice_app", False) is True
-
-    @staticmethod
     def import_optional(module_path: str):
         """
         Import an optional URL module.
@@ -86,7 +80,7 @@ class Routing:
             app_configs = apps.get_app_configs()
 
         for config in app_configs:
-            if not cls.is_djangospice_app(config):
+            if not is_djangospice_app(config):
                 continue
 
             module_path = f"{config.name}.urls"

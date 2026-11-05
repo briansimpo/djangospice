@@ -3,12 +3,13 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, ClassVar
 from urllib.parse import urlencode
-from slugify import slugify
+
 from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 from django.utils.text import camel_case_to_spaces
+from slugify import slugify
 
 from djangospice.core.formatting import snake_case
 from djangospice.htmx.component import HTMLComponent
@@ -16,14 +17,13 @@ from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
 from djangospice.widget.methods import Method
 
-from .actions import Action, Actions, ActionContext, BoundAction
+from .actions import Action, ActionContext, Actions, BoundAction
+from .apps import namespace
 from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
 from .exceptions import WidgetNotVisible
 from .identifier import WidgetIdentifier
 from .interaction import Interaction
 from .querystate import QueryState
-from .apps import namespace
-
 
 _WIDGET_SUFFIX = "Widget"
 
@@ -74,7 +74,7 @@ class Widget(HTMLComponent):
 
     namespace: ClassVar[str] = namespace
 
-    lazy: ClassVar[bool] = False
+    lazy: ClassVar[bool] = True
 
     refreshable: ClassVar[bool] = False
     refresh_interval: ClassVar[int | None] = None
@@ -84,7 +84,7 @@ class Widget(HTMLComponent):
     template_name: ClassVar[str | None] = None
 
     # ------------------------------------------------------------------
-    # Initialization
+    # Initialization & Subclass Configuration
     # ------------------------------------------------------------------
 
     def __init__(
@@ -105,31 +105,12 @@ class Widget(HTMLComponent):
         self.children: list[Widget] = []
         self.slots: dict[str, list[Widget]] = {}
 
-        self.initialize()
-        self.configure()
-
         if children:
             self.add_children(*children)
 
         if slots:
             for name, widgets in slots.items():
                 self.set_slot(name, *widgets)
-
-    def initialize(self) -> None:
-        """
-        Post-construction initialization hook.
-        """
-        pass
-
-    def configure(self) -> None:
-        """
-        Instance-level composition and slot population hook.
-        """
-        pass
-
-    # ------------------------------------------------------------------
-    # Subclass Configuration
-    # ------------------------------------------------------------------
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -174,12 +155,12 @@ class Widget(HTMLComponent):
         Resolve the canonical widget identifier as a snake_case slug.
 
         Examples:
-            OrgUnitWidget             -> org_unit
-            UserStatsWidget           -> user_stats
-            StudentAttendanceWidget   -> student_attendance
-            DashboardWidget           -> dashboard
-            XMLParserWidget           -> xml_parser
-            APIKeyWidget              -> api_key
+            OrgUnitWidget           -> org_unit
+            UserStatsWidget         -> user_stats
+            StudentAttendanceWidget -> student_attendance
+            DashboardWidget         -> dashboard
+            XMLParserWidget         -> xml_parser
+            APIKeyWidget            -> api_key
         """
         name = cls._identity_class_name()
         name = snake_case(name)
@@ -238,6 +219,11 @@ class Widget(HTMLComponent):
     def widget_key(self) -> str:
         return str(self.identifier)
 
+    @property
+    def id(self) -> str:
+        return f"{self.name}-widget"
+    
+
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
@@ -284,7 +270,7 @@ class Widget(HTMLComponent):
     def get_action_collection(self) -> Actions:
         return self._actions
 
-    def bind_action(self, action: Action,context: ActionContext) -> BoundAction:
+    def bind_action(self, action: Action, context: ActionContext) -> BoundAction:
         return BoundAction(
             action=action,
             context=context,
@@ -332,9 +318,7 @@ class Widget(HTMLComponent):
 
     def add_to_slot(self, name: str, widget: Widget) -> Widget:
         self._attach(widget)
-
         self.slots.setdefault(name, []).append(widget)
-
         return widget
 
     def add_to_slots(self, **slots: Widget | list[Widget] | tuple[Widget, ...]) -> None:
@@ -352,7 +336,7 @@ class Widget(HTMLComponent):
     def has_slot(self, name: str) -> bool:
         return bool(self.slots.get(name))
 
-    def remove_from_slot(self,name: str,widget: Widget) -> None:
+    def remove_from_slot(self, name: str, widget: Widget) -> None:
         widgets = self.slots.get(name)
 
         if not widgets or widget not in widgets:
@@ -475,10 +459,12 @@ class Widget(HTMLComponent):
     def get_data(self) -> dict:
         return self.request_data
 
+    # ------------------------------------------------------------------
+    # URLs, Navigation & HTMX
+    # ------------------------------------------------------------------
 
-    def get_widget_url(self):
-     
-       return safe_reverse(
+    def get_widget_url(self) -> str:
+        return safe_reverse(
             view_name="widget_view",
             namespace=self.namespace,
             kwargs={
@@ -487,43 +473,8 @@ class Widget(HTMLComponent):
             },
         )
 
-    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
-        state = state or self.query_state
-
-        for name, value in params.items():
-            state = state.set(name, value)
-
-        query = state.encode()
-
-        if query:
-            return f"{self.base_url}?{query}"
-
-        return self.base_url
-    
-    
-    def interaction(self,url: str, method: str = "GET",target: str | None = None,swap: str = "outerHTML",push_url: bool = True,) -> Interaction:
-        htmx = (
-            self.htmx
-            .request(
-                method=method,
-                url=url,
-            )
-            .target_to(target or "this")
-            .swap_to(swap)
-        )
-
-        if push_url:
-            htmx.push(push_url)
-
-        return Interaction(
-            url=url,
-            htmx=htmx,
-        )
-
-
     @property
     def url(self) -> str:
-       
         url = self.get_widget_url()
 
         params = {
@@ -538,6 +489,23 @@ class Widget(HTMLComponent):
         return url
 
     @property
+    def base_url(self) -> str:
+        return self.url.split("?", 1)[0]
+
+    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
+        state = state or self.query_state
+
+        for name, value in params.items():
+            state = state.set(name, value)
+
+        query = state.encode()
+
+        if query:
+            return f"{self.base_url}?{query}"
+
+        return self.base_url
+
+    @property
     def query_state(self) -> QueryState:
         if self.request is None:
             return QueryState()
@@ -546,11 +514,6 @@ class Widget(HTMLComponent):
             self.request.GET,
         )
 
-    @property
-    def base_url(self) -> str:
-        return self.url.split("?", 1)[0]
-
-   
     @property
     def is_lazy_fetch(self) -> bool:
         request = self.request
@@ -570,7 +533,55 @@ class Widget(HTMLComponent):
             and match.kwargs.get(WIDGET_NAME_KEY) == self.name
         )
 
-  
+    def interaction(
+        self,
+        url: str,
+        method: str = "GET",
+        target: str | None = None,
+        swap: str = "outerHTML",
+        push_url: bool = True,
+    ) -> Interaction:
+        htmx = (
+            self.htmx
+            .request(
+                method=method,
+                url=url,
+            )
+            .target_to(target or "this")
+            .swap_to(swap)
+        )
+
+        if push_url:
+            htmx.push(push_url)
+
+        return Interaction(
+            url=url,
+            htmx=htmx,
+        )
+
+    def get_refresh_event(self) -> str:
+        return f"refresh_{self.id}"
+
+    def get_refresh_target(self) -> str:
+        return "this"
+
+    def get_refresh_swap(self) -> str:
+        return "outerHTML"
+
+    def get_refresh_command(self) -> str:
+        return f"{self.get_refresh_event()} from:body"
+
+    def configure(self) -> None:
+        (
+            self.htmx.get(self.url)
+            .target_to(self.get_refresh_target())
+            .trigger_on(self.get_refresh_command())
+            .swap_to(self.get_refresh_swap())
+        )
+
+    def refresh_widget(self) -> Response:
+        return self.response().emit(self.get_refresh_event())
+
     # ------------------------------------------------------------------
     # Caching
     # ------------------------------------------------------------------
@@ -618,7 +629,7 @@ class Widget(HTMLComponent):
 
         return context
 
-    def render(self, request: HttpRequest | None = None):
+    def render(self, request: HttpRequest | None = None) -> Any:
         """
         Render the widget through the HTMLComponent pipeline.
 
@@ -627,7 +638,6 @@ class Widget(HTMLComponent):
         - ``get_content()``, or
         - ``template_name`` + ``get_context()``.
         """
-
         actual_request = (
             request
             if request is not None
@@ -639,7 +649,7 @@ class Widget(HTMLComponent):
         )
 
     # ------------------------------------------------------------------
-    # HTTP Response
+    # HTTP Response & Methods
     # ------------------------------------------------------------------
 
     def response(self) -> Response:
@@ -670,11 +680,6 @@ class Widget(HTMLComponent):
 
     def method_not_allowed(self) -> Response:
         return Response.empty(status=405)
-
-
-    # ------------------------------------------------------------------
-    # Methods & Actions
-    # ------------------------------------------------------------------
 
     @classmethod
     def get_methods(cls) -> dict[str, Method]:

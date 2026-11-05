@@ -1,19 +1,5 @@
-from pathlib import Path
-from typing import Iterable
-
-from djangospice.package.discovery import PackageDiscovery
-
-
-def djangospice_packages(project_dir: str | Path, app_directories: Iterable[str] = ("apps",)) -> list[str]:
+def is_djangospice_app(config) -> bool:
     """
-    Discover Djangospice built-in and project applications.
-
-    Returns additional INSTALLED_APPS entries.
+    Identify Djangospice applications and extensions.
     """
-
-    discovery = PackageDiscovery(
-        project_dir=project_dir,
-        app_directories=app_directories,
-    )
-
-    return discovery.build()
+    return getattr(config, "djangospice_app", False) is True

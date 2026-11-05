@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
-
+from urllib.parse import urlencode
 from django import template
+from django.utils.html import format_html
 from django.utils.safestring import SafeString, mark_safe
 
 from djangospice.widget.exceptions import WidgetNotVisible
@@ -70,3 +71,23 @@ def render_slot(context: template.Context, widget: Widget, name: str) -> SafeStr
 
     return mark_safe("".join(rendered))
 
+
+@register.simple_tag
+def widget_url(url, **kwargs):
+    """
+    Build a widget action URL with query parameters.
+
+    Usage:
+        {% widget_url widget.mark_as_read id=notification.id %}
+    """
+    if not url:
+        return ""
+
+    if not kwargs:
+        return url
+
+    query = urlencode(kwargs)
+
+    separator = "&" if "?" in url else "?"
+
+    return format_html("{}{}{}", url, separator, query)

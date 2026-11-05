@@ -11,7 +11,7 @@ from .builder import NotificationBuilder
 from .enums import Channel
 from .services import ChannelService
 from .celery import CeleryAdapter
-from .helpers import dispatch_notification_created
+from .helpers import notification_created
 
 
 # Type aliases
@@ -159,7 +159,7 @@ class Notifier:
                 cls.create_deliveries(notification_record, channels)
 
                 # 6. Dispatch event
-                dispatch_notification_created(notification_record, user)
+                notification_created(notification_record)
 
                 notifications.append(notification_record)
 

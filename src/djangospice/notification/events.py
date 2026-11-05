@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from djangospice.events import BaseEvent
 from .payload import Payload
@@ -7,7 +8,6 @@ from .payload import Payload
 @dataclass
 class NotificationEvent(BaseEvent):
     notification: Payload
-    unread_count: int
 
 
 @dataclass
@@ -33,4 +33,4 @@ class NotificationDeleted(NotificationEvent):
 @dataclass
 class NotificationReadAll(BaseEvent):
     name = "notification_read_all"
-    unread_count: int = None
+    recipient: Any

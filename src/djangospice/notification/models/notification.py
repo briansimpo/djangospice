@@ -146,7 +146,7 @@ class Notification(BaseModel):
 
     @property
     def timespan(self):
-        return self.naturalday()
+        return self.timesince()
     
     def mark_as_deleted(self):
         if not self.deleted:

@@ -2,6 +2,7 @@ from pathlib import Path, PurePosixPath
 from django.apps import apps
 from django.contrib.staticfiles import finders
 from djangospice.assets.conf import get_setting
+from djangospice.package.helpers import is_djangospice_app
 
 ASSET_TYPES = {
     "js": "js",
@@ -10,13 +11,6 @@ ASSET_TYPES = {
     "stylesheet": "css",
     "styles": "css",
 }
-
-
-def is_djangospice_app(config) -> bool:
-        """
-        Identify Djangospice applications and extensions.
-        """
-        return getattr(config, "djangospice_app", False) is True
 
 
 def _find(relative_path):

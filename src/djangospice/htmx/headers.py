@@ -126,15 +126,15 @@ class HTMXHeaders(Serializable):
     # Events API
     # ------------------------------------------------------------------
     
-    def trigger(self, name: str, /, **payload: Any) -> Self:
+    def trigger(self, name: str, **payload: Any) -> Self:
         self.event.add(name, **payload)
         return self
 
-    def after_swap(self, name: str, /, **payload: Any) -> Self:
+    def after_swap(self, name: str, **payload: Any) -> Self:
         self.after_swap_event.add(name, **payload)
         return self
 
-    def after_settle(self, name: str, /, **payload: Any) -> Self:
+    def after_settle(self, name: str, **payload: Any) -> Self:
         self.after_settle_event.add(name, **payload)
         return self
 
