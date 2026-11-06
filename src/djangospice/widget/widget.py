@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any, ClassVar
-from urllib.parse import urlencode
+
 
 from django.core.exceptions import  PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
-from djangospice.core.object import Classfiable
+from djangospice.core.object import Executable
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
-from djangospice.htmx.querystate import QueryState
 from djangospice.utils import safe_reverse
 
 from .actions import Action, ActionContext, Actions, BoundAction
@@ -19,8 +18,8 @@ from .exceptions import WidgetNotVisible
 from .apps import namespace
 
 
-class Widget(Classfiable, HTMLComponent):
-    """
+class Widget(Executable, HTMLComponent):
+    """ 
     Base class for Djangospice UI widgets.
 
     A Widget coordinates:
@@ -253,7 +252,22 @@ class Widget(Classfiable, HTMLComponent):
     # ------------------------------------------------------------------
     # Request & Visibility
     # ------------------------------------------------------------------
+    @property
+    def is_lazy_fetch(self) -> bool:
+        request = self.request
 
+        if (request is None or request.headers.get("HX-Request") != "true"):
+            return False
+
+        match = request.resolver_match
+
+        return bool(
+            match
+            and match.view_name == self.namespace
+            and match.kwargs.get("app_name") == self.app_name
+            and match.kwargs.get("class_name") == self.class_name
+        )
+    
     @property
     def request_data(self) -> Any:
         if self.request is None:
@@ -350,79 +364,6 @@ class Widget(Classfiable, HTMLComponent):
 
     def get_data(self) -> dict:
         return self.request_data
-
-    # ------------------------------------------------------------------
-    # URLs, Navigation & HTMX
-    # ------------------------------------------------------------------
-
-    @property
-    def url(self) -> str:
-        url =  self.build_widget_url()
-        params = {
-            key: value
-            for key, value in self.kwargs.items()
-            if key not in {"id", "app_name", "class_name"}
-        }
-
-        if params:
-            return f"{url}?{urlencode(params)}"
-
-        return url
-
-    @property
-    def base_url(self) -> str:
-        return self.url.split("?", 1)[0]
-
-    @property
-    def query_state(self) -> QueryState:
-        if self.request is None:
-            return QueryState()
-
-        return QueryState.from_querydict(
-            self.request.GET,
-        )
-
-    @property
-    def is_lazy_fetch(self) -> bool:
-        request = self.request
-
-        if (
-            request is None
-            or request.headers.get("HX-Request") != "true"
-        ):
-            return False
-
-        match = request.resolver_match
-
-        return bool(
-            match
-            and match.view_name == self.namespace
-            and match.kwargs.get("app_name") == self.app_name
-            and match.kwargs.get("class_name") == self.name
-        )
-
-    def build_widget_url(self):
-        return safe_reverse(
-            view_name="widget_view",
-            namespace=self.namespace,
-            kwargs={
-                "app_name": self.identity.app_name,
-                "class_name": self.identity.class_name,
-            },
-        )
-    
-    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
-        state = state or self.query_state
-
-        for name, value in params.items():
-            state = state.set(name, value)
-
-        query = state.encode()
-
-        if query:
-            return f"{self.base_url}?{query}"
-
-        return self.base_url
 
     def get_refresh_event(self) -> str:
         return f"refresh_{self.id}"
@@ -546,10 +487,13 @@ class Widget(Classfiable, HTMLComponent):
     def method_not_allowed(self) -> Response:
         return Response.empty(status=405)
 
-    def get_method_url(self, name: str) -> str:
-        """
-        Build the URL for a registered widget method.
-        """
-        self.check_method(name)
-
-        return self.build_url(action=name)
+    def get_dispatch_url(self):
+        return safe_reverse(
+            view_name="widget_view",
+            namespace=self.namespace,
+            kwargs={
+                "app_name": self.identity.app_name,
+                "class_name": self.identity.class_name,
+            },
+        )
+    

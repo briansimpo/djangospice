@@ -237,9 +237,9 @@ class LookupWidget(forms.Select):
 
     @property
     def lookup_url(self):
-        return self.url or self.build_widget_url()
+        return self.url or self.get_dispatch_url()
 
-    def build_widget_url(self) -> str:
+    def get_dispatch_url(self) -> str:
         return safe_reverse(
             view_name="lookup_view",
             namespace=namespace,

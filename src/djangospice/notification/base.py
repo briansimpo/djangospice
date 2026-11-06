@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from functools import cached_property
-
-from djangospice.core.object import Classfiable, Object
+from djangospice.core.object import Object
 
 from .enums import (
     Channel,
@@ -20,7 +19,7 @@ from .messages import (
 )
 
 
-class BaseNotification(Classfiable, Object):
+class BaseNotification(Object):
     """
     Base business notification.
 
@@ -35,7 +34,6 @@ class BaseNotification(Classfiable, Object):
         required (bool): Whether this notification bypasses user opt-out preferences.
         priority (int): Delivery priority (higher numbers indicate higher priority).
     """
-
     level: NotificationLevel = NotificationLevel.INFO
     category: str | None = None
     queue: str = "default"
@@ -150,11 +148,5 @@ class BaseNotification(Classfiable, Object):
         """Build a Telegram message payload."""
         return None
 
-    def __repr__(self) -> str:
-        """Returns a string representation of the BaseNotification instance."""
-        return (
-            f"<{self.__class__.__name__} "
-            f"type='{self.type}' "
-            f"level='{self.level}'>"
-        )
 
+   

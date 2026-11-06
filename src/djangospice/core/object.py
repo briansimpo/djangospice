@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from typing import Any, ClassVar, Callable
+from urllib.parse import urlencode
 from functools import update_wrapper
 from inspect import Parameter, signature
 from slugify import slugify
@@ -10,7 +11,7 @@ from slugify import slugify
 from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady
 from django.utils.text import camel_case_to_spaces
-
+from djangospice.htmx.querystate import QueryState
 from .formatting import snake_case
 
 
@@ -137,7 +138,7 @@ class ClassMethod:
         return self.func(widget, *args, **kwargs)
 
 
-class Classfiable:
+class Executable:
     suffix: ClassVar[str | None] = None
     app_name: ClassVar[str | None] = None
     class_name: ClassVar[str | None] = None
@@ -253,6 +254,14 @@ class Classfiable:
             raise AttributeError(
                 f"Class method '{name}' is not registered."
             )
+    
+    def get_method_url(self, name: str) -> str:
+        """
+        Build the URL for a registered widget method.
+        """
+        self.check_method(name)
+
+        return self.build_url(action=name)
         
     @property
     def identity(self) -> ClassIdentity:
@@ -267,6 +276,59 @@ class Classfiable:
         if self.suffix is None:
             return self.class_name
         return f"{self.class_name}_{self.suffix.lower()}"
+
+    @property
+    def url(self) -> str:
+        url =  self.get_dispatch_url()
+        params = {
+            key: value
+            for key, value in self.kwargs.items()
+            if key not in {"id", "app_name", "class_name"}
+        }
+
+        if params:
+            return f"{url}?{urlencode(params)}"
+
+        return url
+
+    @property
+    def base_url(self) -> str:
+        return self.url.split("?", 1)[0]
+
+    @property
+    def query_state(self) -> QueryState:
+        if self.request is None:
+            return QueryState()
+
+        return QueryState.from_querydict(
+            self.request.GET,
+        )
+
+    def get_dispatch_url(self):
+        raise NotImplementedError
     
+    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
+        state = state or self.query_state
+
+        for name, value in params.items():
+            state = state.set(name, value)
+
+        query = state.encode()
+
+        if query:
+            return f"{self.base_url}?{query}"
+
+        return self.base_url
+
+    def get_method_url(self, name: str) -> str:
+        """
+        Build the URL for a registered widget method.
+        """
+        self.check_method(name)
+
+        return self.build_url(action=name)
+
+
+
 
 
