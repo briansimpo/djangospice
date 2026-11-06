@@ -266,15 +266,15 @@ class TableWidget(Widget):
 
     @property
     def table_id(self) -> str:
-        return f"{self.name}-table"
+        return f"{self.class_name}_table"
 
     @property
     def table_wrapper_id(self) -> str:
-        return f"{self.name}-wrapper"
+        return f"{self.class_name}_wrapper"
 
     @property
     def selection_id(self) -> str:
-        return f"{self.name}-selection"
+        return f"{self.class_name}_selection"
 
     @property
     def htmx_target(self) -> str:
@@ -282,15 +282,15 @@ class TableWidget(Widget):
 
     @property
     def htmx_indicator(self) -> str:
-        return f"{self.name}-loader"
+        return f"{self.class_name}_loader"
 
     @property
     def context_menu_id(self) -> str:
-        return f"{self.name}-contextmenu"
+        return f"{self.class_name}_contextmenu"
 
     @property
     def page_size_id(self) -> str:
-        return f"{self.table_id}-pagesize"
+        return f"{self.table_id}_pagesize"
 
 
     # ==================================================================

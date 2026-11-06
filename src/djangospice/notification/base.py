@@ -1,5 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from functools import cached_property
+
+from djangospice.core.object import Classfiable, Object
 
 from .enums import (
     Channel,
@@ -18,7 +20,7 @@ from .messages import (
 )
 
 
-class BaseNotification(ABC):
+class BaseNotification(Classfiable, Object):
     """
     Base business notification.
 
@@ -155,4 +157,4 @@ class BaseNotification(ABC):
             f"type='{self.type}' "
             f"level='{self.level}'>"
         )
-        
+

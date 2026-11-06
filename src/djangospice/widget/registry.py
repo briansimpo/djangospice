@@ -6,6 +6,7 @@ from collections.abc import Iterator
 
 from django.core.exceptions import ImproperlyConfigured
 
+from djangospice.core.object import ClassIdentity
 from djangospice.package.module import Module
 
 from .widget import Widget
@@ -32,7 +33,7 @@ class WidgetRegistry:
         """
         Resolve the registry key for a Widget class.
         """
-        return f"{widget.app_name}.{widget.name}"
+        return ClassIdentity.from_class(widget).to_string()
 
     @classmethod
     def load(cls) -> None:
@@ -76,7 +77,7 @@ class WidgetRegistry:
                 "is not a Widget subclass."
             )
 
-        if not widget.name:
+        if not widget.class_name:
             raise ImproperlyConfigured(
                 f"Widget {widget.__module__}.{widget.__qualname__} "
                 "must define a name."
@@ -112,7 +113,7 @@ class WidgetRegistry:
             # ----------------------------------------------------------
             if existing_widget is not None:
                 raise ImproperlyConfigured(
-                    f"Widget '{widget.name}' in app "
+                    f"Widget '{widget.class_name}' in app "
                     f"'{widget.app_name}' is already registered by "
                     f"class "
                     f"`{existing_widget.__module__}."
@@ -132,24 +133,24 @@ class WidgetRegistry:
         return widget
 
     @classmethod
-    def unregister(cls, widget_key: str) -> None:
+    def unregister(cls, identifier: str) -> None:
         """
         Remove a Widget by its namespaced key.
         """
         with cls._lock:
-            cls._widgets.pop(widget_key, None)
+            cls._widgets.pop(identifier, None)
 
     @classmethod
-    def get(cls, widget_key: str) -> type[Widget] | None:
+    def get(cls, identifier: str) -> type[Widget] | None:
         """
         Retrieve a Widget by its namespaced key.
         """
         cls.load()
 
         with cls._lock:
-            if not cls.exists(widget_key):
-                raise Exception(f"Could not find '{widget_key}'. The widget is not registered" )
-            return cls._widgets.get(widget_key)
+            if not cls.exists(identifier):
+                raise Exception(f"Could not find '{identifier}'. The widget is not registered" )
+            return cls._widgets.get(identifier)
 
     @classmethod
     def widgets(cls) -> dict[str, type[Widget]]:
@@ -195,14 +196,14 @@ class WidgetRegistry:
             cls._initialized = False
 
     @classmethod
-    def exists(cls, widget_key: str) -> bool:
+    def exists(cls, identifier: str) -> bool:
         """
         Check whether a Widget is registered.
         """
         cls.load()
 
         with cls._lock:
-            return widget_key in cls._widgets
+            return identifier in cls._widgets
 
     @classmethod
     def groups(cls) -> dict[str | None, list[type[Widget]]]:

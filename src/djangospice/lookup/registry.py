@@ -4,7 +4,6 @@ from threading import RLock
 
 from .definition import LookupDefinition
 from .exceptions import LookupConfigurationError
-from .identifier import LookupIdentifier
 
 
 class LookupRegistry:
@@ -17,11 +16,11 @@ class LookupRegistry:
         self._lock = RLock()
 
     def register(self, definition: LookupDefinition) -> LookupDefinition:
-        key = definition.key
+        identifier = definition.identifier
 
         with self._lock:
-            if key in self._definitions:
-                existing = self._definitions[key]
+            if identifier in self._definitions:
+                existing = self._definitions[identifier]
 
                 raise LookupConfigurationError(
                     f"Lookup '{definition.identifier}' is already "
@@ -29,29 +28,29 @@ class LookupRegistry:
                     f"{existing.model._meta.label}."
                 )
 
-            self._definitions[key] = definition
+            self._definitions[identifier] = definition
 
         return definition
 
-    def get(self, identifier: LookupIdentifier) -> LookupDefinition:
+    def get(self, identifier: str) -> LookupDefinition:
     
         with self._lock:
             try:
-                return self._definitions[identifier.key]
+                return self._definitions[identifier]
             except KeyError as exc:
                 raise LookupConfigurationError(
                     f"Unknown lookup: {identifier}."
                 ) from exc
 
-    def has(self, identifier: LookupIdentifier) -> bool:
+    def has(self, identifier: str) -> bool:
         with self._lock:
-            return identifier.key in self._definitions
+            return identifier in self._definitions
 
-    def unregister(self, identifier: LookupIdentifier) -> None:
+    def unregister(self, identifier: str) -> None:
 
         with self._lock:
             self._definitions.pop(
-                identifier.key,
+                identifier,
                 None,
             )
 

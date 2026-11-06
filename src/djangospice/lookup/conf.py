@@ -20,12 +20,6 @@ DEFAULT_WIDGET_TOKEN_SALT = "djangospice.lookup.widget"
 DEFAULT_WIDGET_TOKEN_MAX_AGE = 300
 DEFAULT_REQUIRE_AUTHENTICATION = False
 
-APP_NAME_KEY = "app_name"
-MODEL_NAME_KEY = "model_name"
-APP_NAME_URL_KEY = "<slug:app_name>"
-MODEL_NAME_URL_KEY = "<slug:model_name>"
-
-
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------

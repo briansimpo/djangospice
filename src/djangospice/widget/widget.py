@@ -4,32 +4,22 @@ from copy import deepcopy
 from typing import Any, ClassVar
 from urllib.parse import urlencode
 
-from slugify import slugify
-
-from django.apps import apps
-from django.core.exceptions import AppRegistryNotReady, PermissionDenied
+from django.core.exceptions import  PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
-from django.utils.text import camel_case_to_spaces
 
-from djangospice.core.formatting import snake_case
+from djangospice.core.object import Classfiable
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
+from djangospice.htmx.querystate import QueryState
 from djangospice.utils import safe_reverse
-from djangospice.widget.methods import Method
 
 from .actions import Action, ActionContext, Actions, BoundAction
-from .apps import namespace
-from .conf import APP_NAME_KEY, WIDGET_NAME_KEY
 from .exceptions import WidgetNotVisible
-from .identifier import WidgetIdentifier
-from .interaction import Interaction
-from .querystate import QueryState
-
-_WIDGET_SUFFIX = "Widget"
+from .apps import namespace
 
 
-class Widget(HTMLComponent):
+class Widget(Classfiable, HTMLComponent):
     """
     Base class for Djangospice UI widgets.
 
@@ -57,10 +47,8 @@ class Widget(HTMLComponent):
     # Class Attributes & Configuration
     # ------------------------------------------------------------------
 
-    name: ClassVar[str | None] = None
-    title: ClassVar[str | None] = None
-    app_name: ClassVar[str | None] = None
     description: ClassVar[str] = ""
+    suffix: ClassVar[str] = "Widget"
 
     actions: ClassVar[Actions] = Actions()
     _actions: ClassVar[Actions] = Actions()
@@ -92,15 +80,7 @@ class Widget(HTMLComponent):
     # Initialization & Subclass Configuration
     # ------------------------------------------------------------------
 
-    def __init__(
-        self,
-        request: HttpRequest | None = None,
-        *,
-        parent: Widget | None = None,
-        children: list[Widget] | None = None,
-        slots: dict[str, list[Widget]] | None = None,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, request: HttpRequest | None = None, *, parent: Widget | None = None, children: list[Widget] | None = None, slots: dict[str, list[Widget]] | None = None, **kwargs: Any) -> None:
         super().__init__(kwargs=kwargs)
 
         self.request = request
@@ -120,117 +100,10 @@ class Widget(HTMLComponent):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
 
-        cls._configure_identity()
         cls._normalize_actions()
 
     def initialize(self):
         pass
-
-    @classmethod
-    def _configure_identity(cls) -> None:
-        if cls.__dict__.get("name") is None:
-            cls.name = cls._resolve_name()
-
-        if cls.__dict__.get("title") is None:
-            cls.title = cls._resolve_title()
-
-        if cls.__dict__.get("app_name") is None:
-            cls.app_name = cls._resolve_app_name(cls.__module__)
-
-    @classmethod
-    def _identity_class_name(cls) -> str:
-        """
-        Return the class name without the Widget suffix.
-
-        Examples:
-
-            DashboardWidget -> Dashboard
-            Dashboardwidget -> Dashboard
-            DashboardWIDGET -> Dashboard
-            UserStatsWidget -> UserStats
-            Dashboard       -> Dashboard
-        """
-        class_name = str(cls.__name__)
-
-        if class_name.lower().endswith(_WIDGET_SUFFIX.lower()):
-            return class_name[: -len(_WIDGET_SUFFIX)]
-
-        return class_name
-
-    @classmethod
-    def _resolve_name(cls) -> str:
-        """
-        Resolve the canonical widget identifier as a snake_case slug.
-
-        Examples:
-            OrgUnitWidget           -> org_unit
-            UserStatsWidget         -> user_stats
-            StudentAttendanceWidget -> student_attendance
-            DashboardWidget         -> dashboard
-            XMLParserWidget         -> xml_parser
-            APIKeyWidget            -> api_key
-        """
-        name = cls._identity_class_name()
-        name = snake_case(name)
-        return slugify(name, separator="_")
-
-    @classmethod
-    def _resolve_title(cls) -> str:
-        """
-        Resolve the human-readable widget title.
-
-        Examples:
-
-            UserStatsWidget -> User Stats
-            StudentAttendanceWidget -> Student Attendance
-            DashboardWidget -> Dashboard
-        """
-        return camel_case_to_spaces(
-            cls._identity_class_name(),
-        ).title()
-
-    @classmethod
-    def _resolve_app_name(cls, module_path: str) -> str:
-        """
-        Resolve the Django application label from the widget module path.
-
-        The longest matching application path is preferred.
-        """
-        try:
-            matches = [
-                app_config
-                for app_config in apps.get_app_configs()
-                if (
-                    module_path == app_config.name
-                    or module_path.startswith(
-                        f"{app_config.name}.",
-                    )
-                )
-            ]
-
-            if matches:
-                return max(
-                    matches,
-                    key=lambda app_config: len(app_config.name),
-                ).label
-
-        except AppRegistryNotReady:
-            pass
-
-        return module_path.split(".", 1)[0]
-
-    @property
-    def identifier(self) -> WidgetIdentifier:
-        return WidgetIdentifier.from_widget(self)
-
-    @property
-    def widget_key(self) -> str:
-        return str(self.identifier)
-
-    @property
-    def id(self) -> str:
-        return f"{self.name}_widget"
-    
 
     # ------------------------------------------------------------------
     # Actions
@@ -482,24 +355,13 @@ class Widget(HTMLComponent):
     # URLs, Navigation & HTMX
     # ------------------------------------------------------------------
 
-    def get_widget_url(self) -> str:
-        return safe_reverse(
-            view_name="widget_view",
-            namespace=self.namespace,
-            kwargs={
-                APP_NAME_KEY: self.identifier.app_name,
-                WIDGET_NAME_KEY: self.identifier.widget_name,
-            },
-        )
-
     @property
     def url(self) -> str:
-        url = self.get_widget_url()
-
+        url =  self.build_widget_url()
         params = {
             key: value
             for key, value in self.kwargs.items()
-            if key not in {"id", "app_name", "widget_name"}
+            if key not in {"id", "app_name", "class_name"}
         }
 
         if params:
@@ -510,19 +372,6 @@ class Widget(HTMLComponent):
     @property
     def base_url(self) -> str:
         return self.url.split("?", 1)[0]
-
-    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
-        state = state or self.query_state
-
-        for name, value in params.items():
-            state = state.set(name, value)
-
-        query = state.encode()
-
-        if query:
-            return f"{self.base_url}?{query}"
-
-        return self.base_url
 
     @property
     def query_state(self) -> QueryState:
@@ -548,35 +397,32 @@ class Widget(HTMLComponent):
         return bool(
             match
             and match.view_name == self.namespace
-            and match.kwargs.get(APP_NAME_KEY) == self.app_name
-            and match.kwargs.get(WIDGET_NAME_KEY) == self.name
+            and match.kwargs.get("app_name") == self.app_name
+            and match.kwargs.get("class_name") == self.name
         )
 
-    def interaction(
-        self,
-        url: str,
-        method: str = "GET",
-        target: str | None = None,
-        swap: str = "outerHTML",
-        push_url: bool = True,
-    ) -> Interaction:
-        htmx = (
-            self.htmx
-            .request(
-                method=method,
-                url=url,
-            )
-            .target_to(target or "this")
-            .swap_to(swap)
+    def build_widget_url(self):
+        return safe_reverse(
+            view_name="widget_view",
+            namespace=self.namespace,
+            kwargs={
+                "app_name": self.identity.app_name,
+                "class_name": self.identity.class_name,
+            },
         )
+    
+    def build_url(self, *, state: QueryState | None = None, **params: Any) -> str:
+        state = state or self.query_state
 
-        if push_url:
-            htmx.push(push_url)
+        for name, value in params.items():
+            state = state.set(name, value)
 
-        return Interaction(
-            url=url,
-            htmx=htmx,
-        )
+        query = state.encode()
+
+        if query:
+            return f"{self.base_url}?{query}"
+
+        return self.base_url
 
     def get_refresh_event(self) -> str:
         return f"refresh_{self.id}"
@@ -612,7 +458,7 @@ class Widget(HTMLComponent):
         return ":".join(
             (
                 self.namespace,
-                self.widget_key,
+                self.identifier,
                 self.cache_identifier(),
                 self.generate_state_hash(),
             ),
@@ -700,40 +546,10 @@ class Widget(HTMLComponent):
     def method_not_allowed(self) -> Response:
         return Response.empty(status=405)
 
-    @classmethod
-    def get_methods(cls) -> dict[str, Method]:
-        """
-        Discover methods declared on this widget and its parents.
-
-        Child classes override inherited methods with the same name.
-        """
-        methods: dict[str, Method] = {}
-
-        for base in reversed(cls.__mro__):
-            for name, value in base.__dict__.items():
-                if isinstance(value, Method):
-                    methods[name] = value
-
-        return methods
-
-    def get_method(self, name: str) -> Method:
-        """
-        Resolve a registered widget method.
-        """
-        try:
-            return self.get_methods()[name]
-        except KeyError:
-            raise AttributeError(
-                f"Widget method '{name}' is not registered."
-            ) from None
-
     def get_method_url(self, name: str) -> str:
         """
         Build the URL for a registered widget method.
         """
-        if name not in self.get_methods():
-            raise AttributeError(
-                f"Widget method '{name}' is not registered."
-            )
+        self.check_method(name)
 
         return self.build_url(action=name)

@@ -2,7 +2,6 @@ from __future__ import annotations
 from django.apps import apps
 from .definition import LookupDefinition
 from .registry import LookupRegistry
-from .identifier import LookupIdentifier
 
 
 class LookupResolver:
@@ -13,5 +12,5 @@ class LookupResolver:
     def __init__(self, registry: LookupRegistry) -> None:
         self.registry = registry
 
-    def resolve(self, identifier: LookupIdentifier) -> LookupDefinition:
+    def resolve(self, identifier: str) -> LookupDefinition:
         return self.registry.get(identifier)

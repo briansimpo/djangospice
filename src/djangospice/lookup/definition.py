@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Iterable, TypeAlias
 
 from django.db import models
-
+from djangospice.core.object import ClassIdentity
 from .dependencies import (
     LookupDependency,
     LookupDependencyDeclaration,
@@ -12,7 +12,6 @@ from .dependencies import (
 )
 from .exceptions import LookupConfigurationError
 from .scope import LookupScope, UserScope
-from .identifier import LookupIdentifier
 
 
 LookupSearchField: TypeAlias = str
@@ -82,22 +81,22 @@ class LookupDefinition:
                 )
 
     @property
-    def identifier(self) -> LookupIdentifier:
-        return LookupIdentifier.from_model(self.model)
+    def identity(self):
+        return ClassIdentity.from_model(self.model)
 
     @property
     def app_name(self) -> str:
-        return self.identifier.app_name
+        return self.identity.app_name
 
 
     @property
     def model_name(self) -> str:
-        return self.identifier.model_name
+        return self.identity.class_name
 
 
     @property
-    def key(self) -> str:
-        return self.identifier.key
+    def identifier(self) -> str:
+        return str(self.identity)
 
     @property
     def dependencies(self) -> tuple[LookupDependency, ...]:

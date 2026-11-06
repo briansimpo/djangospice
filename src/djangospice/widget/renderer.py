@@ -38,7 +38,7 @@ class WidgetRenderer:
     def check_visibility(self) -> None:
         if not self.widget.visible():
             raise WidgetNotVisible(
-                f"Widget '{self.widget.widget_key}' is not visible."
+                f"Widget '{self.widget.identifier}' is not visible."
             )
 
     def should_render_placeholder(self) -> bool:

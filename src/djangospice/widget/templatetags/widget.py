@@ -16,7 +16,7 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def render_widget(context: template.Context, widget_key: str, **kwargs: Any) -> SafeString:
+def render_widget(context: template.Context, identifier: str, **kwargs: Any) -> SafeString:
     """
     Template tag to dynamically render a registered widget.
     
@@ -27,7 +27,7 @@ def render_widget(context: template.Context, widget_key: str, **kwargs: Any) -> 
 
   
     try:
-        widget_class = WidgetRegistry.get(widget_key)
+        widget_class = WidgetRegistry.get(identifier)
     except KeyError as e:
         return mark_safe(str(e))
 

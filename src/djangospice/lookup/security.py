@@ -8,15 +8,13 @@ from django.http import HttpRequest
 
 from .conf import LookupConfig, lookup_config
 from .exceptions import AuthenticationError, AuthenticationRequired
-from .identifier import LookupIdentifier
-
 
 @dataclass(frozen=True, slots=True)
 class LookupSecurityContext:
     user: Any | None = None
     authentication: str = "unknown"
     authenticated: bool = False
-    lookup_identifier: LookupIdentifier | None = None
+    identifier: str | None = None
 
     @property
     def is_authenticated(self) -> bool:
@@ -36,12 +34,12 @@ class LookupSecurityContext:
 
 
 class Authenticator(Protocol):
-    def authenticate(self, request: HttpRequest, lookup_identifier: LookupIdentifier) -> LookupSecurityContext | None:
+    def authenticate(self, request: HttpRequest, identifier: str) -> LookupSecurityContext | None:
         ...
 
 
 class SessionAuthenticator:
-    def authenticate(self, request: HttpRequest, lookup_identifier: LookupIdentifier) -> LookupSecurityContext | None:
+    def authenticate(self, request: HttpRequest, identifier: str) -> LookupSecurityContext | None:
         user = getattr(request, "user", None)
 
         if user is None:
@@ -58,7 +56,7 @@ class SessionAuthenticator:
             user=user,
             authentication="session",
             authenticated=True,
-            lookup_identifier=lookup_identifier,
+            identifier=identifier,
         )
 
 
@@ -70,17 +68,17 @@ class WidgetCapabilityAuthenticator:
     def __init__(self, *, config: LookupConfig = lookup_config) -> None:
         self.config = config
 
-    def issue(self, lookup_identifier: LookupIdentifier, *, subject: Any = None) -> str:
+    def issue(self, identifier: str, *, subject: Any = None) -> str:
         return signing.dumps(
             {
-                "lookup": str(lookup_identifier),
+                "lookup": identifier,
                 "subject": subject,
             },
             salt=self.config.widget_token_salt,
             compress=True,
         )
 
-    def authenticate(self, request: HttpRequest, lookup_identifier: LookupIdentifier) -> LookupSecurityContext | None:
+    def authenticate(self, request: HttpRequest, identifier: str) -> LookupSecurityContext | None:
         token = request.headers.get(
             self.config.widget_token_header,
             "",
@@ -105,7 +103,7 @@ class WidgetCapabilityAuthenticator:
                 "Invalid widget capability."
             )
 
-        if payload.get("lookup") != str(lookup_identifier):
+        if payload.get("lookup") != str(identifier):
             raise AuthenticationError(
                 "Widget capability is not valid "
                 "for this lookup."
@@ -115,7 +113,7 @@ class WidgetCapabilityAuthenticator:
             user=payload.get("subject"),
             authentication="widget",
             authenticated=True,
-            lookup_identifier=lookup_identifier,
+            identifier=identifier,
         )
 
 
@@ -150,11 +148,11 @@ class LookupSecurity:
             ),
         )
 
-    def authenticate(self, request: HttpRequest, lookup_identifier: LookupIdentifier) -> LookupSecurityContext:
+    def authenticate(self, request: HttpRequest, identifier: str) -> LookupSecurityContext:
         for authenticator in self.authenticators:
             context = authenticator.authenticate(
                 request=request,
-                lookup_identifier=lookup_identifier,
+                identifier=identifier,
             )
 
             if context is not None:
@@ -167,5 +165,5 @@ class LookupSecurity:
 
         return LookupSecurityContext(
             authenticated=False,
-            lookup_identifier=lookup_identifier,
+            identifier=identifier,
         )

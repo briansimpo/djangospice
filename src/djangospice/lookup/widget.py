@@ -5,12 +5,11 @@ from typing import Any
 
 from django import forms
 from django.db import models
-
+from djangospice.core.object import ClassIdentity
 from djangospice.utils import safe_reverse
-from .conf import APP_NAME_KEY, MODEL_NAME_KEY, LookupConfig, lookup_config
+from .conf import LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
-from .identifier import LookupIdentifier
 from .apps import namespace
 
 class LookupWidget(forms.Select):
@@ -231,22 +230,22 @@ class LookupWidget(forms.Select):
         return value
 
     @property
-    def identifier(self) -> LookupIdentifier:
-        return LookupIdentifier.from_model(
+    def identity(self) -> ClassIdentity:
+        return ClassIdentity.from_model(
             self.model,
         )
 
     @property
     def lookup_url(self):
-        return self.url or self.get_lookup_url()
+        return self.url or self.build_widget_url()
 
-    def get_lookup_url(self) -> str:
+    def build_widget_url(self) -> str:
         return safe_reverse(
             view_name="lookup_view",
             namespace=namespace,
             kwargs={
-                APP_NAME_KEY: self.identifier.app_name,
-                MODEL_NAME_KEY: self.identifier.model_name,
+                "app_name": self.identity.app_name,
+                "model_name": self.identity.class_name,
             },
         )
        

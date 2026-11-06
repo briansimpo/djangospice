@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from .identifier import WidgetIdentifier
+from djangospice.core.object import ClassIdentity
+
+
 from .registry import WidgetRegistry
 
 
@@ -18,51 +20,31 @@ class WidgetResolver:
     """
 
     @classmethod
-    def key(cls, app_name: str, widget_name: str) -> str:
-        """
-        Build the canonical registry key for a widget.
-        """
-        return str(WidgetIdentifier(app_name, widget_name))
-
-    @classmethod
-    def resolve(cls, app_name: str, widget_name: str, *, expected_type: type[WidgetT] | None = None) -> type[WidgetT]:
+    def resolve(cls, identifier, *, expected_type: type[WidgetT] | None = None) -> type[WidgetT]:
         """
         Resolve a registered widget class.
 
         ``expected_type`` can be supplied when a consumer requires a
         particular widget specialization, for example ``DynamicTable``.
         """
-        widget_key = cls.key(app_name, widget_name)
-
+       
         try:
-            widget_cls = WidgetRegistry.get(widget_key)
+            widget_cls = WidgetRegistry.get(identifier)
         except KeyError:
             raise LookupError(
-                f"Widget '{widget_key}' is not registered."
+                f"Widget '{identifier}' is not registered."
             ) from None
 
         if widget_cls is None:
             raise LookupError(
-                f"Widget '{widget_key}' is not registered."
+                f"Widget '{identifier}' is not registered."
             )
 
         if expected_type is not None:
             if not issubclass(widget_cls, expected_type):
                 raise TypeError(
-                    f"Widget '{widget_key}' must inherit from "
+                    f"Widget '{identifier}' must inherit from "
                     f"{expected_type.__name__}."
                 )
 
         return widget_cls
-
-    @classmethod
-    def instantiate(cls, app_name: str, widget_name: str, *, expected_type: type[WidgetT] | None = None, request: Any = None, **kwargs: Any) -> WidgetT:
-        """
-        Resolve and instantiate a widget.
-        """
-        widget_cls = cls.resolve(app_name, widget_name, expected_type=expected_type)
-
-        return widget_cls(
-            request=request,
-            **kwargs,
-        )

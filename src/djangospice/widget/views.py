@@ -4,6 +4,7 @@ from typing import Any
 
 from django.http import Http404, HttpRequest, HttpResponse
 from django.views import View
+from djangospice.core.object import ClassIdentity
 from djangospice.htmx.shortcuts import render_response
 from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
@@ -14,17 +15,15 @@ class WidgetView(View):
     """
     HTTP view for dynamically resolving, configuring, and executing widgets.
 
-    Maps routing parameters (`app_name`, `name`) to a registered Widget, instantiates 
+    Maps routing parameters (`app_name`, `class_name`) to a registered Widget, instantiates 
     it with request query state and path variables, and delegates execution 
     to the WidgetExecutor.
     """
 
-    def dispatch(self, request: HttpRequest, app_name: str, widget_name: str, *args: Any, **kwargs: Any) -> HttpResponse:
+    def dispatch(self, request: HttpRequest, app_name: str, class_name: str, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
-            widget_cls = WidgetResolver.resolve(
-                app_name,
-                widget_name,
-            )
+            identifier = ClassIdentity.build(app_name, class_name).to_string()
+            widget_cls = WidgetResolver.resolve(identifier)
         except LookupError as exc:
             raise Http404(str(exc)) from exc
 
@@ -42,7 +41,7 @@ class WidgetView(View):
             response = WidgetExecutor(widget, request).execute()
         except WidgetNotVisible:
             raise Http404(
-                f"Widget '{app_name}:{widget_name}' is not accessible."
+                f"Widget '{app_name}:{class_name}' is not accessible."
             ) from None
 
         return render_response(request, response)
