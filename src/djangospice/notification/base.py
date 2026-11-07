@@ -49,10 +49,10 @@ class Notification(Executable):
     # Metadata
     # ------------------------------------------------------------------
 
-    def __init__(self, *args, request=None, **kwargs):
+    def __init__(self, *args, request=None, notification_model=None, **kwargs) -> None:
         super().__init__(*args, request=request, **kwargs)
-
-
+        self.notification = notification_model
+        
     @cached_property
     def type(self) -> str:
         """

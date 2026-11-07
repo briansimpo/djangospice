@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.core.exceptions import PermissionDenied
 from django.views import View
 from django.http import Http404, HttpRequest, HttpResponse
 
@@ -9,7 +10,6 @@ from djangospice.exec.identity import ClassIdentity
 from djangospice.exec.resolver import Resolver
 from djangospice.htmx.shortcuts import dispatch_response
 
-from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
 
 
@@ -38,9 +38,7 @@ class WidgetView(View):
         try:
             response = WidgetExecutor(widget=instance, request=request, action=action).execute()
 
-        except WidgetNotVisible:
-            raise Http404(
-                f"Widget '{app_name}:{class_name}' is not accessible."
-            ) from None
+        except PermissionDenied:
+            raise Http404() from None
 
         return dispatch_response(request, response)
