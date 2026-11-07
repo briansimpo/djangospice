@@ -17,8 +17,8 @@ class ContentRenderer:
         request: HttpRequest | None = None,
     ) -> str:
         # Content has already been rendered.
-        if response.content_value is not None:
-            return response.content_value
+        if response.content is not None:
+            return response.content
 
         # No template and no pre-rendered content.
         if not response.template:

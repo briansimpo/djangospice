@@ -5,7 +5,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 from .request import attach_htmx_info
 from .response import Response
-from .shortcuts import render_response
+from .shortcuts import dispatch_response
 
 
 class HTMXMiddleware(MiddlewareMixin):
@@ -19,6 +19,6 @@ class HTMXMiddleware(MiddlewareMixin):
 
     def process_response(self,request: HttpRequest, response: HttpResponse | Response) -> HttpResponse:
         if isinstance(response, Response):
-            return render_response(request, response)
+            return dispatch_response(request, response)
 
         return response

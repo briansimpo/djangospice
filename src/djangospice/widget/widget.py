@@ -425,7 +425,7 @@ class Widget(Executable, HTMXComponent):
         Rendering is intentionally performed by ``HTMXComponent`` rather
         than duplicating template/content resolution here.
         """
-        return Response.content(
+        return Response.html(
             self.render(request=self.request),
         )
 

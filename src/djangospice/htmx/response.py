@@ -20,10 +20,10 @@ class Response:
     """
 
     template: str | None = None
-    payload: dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     status_code: int = 200
     headers: dict[str, str] = field(default_factory=dict)
-    content_value: str | bytes | None = None
+    content: str | bytes | None = None
     fragments: HTMLFragments = field(default_factory=HTMLFragments)
 
     _htmx: HTMXHeaders = field(default_factory=HTMXHeaders, repr=False)
@@ -39,12 +39,12 @@ class Response:
         status: int = 200,
         **values: Any,
     ) -> Self:
-        payload = dict(context or {})
-        payload.update(values)
-        return cls(template=template, payload=payload, status_code=status)
+        context = dict(context or {})
+        context.update(values)
+        return cls(template=template, context=context, status_code=status)
 
     @classmethod
-    def content(
+    def html(
         cls,
         content: str | bytes = b"",
         *,
@@ -52,7 +52,7 @@ class Response:
         content_type: str = "text/html; charset=utf-8",
         **headers: str,
     ) -> Self:
-        result = cls(content_value=content, status_code=status)
+        result = cls(content=content, status_code=status)
         result.headers["Content-Type"] = content_type
         result.headers.update(headers)
         return result
@@ -78,7 +78,7 @@ class Response:
         title: str | None = None,
         status: int = 200,
     ) -> Self:
-        result = cls(content_value=content, status_code=status)
+        result = cls(content=content, status_code=status)
         result._document = Document(
             filename=filename,
             content_type=content_type,
@@ -107,11 +107,11 @@ class Response:
         return self
 
     def set(self, key: str, value: Any) -> Self:
-        self.payload[key] = value
+        self.context[key] = value
         return self
 
     def update(self, **values: Any) -> Self:
-        self.payload.update(values)
+        self.context.update(values)
         return self
 
     def header(self, name: str, value: str) -> Self:
