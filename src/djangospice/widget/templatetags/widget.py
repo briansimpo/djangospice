@@ -6,8 +6,8 @@ from django import template
 from django.utils.html import format_html
 from django.utils.safestring import SafeString, mark_safe
 
+from djangospice.exec.registry import Registry
 from djangospice.widget.exceptions import WidgetNotVisible
-from djangospice.widget.registry import WidgetRegistry
 from djangospice.widget.renderer import render
 from djangospice.widget.widget import Widget
 
@@ -27,7 +27,7 @@ def render_widget(context: template.Context, identifier: str, **kwargs: Any) -> 
 
   
     try:
-        widget_klass = WidgetRegistry.get(identifier)
+        widget_klass = Registry.get(identifier)
     except KeyError as e:
         return mark_safe(str(e))
 

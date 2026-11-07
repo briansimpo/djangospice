@@ -5,12 +5,14 @@ from typing import Any
 
 from django import forms
 from django.db import models
-from djangospice.core.executable import ClassIdentity
+from djangospice.exec.identity import ClassIdentity
 from djangospice.utils import safe_reverse
+
 from .conf import LookupConfig, lookup_config
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
 from .apps import namespace
+
 
 class LookupWidget(forms.Select):
     """

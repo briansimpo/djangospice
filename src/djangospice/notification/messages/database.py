@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from djangospice.core.executable import Action
+from djangospice.exec.actions import Action
 from .base import Message
 
 

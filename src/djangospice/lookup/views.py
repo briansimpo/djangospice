@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.http import HttpRequest, JsonResponse
 from django.views import View
 
-from djangospice.core.executable import ClassIdentity
+from djangospice.exec.identity import ClassIdentity
 
 from .engine import LookupEngine
 from .adapter import LookupAdapter

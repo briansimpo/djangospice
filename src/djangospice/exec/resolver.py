@@ -1,8 +1,8 @@
-from .registry import NotificationRegistry
-from .base import Notification
+from .registry import Registry
+from .mixin import Executable
 
 
-class NotificationResolver:
+class Resolver:
     """
     Resolves registered widgets from their application and name.
 
@@ -11,7 +11,7 @@ class NotificationResolver:
     """
 
     @classmethod
-    def resolve(cls, identifier, *, expected_type: type[Notification] | None = None) -> type[Notification]:
+    def resolve(cls, identifier, *, expected_type: type[Executable] | None = None) -> type[Executable]:
         """
         Resolve a registered widget class.
 
@@ -20,22 +20,22 @@ class NotificationResolver:
         """
        
         try:
-            widget_klass = NotificationRegistry.get(identifier)
+            exec_klass = Registry.get(identifier)
         except KeyError:
             raise LookupError(
-                f"Notification '{identifier}' is not registered."
+                f"Executable '{identifier}' is not registered."
             ) from None
 
-        if widget_klass is None:
+        if exec_klass is None:
             raise LookupError(
-                f"Notification '{identifier}' is not registered."
+                f"Executable '{identifier}' is not registered."
             )
 
         if expected_type is not None:
-            if not issubclass(widget_klass, expected_type):
+            if not issubclass(exec_klass, expected_type):
                 raise TypeError(
-                    f"Notification '{identifier}' must inherit from "
+                    f"Executable '{identifier}' must inherit from "
                     f"{expected_type.__name__}."
                 )
 
-        return widget_klass
+        return exec_klass

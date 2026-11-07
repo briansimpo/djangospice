@@ -3,18 +3,15 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, ClassVar
 
-
-from django.core.exceptions import  PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
-from djangospice.core.executable import Executable
+from djangospice.exec.mixin import Executable
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
 
 from .actions import Action, ActionContext, Actions, BoundAction
-from .exceptions import WidgetNotVisible
 from .apps import namespace
 
 
@@ -52,8 +49,6 @@ class Widget(Executable, HTMLComponent):
     actions: ClassVar[Actions] = Actions()
     _actions: ClassVar[Actions] = Actions()
 
-    enabled: ClassVar[bool] = True
-    permission: ClassVar[str | None] = None
     priority: ClassVar[int] = 100
 
     model: ClassVar[type[Model] | None] = None
@@ -71,10 +66,7 @@ class Widget(Executable, HTMLComponent):
 
     template_name: ClassVar[str | None] = None
 
-    login_required: ClassVar[bool] = False
-    staff_required: ClassVar[bool] = False
-    permissions: ClassVar[tuple[str, ...]] = ()
-
+   
     # ------------------------------------------------------------------
     # Initialization & Subclass Configuration
     # ------------------------------------------------------------------
@@ -297,42 +289,7 @@ class Widget(Executable, HTMLComponent):
 
         return data.getlist(name)
 
-    def authorize(self) -> None:
-        user = self.user
-
-        if not self.visible():
-            raise WidgetNotVisible
-
-        if self.login_required and not user.is_authenticated:
-            raise PermissionDenied
-
-        if self.staff_required and not user.is_staff:
-            raise PermissionDenied
-
-        if self.permissions and not user.has_perms(self.permissions):
-            raise PermissionDenied
-
-    def visible(self) -> bool:
-        if not self.enabled:
-            return False
-
-        if self.permission and not self._has_permission():
-            return False
-
-        return self.is_visible()
-
-    def _has_permission(self) -> bool:
-        user = self.user
-
-        return bool(
-            user
-            and user.is_authenticated
-            and user.has_perm(self.permission),
-        )
-
-    def is_visible(self) -> bool:
-        return True
-
+   
     # ------------------------------------------------------------------
     # Data Resolution
     # ------------------------------------------------------------------

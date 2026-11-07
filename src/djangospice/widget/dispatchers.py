@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from djangospice.core.executable import Dispatcher
+from djangospice.exec.dispatchers import Dispatcher
 from djangospice.htmx.response import Response
 
 from .actions import ActionContext

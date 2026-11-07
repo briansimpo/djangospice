@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from .registry import WidgetRegistry
-
+from djangospice.exec.registry import Registry
 
 def widget(widget_klass):
-    WidgetRegistry.register(widget_klass)
+    Registry.register(widget_klass)
     return widget_klass

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from djangospice.core.executable import Executable
+from djangospice.exec.mixin import Executable
 from djangospice.utils import safe_reverse
 
 from .enums import (

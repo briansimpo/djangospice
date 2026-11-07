@@ -1,13 +1,19 @@
 from typing import Callable
 
-from .executable import ClassMethod
+from .method import Method
+from .registry import Registry
+
+
+def executable(exec_klass):
+    Registry.register(exec_klass)
+    return exec_klass
 
 
 def action(method: str = "GET", **attributes):
     """Declare an executable action using one HTTP method."""
 
     def decorator(func: Callable):
-        return ClassMethod(func, method=method, **attributes)
+        return Method(func, method=method, **attributes)
 
     return decorator
 

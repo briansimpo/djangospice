@@ -5,10 +5,10 @@ from typing import Any
 from django.views import View
 from django.http import Http404, HttpRequest, HttpResponse
 
-from djangospice.core.executable import ClassIdentity
+from djangospice.exec.identity import ClassIdentity
+from djangospice.exec.resolver import Resolver
 from djangospice.htmx.shortcuts import render_response
 
-from .resolver import WidgetResolver
 from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
 
@@ -25,7 +25,7 @@ class WidgetView(View):
         try:
             identifier = ClassIdentity.build(app_name, class_name).to_string()
 
-            widget_cls = WidgetResolver.resolve(identifier)
+            widget_cls = Resolver.resolve(identifier)
 
         except LookupError as exc:
             raise Http404(str(exc)) from exc

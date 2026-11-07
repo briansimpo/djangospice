@@ -5,7 +5,7 @@ from typing import ClassVar
 from django.http import HttpRequest
 
 from djangospice.htmx.response import Response
-from djangospice.core.executable import Dispatcher, MethodDispatcher, UnknownDispatcher, DispatcherNotFound
+from djangospice.exec.dispatchers import Dispatcher, MethodDispatcher, UnknownDispatcher
 from .dispatchers import ActionDispatcher, HttpDispatcher
 from .widget import Widget
 
@@ -49,4 +49,4 @@ class WidgetExecutor:
             if dispatcher.can_dispatch():
                 return dispatcher.dispatch()
 
-        raise DispatcherNotFound("No valid dispatcher found for this request.")
+        raise Exception("No valid dispatcher found for this request.")
