@@ -18,7 +18,7 @@ from .attributes import HTMLAttributeRenderer, HTMXAttributes
 
 
 @dataclass
-class HTMLComponent(Serializable):
+class HTMXComponent(Serializable):
     """
     Base class for server-rendered HTML components.
 
@@ -26,7 +26,7 @@ class HTMLComponent(Serializable):
 
     1. Template-based rendering::
 
-        class UserCard(HTMLComponent):
+        class UserCard(HTMXComponent):
             template_name = "components/user_card.html"
 
             def get_context(self):
@@ -36,7 +36,7 @@ class HTMLComponent(Serializable):
 
     2. Direct-content rendering::
 
-        class Divider(HTMLComponent):
+        class Divider(HTMXComponent):
 
             def get_content(self):
                 return "<hr>"

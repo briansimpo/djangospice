@@ -4,12 +4,12 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import Self
 
-from .fragments import HTMLFragment
+from .fragments import HTMXFragment
 
 
 @dataclass(slots=True, kw_only=True)
 class OOBEntry:
-    fragment: HTMLFragment
+    fragment: HTMXFragment
 
     target: str | None = None
     swap: str = "outerHTML"
@@ -22,7 +22,7 @@ class OOBList:
     Collection of fragments that should be delivered as HTMX
     out-of-band updates.
 
-    OOBList does not own fragment rendering. HTMLFragment does.
+    OOBList does not own fragment rendering. HTMXFragment does.
     """
 
     __slots__ = ("_items",)
@@ -42,7 +42,7 @@ class OOBList:
 
     def add(
         self,
-        fragment: HTMLFragment,
+        fragment: HTMXFragment,
         *,
         target: str | None = None,
         swap: str = "outerHTML",

@@ -7,7 +7,7 @@ from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
 from djangospice.exec.mixin import Executable
-from djangospice.htmx.component import HTMLComponent
+from djangospice.htmx.component import HTMXComponent
 from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
 
@@ -15,7 +15,7 @@ from .actions import Action, ActionContext, Actions, BoundAction
 from .apps import namespace
 
 
-class Widget(Executable, HTMLComponent):
+class Widget(Executable, HTMXComponent):
     """ 
     Base class for Djangospice UI widgets.
 
@@ -32,7 +32,7 @@ class Widget(Executable, HTMLComponent):
     - caching
     - HTTP response generation
 
-    Rendering itself is delegated to ``HTMLComponent``. A widget may
+    Rendering itself is delegated to ``HTMXComponent``. A widget may
     therefore render either:
 
     1. through ``template_name`` + ``get_context()``, or
@@ -382,7 +382,7 @@ class Widget(Executable, HTMLComponent):
 
     def get_context(self) -> dict[str, Any]:
         """
-        Extend HTMLComponent context with widget-specific values.
+        Extend HTMXComponent context with widget-specific values.
         """
         context = super().get_context()
 
@@ -397,9 +397,9 @@ class Widget(Executable, HTMLComponent):
 
     def render(self, request: HttpRequest | None = None) -> Any:
         """
-        Render the widget through the HTMLComponent pipeline.
+        Render the widget through the HTMXComponent pipeline.
 
-        HTMLComponent decides whether rendering happens through:
+        HTMXComponent decides whether rendering happens through:
 
         - ``get_content()``, or
         - ``template_name`` + ``get_context()``.
@@ -422,7 +422,7 @@ class Widget(Executable, HTMLComponent):
         """
         Build the HTTP response containing the widget's rendered HTML.
 
-        Rendering is intentionally performed by ``HTMLComponent`` rather
+        Rendering is intentionally performed by ``HTMXComponent`` rather
         than duplicating template/content resolution here.
         """
         return Response.content(

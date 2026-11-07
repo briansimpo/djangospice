@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Self
 from django.urls import reverse
 
-from .fragments import HTMLFragment, HTMLFragments
+from .fragments import HTMXFragment, HTMLFragments
 from .document import Document
 from .headers import HTMXHeaders
 from .oob import OOBList
@@ -180,7 +180,7 @@ class Response:
 
     def fragment(self,template: str, **context: Any) -> Self:
         self.fragments.add(
-            HTMLFragment(
+            HTMXFragment(
                 template_name=template,
                 context=context,
             )
@@ -191,7 +191,7 @@ class Response:
     # oob / documents
     # ------------------------------------------------------------------
     def oob(self, template: str, *, target: str | None = None, swap: str = "outerHTML", select: str | None = None, **context: Any) -> Self:
-        fragment = HTMLFragment(
+        fragment = HTMXFragment(
             template_name=template,
             context=context,
         )
@@ -206,7 +206,7 @@ class Response:
         return self
 
     def oob_html(self, html: str, *, target: str | None = None, swap: str = "outerHTML",) -> Self:
-        fragment = HTMLFragment.from_html(html)
+        fragment = HTMXFragment.from_html(html)
 
         self._oob.add(
             fragment,
@@ -216,7 +216,7 @@ class Response:
 
         return self
    
-    def oob_fragment(self, fragment: HTMLFragment, *, target: str | None = None, swap: str = "outerHTML", select: str | None = None) -> Self:
+    def oob_fragment(self, fragment: HTMXFragment, *, target: str | None = None, swap: str = "outerHTML", select: str | None = None) -> Self:
         self._oob.add(
             fragment,
             target=target,

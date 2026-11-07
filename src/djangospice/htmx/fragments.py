@@ -7,11 +7,11 @@ from typing import Any, Self, overload
 from django.http import HttpRequest
 from django.utils.safestring import SafeString, mark_safe
 
-from .component import HTMLComponent
+from .component import HTMXComponent
 
 
 @dataclass(slots=True, kw_only=True)
-class HTMLFragment(HTMLComponent):
+class HTMXFragment(HTMXComponent):
     template_name: str | None = None
     context: dict[str, Any] = field(default_factory=dict)
     html: str | None = None
@@ -35,9 +35,9 @@ class HTMLFragments:
 
     def __init__(
         self,
-        fragments: Iterable[HTMLFragment] | None = None,
+        fragments: Iterable[HTMXFragment] | None = None,
     ) -> None:
-        self._items: list[HTMLFragment] = []
+        self._items: list[HTMXFragment] = []
         if fragments:
             self.extend(fragments)
 
@@ -45,34 +45,34 @@ class HTMLFragments:
     # Collection API
     # ------------------------------------------------------------------
 
-    def add(self, fragment: HTMLFragment) -> Self:
+    def add(self, fragment: HTMXFragment) -> Self:
         """Add a single fragment."""
         self._items.append(fragment)
         return self
 
-    def extend(self, *fragments: HTMLFragment | Iterable[HTMLFragment]) -> Self:
+    def extend(self, *fragments: HTMXFragment | Iterable[HTMXFragment]) -> Self:
         """
-        Add multiple fragments. Accepts individual HTMLFragment arguments
+        Add multiple fragments. Accepts individual HTMXFragment arguments
         or iterables containing fragments.
         """
         for item in fragments:
-            if isinstance(item, HTMLFragment):
+            if isinstance(item, HTMXFragment):
                 self._items.append(item)
             elif isinstance(item, Iterable) and not isinstance(item, (str, bytes)):
                 for sub_item in item:
-                    if isinstance(sub_item, HTMLFragment):
+                    if isinstance(sub_item, HTMXFragment):
                         self._items.append(sub_item)
                     else:
                         raise TypeError(
-                            f"Expected HTMLFragment, got {type(sub_item).__name__}"
+                            f"Expected HTMXFragment, got {type(sub_item).__name__}"
                         )
             else:
                 raise TypeError(
-                    f"Expected HTMLFragment or Iterable, got {type(item).__name__}"
+                    f"Expected HTMXFragment or Iterable, got {type(item).__name__}"
                 )
         return self
 
-    def remove(self, fragment: HTMLFragment) -> Self:
+    def remove(self, fragment: HTMXFragment) -> Self:
         """Remove a fragment."""
         self._items.remove(fragment)
         return self
@@ -105,7 +105,7 @@ class HTMLFragments:
     def __bool__(self) -> bool:
         return bool(self._items)
 
-    def __iter__(self) -> Iterator[HTMLFragment]:
+    def __iter__(self) -> Iterator[HTMXFragment]:
         return iter(self._items)
 
     def __len__(self) -> int:
@@ -123,12 +123,12 @@ class HTMLFragments:
         return False
 
     @overload
-    def __getitem__(self, index: int) -> HTMLFragment: ...
+    def __getitem__(self, index: int) -> HTMXFragment: ...
 
     @overload
     def __getitem__(self, index: slice) -> HTMLFragments: ...
 
-    def __getitem__(self, index: int | slice) -> HTMLFragment | HTMLFragments:
+    def __getitem__(self, index: int | slice) -> HTMXFragment | HTMLFragments:
         """Support indexing and sequence slicing."""
         if isinstance(index, slice):
             return HTMLFragments(self._items[index])

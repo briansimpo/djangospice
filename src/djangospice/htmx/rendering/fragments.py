@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.http import HttpRequest
 from django.template.loader import render_to_string
 
-from djangospice.htmx.fragments import HTMLFragment
+from djangospice.htmx.fragments import HTMXFragment
 
 
 
@@ -14,7 +14,7 @@ class FragmentRenderer:
 
     def render(
         self,
-        fragment: HTMLFragment,
+        fragment: HTMXFragment,
         *,
         request: HttpRequest | None = None,
     ) -> str:
