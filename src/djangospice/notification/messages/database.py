@@ -15,7 +15,7 @@ class DatabaseMessage(Message):
     body: str
     icon: str | None = None
     image: str | None = None
-    url: str | None = None
+    url: str = ""
     actions: list[Action] = field(default_factory=list)
 
     def get_actions(self):
