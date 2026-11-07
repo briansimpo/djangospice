@@ -5,7 +5,7 @@ from typing import Any
 
 from django import forms
 from django.db import models
-from djangospice.core.object import ClassIdentity
+from djangospice.core.executable import ClassIdentity
 from djangospice.utils import safe_reverse
 from .conf import LookupConfig, lookup_config
 from .definition import LookupDefinition
@@ -237,9 +237,9 @@ class LookupWidget(forms.Select):
 
     @property
     def lookup_url(self):
-        return self.url or self.get_dispatch_url()
+        return self.url or self.dispatch_url()
 
-    def get_dispatch_url(self) -> str:
+    def dispatch_url(self) -> str:
         return safe_reverse(
             view_name="lookup_view",
             namespace=namespace,

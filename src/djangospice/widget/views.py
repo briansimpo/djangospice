@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.http import Http404, HttpRequest, HttpResponse
 from django.views import View
-from djangospice.core.object import ClassIdentity
+from django.http import Http404, HttpRequest, HttpResponse
+from djangospice.core.executable import ClassIdentity
 from djangospice.htmx.shortcuts import render_response
+from .resolver import WidgetResolver
 from .exceptions import WidgetNotVisible
 from .executor import WidgetExecutor
-from .resolver import WidgetResolver
 
 
 class WidgetView(View):

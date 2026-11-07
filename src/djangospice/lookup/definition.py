@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Iterable, TypeAlias
 
 from django.db import models
-from djangospice.core.object import ClassIdentity
+from djangospice.core.executable import ClassIdentity
 from .dependencies import (
     LookupDependency,
     LookupDependencyDeclaration,

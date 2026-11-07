@@ -1,14 +1,5 @@
-from __future__ import annotations
-
-from typing import Any, TypeVar
-
-from djangospice.core.object import ClassIdentity
-
-
 from .registry import WidgetRegistry
-
-
-WidgetT = TypeVar("WidgetT")
+from .widget import Widget
 
 
 class WidgetResolver:
@@ -20,7 +11,7 @@ class WidgetResolver:
     """
 
     @classmethod
-    def resolve(cls, identifier, *, expected_type: type[WidgetT] | None = None) -> type[WidgetT]:
+    def resolve(cls, identifier, *, expected_type: type[Widget] | None = None) -> type[Widget]:
         """
         Resolve a registered widget class.
 
@@ -29,22 +20,22 @@ class WidgetResolver:
         """
        
         try:
-            widget_cls = WidgetRegistry.get(identifier)
+            widget_klass = WidgetRegistry.get(identifier)
         except KeyError:
             raise LookupError(
                 f"Widget '{identifier}' is not registered."
             ) from None
 
-        if widget_cls is None:
+        if widget_klass is None:
             raise LookupError(
                 f"Widget '{identifier}' is not registered."
             )
 
         if expected_type is not None:
-            if not issubclass(widget_cls, expected_type):
+            if not issubclass(widget_klass, expected_type):
                 raise TypeError(
                     f"Widget '{identifier}' must inherit from "
                     f"{expected_type.__name__}."
                 )
 
-        return widget_cls
+        return widget_klass

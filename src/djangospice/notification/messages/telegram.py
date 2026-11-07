@@ -3,7 +3,7 @@ from dataclasses import  dataclass
 from .base import Message
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class TelegramMessage(Message):
     """
     Payload for Telegram Bot API.

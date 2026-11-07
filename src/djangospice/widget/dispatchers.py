@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from django.http import HttpRequest
 from djangospice.htmx.response import Response
 
 from .actions import ActionContext
-
-if TYPE_CHECKING:
-    from .widget import Widget
+from .widget import Widget
 
 
 class BaseDispatcher(ABC):

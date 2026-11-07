@@ -4,7 +4,7 @@ from djangospice.core.payload import Payload
 from .base import Message
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class EmailMessage(Message):
     """
     Payload for constructing an email delivery.

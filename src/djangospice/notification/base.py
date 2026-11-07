@@ -1,6 +1,10 @@
-from abc import abstractmethod
 from functools import cached_property
+from typing import Any
+
+from django.http import HttpRequest
 from djangospice.core.object import Object
+from djangospice.core.executable import Executable
+from djangospice.utils import safe_reverse
 
 from .enums import (
     Channel,
@@ -19,7 +23,8 @@ from .messages import (
 )
 
 
-class BaseNotification(Object):
+
+class Notification(Executable, Object):
     """
     Base business notification.
 
@@ -34,6 +39,7 @@ class BaseNotification(Object):
         required (bool): Whether this notification bypasses user opt-out preferences.
         priority (int): Delivery priority (higher numbers indicate higher priority).
     """
+    suffix = "Notification"
     level: NotificationLevel = NotificationLevel.INFO
     category: str | None = None
     queue: str = "default"
@@ -43,6 +49,10 @@ class BaseNotification(Object):
     # ------------------------------------------------------------------
     # Metadata
     # ------------------------------------------------------------------
+
+    def __init__(self, *args, request=None, **kwargs):
+        super().__init__(*args, request=request, **kwargs)
+
 
     @cached_property
     def type(self) -> str:
@@ -105,7 +115,6 @@ class BaseNotification(Object):
     # Channel-specific builders
     # ------------------------------------------------------------------
 
-    @abstractmethod
     def to_database(self, user) -> DatabaseMessage:
         """
         Build a database message for in-app or persistent notifications.
@@ -118,7 +127,7 @@ class BaseNotification(Object):
         Returns:
             DatabaseMessage: The constructed database message payload.
         """
-        return NotImplementedError
+        return None
 
     def to_email(self, user) -> EmailMessage | None:
         """Build an email message payload."""
@@ -148,5 +157,48 @@ class BaseNotification(Object):
         """Build a Telegram message payload."""
         return None
 
+    def dispatch_url(self):
+        from .apps import namespace
+        return safe_reverse(
+            view_name="notification_action",
+            namespace=namespace,
+            kwargs={
+                "app_name": self.identity.app_name,
+                "class_name": self.identity.class_name,
+            },
+        )
 
-   
+    # ------------------------------------------------------------------
+    # Notification actions
+    # ------------------------------------------------------------------
+
+    def _action_metadata(self, name: str) -> dict[str, Any]:
+        """
+        Return presentation metadata for an action.
+        """
+
+        method = self.get_method(name)
+
+        if method is None:
+            return {}
+
+        metadata = method.get_metadata()
+        
+        return {
+            "name": name,
+            "label": metadata.get("label", name.replace("_", " ").title()),
+            "method": method.method,
+            "url":self.get_method_url(name),
+            "style": "primary",
+        }
+
+    def get_actions(self) -> list[dict[str, Any]]:
+        """
+        Return action definitions suitable for serialization
+        and rendering in notification interfaces.
+        """
+
+        return [
+            self._action_metadata(name)
+            for name in self.get_methods()
+        ]

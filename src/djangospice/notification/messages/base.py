@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from djangospice.core.serializable import Serializable
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class Message(Serializable):
     """
     Base message payload.

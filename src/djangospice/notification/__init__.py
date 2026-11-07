@@ -1,10 +1,10 @@
-from .base import BaseNotification
+from .base import Notification
 from .default import DefaultNotification
 from .messages import DatabaseMessage
 
 
 __all__ = [
-    "BaseNotification", 
+    "Notification", 
     "DefaultNotification", 
     "DatabaseMessage",
 ]

@@ -1,8 +1,8 @@
-from .base import BaseNotification
+from .base import Notification
 from .messages import DatabaseMessage
 
 
-class DefaultNotification(BaseNotification):
+class DefaultNotification(Notification):
 
     def __init__(self, title, body, template=None, context=None):
         self.title = title

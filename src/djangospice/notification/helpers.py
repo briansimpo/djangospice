@@ -57,7 +57,7 @@ def notification_read(notification: Notification) -> None:
 def notification_read_all(recipient) -> None:
     transaction.on_commit(
         lambda: Event.dispatch(
-            NotificationReadAll(recipient=recipient)
+            NotificationReadAll(recipient)
         )
     )
 

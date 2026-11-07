@@ -3,12 +3,10 @@ from typing import Any
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .base import BaseNotification
-from .models import Notification
-from .enums import Channel
-from .metadata import Metadata
+from .base import Notification
+from .models import Notification as NotificationModel
 
-
+    
 class NotificationBuilder:
     """
     Responsible for shaping business data and persisting the 
@@ -16,22 +14,7 @@ class NotificationBuilder:
     """
 
     @classmethod
-    def messages(cls,user: AbstractUser, notification: BaseNotification, channels: tuple[Channel, ...]) -> dict[str, dict[str, Any]]:
-        """Construct the channel-specific serialized payloads."""
-        messages = {}
-
-        for channel in channels:
-            message = notification.to_message(channel, user)
-            if message is None:
-                continue
-            
-            # Use .value to ensure the key is a string for JSON serialization
-            messages[channel.value] = message.to_dict()
-
-        return messages
-
-    @classmethod
-    def build(cls,user: AbstractUser, notification: BaseNotification, channels: tuple[Channel, ...], actor: models.Model | None = None, target: models.Model | None = None) -> Notification:
+    def build(cls, user: AbstractUser, notification: Notification, actor: models.Model | None = None, target: models.Model | None = None) -> Notification:
         """
         Map the domain notification into a database record and save it.
         """
@@ -39,26 +22,26 @@ class NotificationBuilder:
         level = getattr(notification.level, "value", notification.level)
         
         message = notification.to_database(user)
-        messages = cls.messages(user, notification, channels)
-        actions = [action.to_dict() for action in message.actions]
+        actions = notification.get_actions()
+        actions.extend(message.get_actions())
 
-        metadata = Metadata(
-            type=notification.type,
-            category=notification.category,
-            url=message.url,
-            actions=actions,
-            icon=message.icon,
-            image=message.image,
-            context=message.context,
-            messages=messages,
-        )
+        data = {
+            "type": notification.type,
+            "category": notification.category,
+            "url": message.url,
+            "icon": message.icon,
+            "image": message.image,
+            "context": message.context,
+            "metadata": message.metadata,
+            "actions": actions
+        }
 
-        return Notification.objects.create(
+        return NotificationModel.objects.create(
             recipient=user,
             actor=actor or user,
             target=target,
             verb=message.title,
             description=message.body,
             level=level,
-            data=metadata.to_dict(),
+            data=data,
         )

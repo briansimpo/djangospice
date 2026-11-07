@@ -1,226 +1,88 @@
-from __future__ import annotations
 
-import logging
 import threading
 from collections.abc import Iterator
 
 from django.core.exceptions import ImproperlyConfigured
 
-from djangospice.core.object import ClassIdentity
-from djangospice.package.module import Module
+from djangospice.core.executable import ClassIdentity
 
 from .widget import Widget
 
-logger = logging.getLogger(__name__)
-
-
 
 class WidgetRegistry:
-    """
-    Thread-safe, app-aware registry for Widget classes.
+    """Thread-safe registry for Widget classes."""
 
-    Registration is idempotent for the same class. This allows widgets to
-    be registered explicitly with ``@widget`` while also being discovered
-    automatically by ``ModuleDiscovery``.
-    """
-
-    _widgets: dict[str, type[Widget]] = {}
-    _initialized: bool = False
+    widgets: dict[str, type[Widget]] = {}
     _lock = threading.RLock()
 
     @classmethod
-    def _get_key(cls, widget: type[Widget]) -> str:
-        """
-        Resolve the registry key for a Widget class.
-        """
-        return ClassIdentity.from_class(widget).to_string()
+    def get_key(cls, widget_klass: type[Widget]) -> str:
+        return ClassIdentity.from_class(widget_klass).to_string()
 
     @classmethod
-    def load(cls) -> None:
-        """
-        Lazily discover and register all available Widget classes.
-        """
-        if cls._initialized:
-            return
+    def register(cls, widget_klass: type[Widget]) -> type[Widget]:
+        """Register a Widget class."""
+
+        if not isinstance(widget_klass, type) or not issubclass(widget_klass, Widget):
+            raise TypeError("Expected a Widget subclass.")
+
+        if not widget_klass.class_name:
+            raise ImproperlyConfigured(
+                f"{widget_klass.__qualname__} must define a name."
+            )
+
+        if not widget_klass.app_name:
+            raise ImproperlyConfigured(
+                f"{widget_klass.__qualname__} must define an app_name."
+            )
+
+        key = cls.get_key(widget_klass)
 
         with cls._lock:
-            if cls._initialized:
-                return
+            existing = cls.widgets.get(key)
 
-            Module.discover(
-                module="widgets",
-                base_class=Widget,
-                callback=cls.register,
-            )
+            if existing is widget_klass:
+                return widget_klass
 
-            cls._initialized = True
-
-    @classmethod
-    def register(cls, widget: type[Widget]) -> type[Widget]:
-        """
-        Register a Widget class.
-
-        Registration is idempotent when the exact same class has already
-        been registered.
-
-        A conflict is raised only when another class attempts to use the
-        same ``app_name.name`` identity.
-        """
-        if not isinstance(widget, type):
-            raise TypeError(
-                "WidgetRegistry.register() expects a Widget class."
-            )
-
-        if not issubclass(widget, Widget):
-            raise TypeError(
-                f"{widget.__module__}.{widget.__qualname__} "
-                "is not a Widget subclass."
-            )
-
-        if not widget.class_name:
-            raise ImproperlyConfigured(
-                f"Widget {widget.__module__}.{widget.__qualname__} "
-                "must define a name."
-            )
-
-        if not widget.app_name:
-            raise ImproperlyConfigured(
-                f"Widget {widget.__module__}.{widget.__qualname__} "
-                "must define an app_name."
-            )
-
-        reg_key = cls._get_key(widget)
-
-        with cls._lock:
-            existing_widget = cls._widgets.get(reg_key)
-
-            # ----------------------------------------------------------
-            # Already registered with the exact same class.
-            #
-            # This is expected when:
-            #
-            #     @widget
-            #     class HelloWidget(Widget):
-            #         ...
-            #
-            # is later found again by ModuleDiscovery.
-            # ----------------------------------------------------------
-            if existing_widget is widget:
-                return widget
-
-            # ----------------------------------------------------------
-            # Same identity, different class.
-            # ----------------------------------------------------------
-            if existing_widget is not None:
+            if existing is not None:
                 raise ImproperlyConfigured(
-                    f"Widget '{widget.class_name}' in app "
-                    f"'{widget.app_name}' is already registered by "
-                    f"class "
-                    f"`{existing_widget.__module__}."
-                    f"{existing_widget.__qualname__}`. "
-                    f"Conflicting class: "
-                    f"`{widget.__module__}.{widget.__qualname__}`."
+                    f"Widget '{key}' is already registered by "
+                    f"{existing.__module__}.{existing.__qualname__}."
                 )
 
-            cls._widgets[reg_key] = widget
+            cls.widgets[key] = widget_klass
 
-        logger.debug(
-            "Registered widget '%s' (%s).",
-            reg_key,
-            f"{widget.__module__}.{widget.__qualname__}",
-        )
-
-        return widget
+        return widget_klass
 
     @classmethod
     def unregister(cls, identifier: str) -> None:
-        """
-        Remove a Widget by its namespaced key.
-        """
-        with cls._lock:
-            cls._widgets.pop(identifier, None)
-
-    @classmethod
-    def get(cls, identifier: str) -> type[Widget] | None:
-        """
-        Retrieve a Widget by its namespaced key.
-        """
-        cls.load()
+        """Unregister a Widget by its identity."""
 
         with cls._lock:
-            if not cls.exists(identifier):
-                raise Exception(f"Could not find '{identifier}'. The widget is not registered" )
-            return cls._widgets.get(identifier)
+            cls.widgets.pop(identifier, None)
 
     @classmethod
-    def widgets(cls) -> dict[str, type[Widget]]:
-        """
-        Return a shallow copy of all registered Widgets.
-        """
-        cls.load()
+    def unregister_app(cls, app_name: str) -> None:
+        """Unregister all Widgets belonging to an application."""
 
         with cls._lock:
-            return cls._widgets.copy()
+            keys = [
+                key
+                for key, widget_klass in cls.widgets.items()
+                if widget_klass.app_name == app_name
+            ]
+
+            for key in keys:
+                del cls.widgets[key]
 
     @classmethod
-    def keys(cls) -> tuple[str, ...]:
-        """
-        Return all registered Widget keys.
-        """
-        cls.load()
-
+    def get(cls, identifier: str) -> type[Widget]:
         with cls._lock:
-            return tuple(cls._widgets)
+            try:
+                return cls.widgets[identifier]
+            except KeyError:
+                raise LookupError(
+                    f"Widget '{identifier}' is not registered."
+                ) from None
 
-    names = keys
-
-    @classmethod
-    def values(cls) -> tuple[type[Widget], ...]:
-        """
-        Return all registered Widget classes.
-        """
-        cls.load()
-
-        with cls._lock:
-            return tuple(cls._widgets.values())
-
-    @classmethod
-    def clear(cls) -> None:
-        """
-        Clear the registry.
-
-        Primarily useful for tests and development environments.
-        """
-        with cls._lock:
-            cls._widgets.clear()
-            cls._initialized = False
-
-    @classmethod
-    def exists(cls, identifier: str) -> bool:
-        """
-        Check whether a Widget is registered.
-        """
-        cls.load()
-
-        with cls._lock:
-            return identifier in cls._widgets
-
-    @classmethod
-    def groups(cls) -> dict[str | None, list[type[Widget]]]:
-        """
-        Group registered Widgets by their group.
-        """
-        groups: dict[str | None, list[type[Widget]]] = {}
-
-        for widget in cls.values():
-            groups.setdefault(widget.group, []).append(widget)
-
-        return groups
-
-    @classmethod
-    def __iter__(cls) -> Iterator[type[Widget]]:
-        return iter(cls.values())
-
-    @classmethod
-    def __len__(cls) -> int:
-        return len(cls.values())
+   

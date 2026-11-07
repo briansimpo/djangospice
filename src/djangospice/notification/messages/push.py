@@ -2,7 +2,7 @@ from dataclasses import  dataclass
 from .base import Message
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class PushMessage(Message):
     """
     Payload for constructing a mobile/web Push Notification (e.g., FCM/APNS).

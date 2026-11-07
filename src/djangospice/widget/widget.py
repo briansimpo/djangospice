@@ -8,7 +8,7 @@ from django.core.exceptions import  PermissionDenied
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
-from djangospice.core.object import Executable
+from djangospice.core.executable import Executable
 from djangospice.htmx.component import HTMLComponent
 from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
@@ -72,29 +72,32 @@ class Widget(Executable, HTMLComponent):
     template_name: ClassVar[str | None] = None
 
     login_required: ClassVar[bool] = False
-    admin_required: ClassVar[bool] = False
+    staff_required: ClassVar[bool] = False
     permissions: ClassVar[tuple[str, ...]] = ()
 
     # ------------------------------------------------------------------
     # Initialization & Subclass Configuration
     # ------------------------------------------------------------------
 
-    def __init__(self, request: HttpRequest | None = None, *, parent: Widget | None = None, children: list[Widget] | None = None, slots: dict[str, list[Widget]] | None = None, **kwargs: Any) -> None:
-        super().__init__(kwargs=kwargs)
+    def __init__(
+        self,
+        request: HttpRequest | None = None,
+        *,
+        parent: Widget | None = None,
+        children: list[Widget] | None = None,
+        slots: dict[str, list[Widget]] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(request=request, **kwargs)
 
-        self.request = request
         self.parent = parent
-        self.user = getattr(request, "user", None)
-
         self.children: list[Widget] = []
         self.slots: dict[str, list[Widget]] = {}
 
-        if children:
-            self.add_children(*children)
+        self.add_children(*(children or []))
 
-        if slots:
-            for name, widgets in slots.items():
-                self.set_slot(name, *widgets)
+        for name, widgets in (slots or {}).items():
+            self.set_slot(name, *widgets)
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -303,7 +306,7 @@ class Widget(Executable, HTMLComponent):
         if self.login_required and not user.is_authenticated:
             raise PermissionDenied
 
-        if self.admin_required and not user.is_staff:
+        if self.staff_required and not user.is_staff:
             raise PermissionDenied
 
         if self.permissions and not user.has_perms(self.permissions):
@@ -487,7 +490,7 @@ class Widget(Executable, HTMLComponent):
     def method_not_allowed(self) -> Response:
         return Response.empty(status=405)
 
-    def get_dispatch_url(self):
+    def dispatch_url(self):
         return safe_reverse(
             view_name="widget_view",
             namespace=self.namespace,

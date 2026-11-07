@@ -5,8 +5,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models, transaction
 from django.db.models import QuerySet
 
-from .base import BaseNotification
-from .models import Notification, NotificationDelivery
+from .base import Notification
+from .models import Notification as NotificationModel
+from .models import NotificationDelivery
 from .builder import NotificationBuilder
 from .enums import Channel
 from .services import ChannelService
@@ -18,11 +19,11 @@ from .helpers import notification_created
 UserType = AbstractUser | int | str
 UserCollection = Iterable[UserType] | UserType | QuerySet[AbstractUser]
 
-NotificationFactory = Callable[[], BaseNotification]
+NotificationFactory = Callable[[], Notification]
 
 NotificationInput = (
-    BaseNotification
-    | type[BaseNotification]
+    Notification
+    | type[Notification]
     | NotificationFactory
 )
 
@@ -60,14 +61,14 @@ class Notifier:
         return User.objects.filter(pk__in=ids)
 
     @classmethod
-    def resolve_notification(cls, notification: NotificationInput, notification_kwargs: dict[str, Any] | None = None) -> BaseNotification:
+    def resolve_notification(cls, notification: NotificationInput, notification_kwargs: dict[str, Any] | None = None) -> Notification:
         """
         Resolve a notification instance from an instance, class, or factory.
         """
         kwargs = notification_kwargs or {}
 
         # Already instantiated
-        if isinstance(notification, BaseNotification):
+        if isinstance(notification, Notification):
             if kwargs:
                 raise TypeError(
                     "notification_kwargs cannot be used with "
@@ -78,7 +79,7 @@ class Notifier:
 
         # Notification class
         if isinstance(notification, type) and issubclass(
-            notification, BaseNotification
+            notification, Notification
         ):
             return notification(**kwargs)
 
@@ -92,28 +93,28 @@ class Notifier:
 
             instance = notification()
 
-            if not isinstance(instance, BaseNotification):
+            if not isinstance(instance, Notification):
                 raise TypeError(
                     "Notification factory must return a "
-                    "BaseNotification instance."
+                    "Notification instance."
                 )
 
             return instance
 
         raise TypeError(
-            "notification must be a BaseNotification instance, "
-            "BaseNotification subclass, or factory."
+            "notification must be a Notification instance, "
+            "Notification subclass, or factory."
         )
 
     @classmethod
-    def create_deliveries(cls, notification: Notification, channels: tuple[Channel, ...]) -> list[Any]:
+    def create_deliveries(cls, notification_model: NotificationModel, channels: tuple[Channel, ...]) -> list[Any]:
 
         deliveries = []
         celery = CeleryAdapter()
 
         for channel in channels:
             delivery = NotificationDelivery.objects.create(
-                notification=notification,
+                notification=notification_model,
                 channel=channel,
             )
 
@@ -150,7 +151,6 @@ class Notifier:
                 notification_record = NotificationBuilder.build(
                     user=user,
                     notification=notification,
-                    channels=channels,
                     actor=actor,
                     target=target,
                 )

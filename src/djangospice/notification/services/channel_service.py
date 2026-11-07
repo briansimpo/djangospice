@@ -1,7 +1,7 @@
 
 from django.contrib.auth.models import AbstractUser
 
-from djangospice.notification.base import BaseNotification
+from djangospice.notification.base import Notification
 from djangospice.notification.enums import Channel
 from djangospice.notification.models import NotificationPreference
 
@@ -55,7 +55,7 @@ class ChannelService:
         )
 
     @classmethod
-    def channels(cls, user: AbstractUser, notification: BaseNotification) -> tuple[Channel, ...]:
+    def channels(cls, user: AbstractUser, notification: Notification) -> tuple[Channel, ...]:
 
         supported = tuple(notification.channels(user))
 

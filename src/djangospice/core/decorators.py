@@ -1,63 +1,37 @@
+from typing import Callable
+
+from .executable import ClassMethod
 
 
-from typing import Callable, Iterable
+def action(method: str = "GET", **attributes):
+    """Declare an executable action using one HTTP method."""
 
-from djangospice.core.object import ClassMethod
-
-
-def action(func=None, *, methods: Iterable[str] | None = None):
-    """
-    Register a widget method as an action.
-
-    Defaults to POST.
-
-    Usage:
-        @action
-        def archive(self, request):
-            ...
-
-        @action()
-        def archive(self, request):
-            ...
-
-        @action(methods=["POST", "DELETE"])
-        def archive(self, request):
-            ...
-    """
-    def decorator(fn: Callable):
-        return ClassMethod(fn, methods=methods)
-
-    if func is None:
-        return decorator
-
-    return decorator(func)
-
-
-def method(http_method: str):
-    """Create a decorator for a specific HTTP method."""
-
-    def decorator(func):
-        return ClassMethod(func, methods=(http_method.upper(),))
+    def decorator(func: Callable):
+        return ClassMethod(func, method=method, **attributes)
 
     return decorator
 
 
-def get(func):
-    return ClassMethod(func, methods=("GET",))
+def get(func=None, **attributes):
+    decorator = action("GET", **attributes)
+    return decorator(func) if func else decorator
 
 
-def post(func):
-    return ClassMethod(func, methods=("POST",))
+def post(func=None, **attributes):
+    decorator = action("POST", **attributes)
+    return decorator(func) if func else decorator
 
 
-def put(func):
-    return ClassMethod(func, methods=("PUT",))
+def put(func=None, **attributes):
+    decorator = action("PUT", **attributes)
+    return decorator(func) if func else decorator
 
 
-def patch(func):
-    return ClassMethod(func, methods=("PATCH",))
+def patch(func=None, **attributes):
+    decorator = action("PATCH", **attributes)
+    return decorator(func) if func else decorator
 
 
-def delete(func):
-    return ClassMethod(func, methods=("DELETE",))
-
+def delete(func=None, **attributes):
+    decorator = action("DELETE", **attributes)
+    return decorator(func) if func else decorator

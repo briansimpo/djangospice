@@ -27,13 +27,13 @@ def render_widget(context: template.Context, identifier: str, **kwargs: Any) -> 
 
   
     try:
-        widget_class = WidgetRegistry.get(identifier)
+        widget_klass = WidgetRegistry.get(identifier)
     except KeyError as e:
         return mark_safe(str(e))
 
    
     try:
-        widget = widget_class(request=request, **kwargs)
+        widget = widget_klass(request=request, **kwargs)
         return render(widget)
     except WidgetNotVisible:
         return mark_safe("")

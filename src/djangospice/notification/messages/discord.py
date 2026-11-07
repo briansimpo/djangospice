@@ -3,7 +3,7 @@ from dataclasses import  dataclass, field
 from .base import Message
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class DiscordMessage(Message):
     """
     Payload for Discord webhooks or Bot API.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.http import HttpRequest, JsonResponse
 from django.views import View
 
-from djangospice.core.object import ClassIdentity
+from djangospice.core.executable import ClassIdentity
 
 from .engine import LookupEngine
 from .adapter import LookupAdapter
@@ -20,23 +20,6 @@ class LookupView(View):
     resolving the model/lookup definition. HTTP parsing and lookup
     execution are delegated to their respective services.
 
-    Example:
-
-        /lookup/academic/course/
-
-    Search:
-
-        /lookup/academic/course/?q=computer
-
-    Cascading:
-
-        /lookup/academic/course/?program=<uuid>
-
-    Multiple cascading dependencies:
-
-        /lookup/academic/course/
-            ?program=<uuid>
-            &program__department=<uuid>
     """
 
     engine = LookupEngine()

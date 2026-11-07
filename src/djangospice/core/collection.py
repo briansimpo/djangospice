@@ -3,12 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Generic, TypeVar
 
-from .entity import Entity
 from .object import Object
 
 
 T = TypeVar("T")
-E = TypeVar("E", bound=Entity)
 V = TypeVar("V", bound=Object)
 
 
@@ -152,37 +150,6 @@ class Collection(BaseCollection[T]):
         self._items.sort(key=key, reverse=reverse)
 
 
-class ImmutableCollection(BaseCollection[T]):
-    """
-    Generic immutable collection.
-    """
-
-    __slots__ = ("_items",)
-
-    def __init__(
-        self,
-        items: T | Iterable[T] | None = None,
-        *args: T,
-    ) -> None:
-        normalized = normalize(items) if items is not None else []
-        normalized.extend(args)
-
-        self._items = tuple(normalized)
-
-
-class EntityCollection(Collection[E]):
-    """
-    Collection of entities.
-    """
-
-    @classmethod
-    def from_iterable(
-        cls,
-        items: Iterable[E],
-    ) -> EntityCollection[E]:
-        return cls(items)
-
-
 class ObjectCollection(Collection[V]):
     """
     Collection of value objects.
@@ -193,36 +160,4 @@ class ObjectCollection(Collection[V]):
         cls,
         items: Iterable[V],
     ) -> ObjectCollection[V]:
-        return cls(items)
-
-
-class ImmutableEntityCollection(
-    ImmutableCollection[E],
-    Generic[E],
-):
-    """
-    Immutable collection of entities.
-    """
-
-    @classmethod
-    def from_iterable(
-        cls,
-        items: Iterable[E],
-    ) -> ImmutableEntityCollection[E]:
-        return cls(items)
-
-
-class ImmutableObjectCollection(
-    ImmutableCollection[V],
-    Generic[V],
-):
-    """
-    Immutable collection of value objects.
-    """
-
-    @classmethod
-    def from_iterable(
-        cls,
-        items: Iterable[V],
-    ) -> ImmutableObjectCollection[V]:
         return cls(items)

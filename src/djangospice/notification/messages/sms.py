@@ -3,7 +3,7 @@ from dataclasses import  dataclass
 from .base import Message
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class SmsMessage(Message):
     """
     Payload for constructing an SMS message.
