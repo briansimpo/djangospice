@@ -1,8 +1,5 @@
 from functools import cached_property
-from typing import Any
 
-from django.http import HttpRequest
-from djangospice.core.object import Object
 from djangospice.core.executable import Executable
 from djangospice.utils import safe_reverse
 
@@ -22,9 +19,10 @@ from .messages import (
     WhatsAppMessage,
 )
 
+from .apps import namespace
 
 
-class Notification(Executable, Object):
+class Notification(Executable):
     """
     Base business notification.
 
@@ -40,6 +38,7 @@ class Notification(Executable, Object):
         priority (int): Delivery priority (higher numbers indicate higher priority).
     """
     suffix = "Notification"
+    namespace = namespace
     level: NotificationLevel = NotificationLevel.INFO
     category: str | None = None
     queue: str = "default"
@@ -60,7 +59,7 @@ class Notification(Executable, Object):
         Fully-qualified notification type.
 
         Returns:
-            str: The app path and class name (e.g., 'myapp.notifications.Alert').
+            str: The app path and class name.
         """
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
@@ -158,47 +157,11 @@ class Notification(Executable, Object):
         return None
 
     def dispatch_url(self):
-        from .apps import namespace
         return safe_reverse(
-            view_name="notification_action",
-            namespace=namespace,
+            view_name="notification_view",
+            namespace=self.namespace,
             kwargs={
                 "app_name": self.identity.app_name,
                 "class_name": self.identity.class_name,
             },
         )
-
-    # ------------------------------------------------------------------
-    # Notification actions
-    # ------------------------------------------------------------------
-
-    def _action_metadata(self, name: str) -> dict[str, Any]:
-        """
-        Return presentation metadata for an action.
-        """
-
-        method = self.get_method(name)
-
-        if method is None:
-            return {}
-
-        metadata = method.get_metadata()
-        
-        return {
-            "name": name,
-            "label": metadata.get("label", name.replace("_", " ").title()),
-            "method": method.method,
-            "url":self.get_method_url(name),
-            "style": "primary",
-        }
-
-    def get_actions(self) -> list[dict[str, Any]]:
-        """
-        Return action definitions suitable for serialization
-        and rendering in notification interfaces.
-        """
-
-        return [
-            self._action_metadata(name)
-            for name in self.get_methods()
-        ]

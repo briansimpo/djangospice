@@ -95,10 +95,7 @@ class HTMLComponent(Serializable):
 
         return value.__class__.__name__
 
-    def _generate_state_hash(
-        self,
-        exclude_keys: set[str] | None = None,
-    ) -> str:
+    def _generate_state_hash(self, exclude_keys: set[str] | None = None) -> str:
         """
         Generate a deterministic hash from component state.
         """
@@ -248,13 +245,7 @@ class HTMLComponent(Serializable):
     # Rendering
     # ------------------------------------------------------------------
 
-    def render_template(
-        self,
-        template: str,
-        context: dict[str, Any],
-        *,
-        request: HttpRequest | None = None,
-    ) -> SafeString:
+    def render_template(self, template: str, context: dict[str, Any], *, request: HttpRequest | None = None) -> SafeString:
         """
         Render a template using the component context.
         """
@@ -266,10 +257,7 @@ class HTMLComponent(Serializable):
             )
         )
 
-    def render_content(
-        self,
-        content: str | SafeString,
-    ) -> SafeString:
+    def render_content(self, content: str | SafeString) -> SafeString:
         """
         Render direct component content.
         """
@@ -278,10 +266,7 @@ class HTMLComponent(Serializable):
 
         return mark_safe(content)
 
-    def render(
-        self,
-        request: HttpRequest | None = None,
-    ) -> SafeString:
+    def render(self, request: HttpRequest | None = None) -> SafeString:
         """
         Render the component.
 

@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 from djangospice.db.models import BaseModel
 
+from djangospice.notification.enums import ActionStatus
 from djangospice.notification.utils import id2slug
 
 from .queryset import NotificationQuerySet
@@ -162,6 +163,8 @@ class Notification(BaseModel):
             f"{self.__class__.__name__!s} has no attribute {name!r}"
         )
 
+    def active_actions(self):
+        return list(self.actions.filter(status=ActionStatus.PENDING).all())
 
     def timesince(self, now=None):
         """

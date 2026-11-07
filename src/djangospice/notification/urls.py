@@ -7,7 +7,12 @@ app_name = namespace
 
 urlpatterns = [
     path(
-        f"<slug:app_name>/<slug:class_name>/",
+        "<slug:app_name>/<slug:class_name>/",
+        NotificationActionView.as_view(),
+        name="notification_view",
+    ),
+    path(
+        "<slug:app_name>/<slug:class_name>/<slug:action>/",
         NotificationActionView.as_view(),
         name="notification_action",
     ),

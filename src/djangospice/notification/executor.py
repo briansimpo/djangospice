@@ -5,12 +5,8 @@ from typing import ClassVar
 from django.http import HttpRequest
 
 from djangospice.htmx.response import Response
+from djangospice.core.executable import Dispatcher, MethodDispatcher, UnknownDispatcher, DispatcherNotFound
 
-from .dispatchers import (
-    BaseDispatcher,
-    MethodDispatcher,
-    UnknownActionDispatcher,
-)
 from .base import Notification
 
 
@@ -20,16 +16,19 @@ class NotificationExecutor:
     and request dispatching.
     """
 
-    dispatchers: ClassVar[tuple[type[BaseDispatcher], ...]] = (
+    dispatchers: ClassVar[tuple[type[Dispatcher], ...]] = (
         MethodDispatcher,
-        UnknownActionDispatcher,
+        UnknownDispatcher,
     )
 
-    def __init__(self, notification: Notification, request: HttpRequest) -> None:
-        self.notification = notification
-        self.request = request
-
+    def __init__(self, notification: Notification, request: HttpRequest,*, action: str | None = None) -> None:
+           self.notification = notification
+           self.request = request
+           self.action = action
+   
     def execute(self) -> Response:
+        self.notification.request = self.request
+        self.notification.user = getattr(self.request, "user", None)
         return self.dispatch()
 
     def dispatch(self) -> Response:
@@ -37,11 +36,10 @@ class NotificationExecutor:
             dispatcher = dispatcher_cls(
                 self.notification,
                 self.request,
+                action=self.action,
             )
 
             if dispatcher.can_dispatch():
                 return dispatcher.dispatch()
 
-        raise Exception(
-            "No valid dispatcher found for this request."
-        )
+        raise DispatcherNotFound("No valid dispatcher found for this request.")

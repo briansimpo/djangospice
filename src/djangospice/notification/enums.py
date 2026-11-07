@@ -44,3 +44,9 @@ class Platform(models.TextChoices):
     MACOS = "MACOS", "macOS"
     LINUX = "LINUX", "Linux"
     WEB = "WEB", "Web"
+
+
+class ActionStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    COMPLETED = "completed", "Completed"
+    FAILED = "failed", "Failed"

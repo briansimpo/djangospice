@@ -19,8 +19,3 @@ class WidgetNotVisible(WidgetError):
         super().__init__(f"Widget '{widget}' is not visible.")
 
 
-class DispatcherNotFound(WidgetError):
-    def __init__(self, widget: str) -> None:
-        self.widget = widget
-        super().__init__(f"Widget Dispatcher not found.")
-
