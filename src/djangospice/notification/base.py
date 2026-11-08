@@ -59,30 +59,19 @@ class Notification(Executable):
         
     @cached_property
     def type(self) -> str:
-        """
-        Fully-qualified notification type.
-
-        Returns:
-            str: The app path and class name.
-        """
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
 
     @property
-    def actor(self):
-        return self.notification.actor
+    def action_id(self):
+        return f"{self.notification.pk}_{self.action}"
 
-    @property
-    def target(self):
-        return self.notification.target
-
-    @property
-    def actor_id(self):
-        return self.notification.actor_object_id
-
-    @property
-    def target_id(self):
-        return self.notification.target_object_id
-
+    def action_completed(self):
+        try:
+            action = self.notification.actions.filter(key=self.action_id).first()
+            if action is not None:
+                action.mark_as_completed(self.user)
+        except Exception:
+            pass
 
     def channels(self, user) -> tuple[Channel, ...]:
         """
