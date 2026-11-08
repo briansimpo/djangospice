@@ -93,7 +93,7 @@ class NotificationBuilder:
         NotificationAction.objects.bulk_create([
             NotificationAction(
                 notification=instance,
-                key=f"{instance.pk}_{action.name}",
+                key=f"{action.name}_{instance.pk}",
                 name=action.name,
                 url=cls._append_notification_id(
                     action.url,
