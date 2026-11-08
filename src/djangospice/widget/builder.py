@@ -5,7 +5,6 @@ from django.utils.safestring import SafeString
 from .widget import Widget
 
 
-
 class WidgetBuilder:
     """
     Builds the final HTML representation of a Widget.
