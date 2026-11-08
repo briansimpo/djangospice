@@ -5,7 +5,7 @@ from functools import update_wrapper
 from inspect import Parameter, signature
 
 from .conf import ActionStyle, ACTION_STYLES, HTTP_METHODS
-from .actions import Action
+from .action import Action
 
 
 class Metadata:

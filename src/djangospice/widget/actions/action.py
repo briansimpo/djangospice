@@ -139,7 +139,7 @@ class Action(Object, metaclass=ActionMetaclass):
             HTMXAttributes()
             .request(
                 method=self.method,
-                url=context.widget.endpoint,
+                url=context.widget.url,
             )
             .with_vals(
                 action=self.name,

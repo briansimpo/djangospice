@@ -9,7 +9,7 @@ from django.utils.text import camel_case_to_spaces
 
 from djangospice.core.formatting import snake_case
 from djangospice.htmx.querystate import QueryState
-from .actions import Action
+from .action import Action
 from .identity import ClassIdentity
 from .method import Method
 

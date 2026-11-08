@@ -54,12 +54,10 @@ class HTMXComponent(Serializable):
     context: dict[str, Any] = field(default_factory=dict)
 
     # Standard HTML attributes.
-    attrs: dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
     # HTMX attributes.
-    htmx: HTMXAttributes = field(
-        default_factory=HTMXAttributes
-    )
+    htmx: HTMXAttributes = field(default_factory=HTMXAttributes)
 
     css_class: str = ""
 
@@ -134,7 +132,7 @@ class HTMXComponent(Serializable):
         This method composes standard HTML attributes, subclass-provided
         attributes, and HTMX attributes. It does not render HTML.
         """
-        attributes = dict(self.attrs)
+        attributes = dict(self.attributes)
 
         attributes.update(
             self.get_extra_attributes()
@@ -187,7 +185,7 @@ class HTMXComponent(Serializable):
 
 
     @property
-    def html_attr(self) -> SafeString:
+    def attr(self) -> SafeString:
         """
         Return the component's attributes rendered as safe HTML.
         """
@@ -214,9 +212,6 @@ class HTMXComponent(Serializable):
     def get_context(self) -> dict[str, Any]:
         """
         Build the base template context.
-
-        ``attrs`` contains the rendered HTML attribute string rather
-        than the raw attribute dictionary.
         """
         context = dict(self.context)
 
