@@ -1,10 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from .element import HTMLElement
-from .helpers import create_element_class
 
 
 # ----------------------------------------------------------------------

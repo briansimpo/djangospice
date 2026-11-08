@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from django.utils.html import conditional_escape
 from django.utils.safestring import SafeData, mark_safe
 
-from djangospice.htmx.component import Component
+from .component import Component
 
 
 class HTMLElement(Component):

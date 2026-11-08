@@ -3,10 +3,7 @@ from typing import Any
 from .element import HTMLElement
 
 
-def create_element_class(
-    name: str,
-    tag_name: str,
-) -> type[HTMLElement]:
+def create_element_class(name: str, tag_name: str) -> type[HTMLElement]:
     """
     Create an HTMLElement subclass for an HTML tag.
     """
@@ -20,11 +17,7 @@ def create_element_class(
     )
 
 
-def create_element(
-    tag_name: str,
-    *children: Any,
-    **attributes: Any,
-) -> HTMLElement:
+def create_element(tag_name: str, *children: Any, **attributes: Any) -> HTMLElement:
     """
     Create an HTML element without requiring a predefined class.
     """
