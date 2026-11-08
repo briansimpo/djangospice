@@ -227,7 +227,7 @@ class Widget(Component, Executable):
         return f"refresh_{self.id}"
 
     def get_refresh_target(self) -> str:
-        return "this"
+        return f"#{self.id}"
 
     def get_refresh_swap(self) -> str:
         return "outerHTML"

@@ -12,7 +12,7 @@ from .builder import NotificationBuilder
 from .enums import Channel
 from .services import ChannelService
 from .celery import CeleryAdapter
-from .helpers import notification_created
+from .notify import notification_created
 
 
 # Type aliases

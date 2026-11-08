@@ -12,65 +12,7 @@ from .response import Response
 renderer = ResponseRenderer()
 
 
-def response(
-    content: str | bytes | Response | None = None,
-    *,
-    status: int = 200,
-    content_type: str = "text/html; charset=utf-8",
-    **headers: str,
-) -> Response:
-    """
-    Create a Djangospice response descriptor.
-
-    This is the primary shortcut for constructing responses in Django views.
-    It accepts raw HTML content, an existing Response descriptor, or no
-    content to create an empty response.
-
-    The returned descriptor supports fluent configuration of status codes,
-    headers, HTMX directives, out-of-band swaps, fragments, and documents.
-    It is materialized into a Django HttpResponse by the response renderer.
-
-    Args:
-        content: Response body as a string or bytes, an existing Response
-            descriptor, or None for an empty response.
-        status: HTTP status code. Defaults to 200.
-        content_type: Content-Type header for raw HTML or bytes.
-            Defaults to text/html; charset=utf-8.
-        **headers: Additional HTTP response headers.
-
-    Returns:
-        Response: A configurable Djangospice response descriptor.
-
-    Examples:
-        Return a simple HTML response:
-
-            return response("Hello world")
-
-        Return an empty response:
-
-            return response()
-
-        Configure an empty response:
-
-            return response().status(204).emit("updated")
-
-        Configure an HTML response:
-
-            return (
-                response("<h1>Hello</h1>")
-                .target("#content")
-                .swap("innerHTML")
-                .emit("content_updated")
-            )
-
-        Set custom headers:
-
-            return response("Created", status=201, X_Custom_Header="value")
-
-        Use an existing descriptor:
-
-            return response(Response.render("home.html"))
-    """
+def response(content: str | bytes | Response | None = None, *, status: int = 200, content_type: str = "text/html; charset=utf-8", **headers: str) -> Response:
     if isinstance(content, Response):
         return content
 
@@ -85,10 +27,7 @@ def response(
     )
 
 
-def dispatch_response(
-    request: HttpRequest,
-    response: Response | HttpResponse,
-) -> HttpResponse:
+def dispatch(request: HttpRequest, response: Response | HttpResponse) -> HttpResponse:
     """
     Dispatch a response descriptor or an existing Django HTTP response.
 
@@ -106,11 +45,6 @@ def dispatch_response(
 
     Returns:
         HttpResponse: The materialized or unchanged HTTP response.
-
-    Examples:
-        return dispatch_response(request, response("Hello world"))
-
-        return dispatch_response(request, HttpResponse("Hello world"))
     """
     if isinstance(response, Response):
         return renderer.render(response, request)
@@ -118,12 +52,7 @@ def dispatch_response(
     return response
 
 
-def htmx_render(
-    request: HttpRequest,
-    template: str,
-    context: dict[str, Any] | None = None,
-    **kwargs: Any,
-) -> HttpResponse:
+def htmx_render(request: HttpRequest, template: str, context: dict[str, Any] | None = None, **kwargs: Any) -> HttpResponse:
     """
     Render a template and return it as an HTMX-compatible response.
 
@@ -143,19 +72,6 @@ def htmx_render(
 
     Returns:
         HttpResponse: The rendered HTML response.
-
-    Examples:
-        return htmx_render(
-            request,
-            "users/partials/user_list.html",
-            {"users": users},
-        )
-
-        return htmx_render(
-            request,
-            "users/partials/user_detail.html",
-            user=user,
-        )
     """
     result = Response.render(
         template=template,
@@ -163,18 +79,10 @@ def htmx_render(
         **kwargs,
     )
 
-    return dispatch_response(request=request, response=result)
+    return dispatch(request=request, response=result)
 
 
-def htmx_redirect(
-    to: str,
-    *,
-    safe: bool = False,
-    app_name: str | None = None,
-    args: tuple | list | None = None,
-    kwargs: dict[str, Any] | None = None,
-    **options: Any,
-) -> Response:
+def htmx_redirect(to: str, *, safe: bool = False, app_name: str | None = None, args: tuple | list | None = None, kwargs: dict[str, Any] | None = None, **options: Any) -> Response:
     """
     Build an HTMX redirect response.
 
@@ -198,32 +106,6 @@ def htmx_redirect(
 
     Returns:
         Response: A configurable HTMX redirect response descriptor.
-
-    Examples:
-        Redirect to a URL:
-
-            return htmx_redirect("/dashboard/")
-
-        Redirect using a named URL:
-
-            return htmx_redirect("dashboard", safe=True)
-
-        Redirect using an application namespace:
-
-            return htmx_redirect(
-                "detail",
-                safe=True,
-                app_name="products",
-                kwargs={"pk": 10},
-            )
-
-        Customize the response:
-
-            return htmx_redirect(
-                "dashboard",
-                safe=True,
-                status=200,
-            )
     """
     status = options.pop("status", 204)
 

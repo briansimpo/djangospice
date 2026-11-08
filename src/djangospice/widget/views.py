@@ -8,7 +8,7 @@ from django.http import Http404, HttpRequest, HttpResponse
 
 from djangospice.exec.identity import ClassIdentity
 from djangospice.exec.resolver import Resolver
-from djangospice.htmx.shortcuts import dispatch_response
+from djangospice.htmx.shortcuts import dispatch
 
 from .executor import WidgetExecutor
 
@@ -41,4 +41,4 @@ class WidgetView(View):
         except PermissionDenied:
             raise Http404() from None
 
-        return dispatch_response(request, response)
+        return dispatch(request, response)
