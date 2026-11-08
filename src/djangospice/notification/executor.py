@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest
 
 from djangospice.htmx.response import Response
 from djangospice.exec.dispatchers import Dispatcher, MethodDispatcher, UnknownDispatcher
@@ -25,11 +25,27 @@ class NotificationExecutor:
            self.notification = notification
            self.request = request
            self.action = action
+
+    def get_notification_model(self):
+        notification_id = (
+            self.request.POST.get("notification_id")
+            or self.request.GET.get("notification_id")
+        )
+
+        if not notification_id:
+            raise Http404("Notification not found.")
+
+        try:
+            return self.request.user.notifications.get(pk=notification_id)
+        except self.request.user.notifications.model.DoesNotExist:
+            raise Http404("Notification not found.") from None
    
     def execute(self) -> Response:
-        self.notification.request = self.request
-        self.notification.user = getattr(self.request, "user", None)
-        
+        notification_model = self.get_notification_model()
+
+        self.notification.set_request(self.request)
+        self.notification.set_property("action", self.action)
+        self.notification.set_property("notification", notification_model)
         self.notification.authorize()
 
         return self.dispatch()

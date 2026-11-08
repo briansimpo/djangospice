@@ -29,9 +29,7 @@ class WidgetExecutor:
         self.action = action
 
     def execute(self) -> Response:
-        self.widget.request = self.request
-        self.widget.user = getattr(self.request, "user", None)
-
+        self.widget.set_request(self.request)
         self.widget.initialize()
         self.widget.configure()
         self.widget.authorize()

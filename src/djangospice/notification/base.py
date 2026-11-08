@@ -1,4 +1,5 @@
 from functools import cached_property
+from typing import Any
 
 from djangospice.exec.mixin import Executable
 from djangospice.utils import safe_reverse
@@ -49,9 +50,12 @@ class Notification(Executable):
     # Metadata
     # ------------------------------------------------------------------
 
-    def __init__(self, *args, request=None, notification_model=None, **kwargs) -> None:
+    def __init__(self, *args: Any, request = None, model = None, action = None, **kwargs: Any) -> None:
         super().__init__(*args, request=request, **kwargs)
-        self.notification = notification_model
+
+        from djangospice.notification.models import Notification
+        self.notification: Notification | None = model
+        self.action = action
         
     @cached_property
     def type(self) -> str:
@@ -62,6 +66,23 @@ class Notification(Executable):
             str: The app path and class name.
         """
         return f"{self.__class__.__module__}.{self.__class__.__name__}"
+
+    @property
+    def actor(self):
+        return self.notification.actor
+
+    @property
+    def target(self):
+        return self.notification.target
+
+    @property
+    def actor_id(self):
+        return self.notification.actor_object_id
+
+    @property
+    def target_id(self):
+        return self.notification.target_object_id
+
 
     def channels(self, user) -> tuple[Channel, ...]:
         """

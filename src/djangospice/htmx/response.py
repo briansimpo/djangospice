@@ -123,7 +123,10 @@ class Response:
     # ------------------------------------------------------------------
 
     def target(self, selector: str | None) -> Self:
-        self._htmx.retarget = selector
+        self._htmx.retarget = (
+            f"#{selector}" if selector and not selector.startswith(("#", ".", "["))
+            else selector
+        )
         return self
 
     def swap(self, strategy: str | None) -> Self:

@@ -22,6 +22,7 @@ class NotificationAction(BaseModel):
 
     label = models.CharField(max_length=100)
     icon = models.CharField(max_length=100, blank=True)
+    key = models.CharField(max_length=100, blank=True)
     method = models.CharField(max_length=10, choices=[("get", "GET"), ("post", "POST")], default="get")
     style = models.CharField(max_length=20, default="primary")
     attributes = models.JSONField(default=dict, blank=True)

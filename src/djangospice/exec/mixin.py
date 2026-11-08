@@ -43,6 +43,28 @@ class Executable:
         super().__init_subclass__(**kwargs)
         cls._configure_identity()
 
+
+    # ------------------------------------------------------------------
+    # Bindings
+    # ------------------------------------------------------------------
+
+    def set_request(self, request) -> None:
+        self.request = request
+        self.set_user(getattr(request, "user", None))
+
+    def set_user(self, user) -> None:
+        self.user = user
+
+    def set_kwargs(self, kwargs: dict[str, Any]) -> None:
+        self.kwargs = kwargs
+
+    def set_property(self, name: str, value: Any) -> None:
+        setattr(self, name, value)
+
+    def set_properties(self, **properties: Any) -> None:
+        for name, value in properties.items():
+            self.set_property(name, value)
+
     # -------------------------------------------------------------
     # Identity
     # -------------------------------------------------------------

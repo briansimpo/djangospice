@@ -27,6 +27,6 @@ class ContentRenderer:
         # Render the response template.
         return render_to_string(
             response.template,
-            response.payload,
+            response.context,
             request=request,
         )
