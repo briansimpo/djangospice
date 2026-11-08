@@ -53,7 +53,7 @@ class Notification(Executable):
 
     @property
     def action_id(self):
-        return f"{self.notification.pk}_{self.action}"
+        return f"{self.action}_{self.notification.pk}"
 
     def action_completed(self):
         try:
