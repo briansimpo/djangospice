@@ -28,15 +28,8 @@ class Notification(Executable):
     Base business notification.
 
     A notification represents a business event and is responsible
-    for building channel-specific messages. Delivery, persistence, 
-    and retries are handled by the framework.
+    for building channel-specific messages. Delivery, persistence, and retries.
 
-    Attributes:
-        level (NotificationLevel): The severity/level of the notification.
-        category (str | None): Optional grouping category for notifications.
-        queue (str): The Celery/task queue name for routing delivery.
-        required (bool): Whether this notification bypasses user opt-out preferences.
-        priority (int): Delivery priority (higher numbers indicate higher priority).
     """
     suffix = "Notification"
     namespace = namespace
@@ -46,9 +39,6 @@ class Notification(Executable):
     required: bool = True
     priority: int = 0
 
-    # ------------------------------------------------------------------
-    # Metadata
-    # ------------------------------------------------------------------
 
     def __init__(self, *args: Any, request = None, model = None, action = None, **kwargs: Any) -> None:
         super().__init__(*args, request=request, **kwargs)
