@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, ClassVar
+from django.http import HttpRequest
 from slugify import slugify
 
 from django.apps import apps
@@ -32,17 +33,16 @@ class Executable:
     staff_required: ClassVar[bool] = False
     permissions: ClassVar[tuple[str, ...]] = ()
 
+    def __init__(self, *, request: HttpRequest | None = None, **kwargs: Any) -> None:
+        super().__init__()
 
-    def __init__(self, *, request=None, **kwargs: Any) -> None:
         self.request = request
         self.user = getattr(request, "user", None)
         self.kwargs = kwargs
-        super().__init__()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls._configure_identity()
-
 
     # ------------------------------------------------------------------
     # Bindings
@@ -54,9 +54,6 @@ class Executable:
 
     def set_user(self, user) -> None:
         self.user = user
-
-    def set_kwargs(self, kwargs: dict[str, Any]) -> None:
-        self.kwargs = kwargs
 
     def set_property(self, name: str, value: Any) -> None:
         setattr(self, name, value)

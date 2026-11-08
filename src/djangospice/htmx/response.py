@@ -5,10 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any, Self
 from django.urls import reverse
 
-from .fragments import HTMXFragment, HTMLFragments
 from .document import Document
 from .headers import HTMXHeaders
-from .oob import OOBList
 
 
 @dataclass(slots=True, kw_only=True)
@@ -24,10 +22,8 @@ class Response:
     status_code: int = 200
     headers: dict[str, str] = field(default_factory=dict)
     content: str | bytes | None = None
-    fragments: HTMLFragments = field(default_factory=HTMLFragments)
 
     _htmx: HTMXHeaders = field(default_factory=HTMXHeaders, repr=False)
-    _oob: OOBList = field(default_factory=OOBList, repr=False)
     _document: Document | None = field(default=None, repr=False)
 
     @classmethod
@@ -94,14 +90,7 @@ class Response:
     @property
     def has_htmx(self) -> bool:
         return bool(self._htmx)
-
-    @property
-    def has_oob(self) -> bool:
-        return bool(self._oob)
-
-    def get_oob(self):
-        return self._oob
-
+    
     def status(self, status_code: int) -> Self:
         self.status_code = status_code
         return self
@@ -123,10 +112,7 @@ class Response:
     # ------------------------------------------------------------------
 
     def target(self, selector: str | None) -> Self:
-        self._htmx.retarget = (
-            f"#{selector}" if selector and not selector.startswith(("#", ".", "["))
-            else selector
-        )
+        self._htmx.retarget = selector
         return self
 
     def swap(self, strategy: str | None) -> Self:
@@ -181,53 +167,4 @@ class Response:
         self._htmx.after_settle(event, **kwargs)
         return self
 
-    def fragment(self,template: str, **context: Any) -> Self:
-        self.fragments.add(
-            HTMXFragment(
-                template_name=template,
-                context=context,
-            )
-        )
-        return self
-
-    # ------------------------------------------------------------------
-    # oob / documents
-    # ------------------------------------------------------------------
-    def oob(self, template: str, *, target: str | None = None, swap: str = "outerHTML", select: str | None = None, **context: Any) -> Self:
-        fragment = HTMXFragment(
-            template_name=template,
-            context=context,
-        )
-
-        self._oob.add(
-            fragment,
-            target=target,
-            swap=swap,
-            select=select,
-        )
-
-        return self
-
-    def oob_html(self, html: str, *, target: str | None = None, swap: str = "outerHTML",) -> Self:
-        fragment = HTMXFragment.from_html(html)
-
-        self._oob.add(
-            fragment,
-            target=target,
-            swap=swap,
-        )
-
-        return self
-   
-    def oob_fragment(self, fragment: HTMXFragment, *, target: str | None = None, swap: str = "outerHTML", select: str | None = None) -> Self:
-        self._oob.add(
-            fragment,
-            target=target,
-            swap=swap,
-            select=select,
-        )
-        return self
-
-    def clear_oob(self) -> Self:
-        self._oob.clear()
-        return self
+    

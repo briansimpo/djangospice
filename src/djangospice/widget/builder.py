@@ -10,7 +10,7 @@ class WidgetBuilder:
     """
     Builds the final HTML representation of a Widget.
 
-    Rendering is delegated entirely to the Widget/HTMXComponent
+    Rendering is delegated entirely to the Widget/Component
     rendering pipeline.
     """
 
