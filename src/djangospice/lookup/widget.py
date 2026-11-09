@@ -6,6 +6,7 @@ from typing import Any
 from django import forms
 from django.db import models
 from djangospice.exec.identity import ClassIdentity
+from djangospice.lookup.decorators import lookup
 from djangospice.utils import safe_reverse
 
 from .conf import LookupConfig, lookup_config
@@ -87,6 +88,8 @@ class LookupWidget(forms.Select):
         config: LookupConfig = lookup_config,
         **kwargs: Any,
     ) -> None:
+
+        
         model = self.resolve_model(
             model=model,
             definition=definition,
@@ -174,6 +177,8 @@ class LookupWidget(forms.Select):
             raise TypeError(
                 "model must be a Django model class."
             )
+
+        lookup(model)
 
         return model
 

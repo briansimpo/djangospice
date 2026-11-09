@@ -52,11 +52,8 @@ class Component:
         for name, components in (slots or {}).items():
             self.set_slot(name, *components)
 
-        if parent is not None:
+        if isinstance(parent, Component):
             parent.add_child(self)
-
-        self.initialize()
-        self.configure()
 
     # --------------------------------------------------------
     # Lifecycle

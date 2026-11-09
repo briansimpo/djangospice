@@ -46,6 +46,7 @@ class NotificationExecutor:
         self.notification.set_request(self.request)
         self.notification.set_property("action", self.action)
         self.notification.set_property("notification", notification_model)
+
         self.notification.authorize()
 
         return self.dispatch()

@@ -19,16 +19,9 @@ class LookupRegistry:
         identifier = definition.identifier
 
         with self._lock:
-            if identifier in self._definitions:
-                existing = self._definitions[identifier]
+            if identifier not in self._definitions:
 
-                raise LookupConfigurationError(
-                    f"Lookup '{definition.identifier}' is already "
-                    f"registered for "
-                    f"{existing.model._meta.label}."
-                )
-
-            self._definitions[identifier] = definition
+                self._definitions[identifier] = definition
 
         return definition
 

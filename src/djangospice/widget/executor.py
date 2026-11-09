@@ -30,6 +30,7 @@ class WidgetExecutor:
 
     def execute(self) -> Response:
         self.widget.set_request(self.request)
+        
         self.widget.initialize()
         self.widget.configure()
         self.widget.authorize()

@@ -9,7 +9,7 @@ from .exceptions import LookupConfigurationError
 from .registry import lookup_registry
 
 
-def register_lookup(model: type[models.Model], **kwargs: Any) -> LookupDefinition:
+def lookup(model: type[models.Model], **kwargs: Any) -> LookupDefinition:
     """
     Register a Django model as a lookup.
 
@@ -24,7 +24,7 @@ def register_lookup(model: type[models.Model], **kwargs: Any) -> LookupDefinitio
         models.Model,
     ):
         raise LookupConfigurationError(
-            "register_lookup() requires a Django model class."
+            "lookup() requires a Django model class."
         )
 
     definition = LookupDefinition(
