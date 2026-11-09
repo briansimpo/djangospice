@@ -83,7 +83,8 @@ class LookupWidget(forms.Select):
         )
 
         self.allow_clear = allow_clear
-        self.multi_select = multi_select
+        self.multi_select = bool(multi_select)
+        self.allow_multiple_selected = self.multi_select
         self.url = url
 
         definition = LookupDefinition(
@@ -212,6 +213,13 @@ class LookupWidget(forms.Select):
         """
         return super().format_value(value)
 
+    def value_from_datadict(self, data, files, name):
+        if self.multi_select:
+            getter = data.getlist if hasattr(data, "getlist") else data.get
+            return getter(name)
+
+        return super().value_from_datadict(data, files, name)
+
     # ------------------------------------------------------------------
     # Lookup metadata
     # ------------------------------------------------------------------
@@ -221,23 +229,6 @@ class LookupWidget(forms.Select):
             dependency.path
             for dependency in self.dependencies
         )
-
-    def get_client_config(self, *, name: str) -> dict[str, Any]:
-        return {
-            "type": "lookup",
-            "name": name,
-            "url": self.lookup_url,
-            "search_param": self.config.search_param,
-            "page_param": self.config.page_param,
-            "page_size_param": self.config.page_size_param,
-            "page_size": self.page_size,
-            "min_search_length": self.min_search_length,
-            "placeholder": self.placeholder,
-            "search_placeholder": self.search_placeholder,
-            "allow_clear": self.allow_clear,
-            "multi_select": self.multi_select,
-            "dependencies": self.get_lookup_dependencies(),
-        }
 
     # ------------------------------------------------------------------
     # HTML attributes
@@ -286,6 +277,9 @@ class LookupWidget(forms.Select):
                 ),
             }
         )
+
+        if self.multi_select:
+            attrs["multiple"] = True
 
         if self.token:
             attrs["data-lookup-token"] = self.token
