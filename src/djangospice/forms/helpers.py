@@ -100,7 +100,7 @@ def create_form_field(*, model, lookups=None, auto_lookup=True, callback: Callab
         if lookup is None and not auto_lookup:
             return formfield
 
-        options = dict(lookup.options) if lookup else {}
+        options = dict(lookup.as_dict()) if lookup else {}
 
         # Preserve the generated field's queryset and Django options.
         field_class = (

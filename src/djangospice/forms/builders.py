@@ -22,6 +22,8 @@ class ModelFormBuilder:
         help_texts=None,
         error_messages=None,
         field_classes=None,
+        inlines=None,
+        auto_inlines=False,
     ):
         if not hasattr(model, "_meta"):
             raise InvalidModelError(
@@ -48,6 +50,8 @@ class ModelFormBuilder:
         self.help_texts = help_texts
         self.error_messages = error_messages
         self.field_classes = field_classes
+        self.inlines = list(inlines or ())
+        self.auto_inlines = auto_inlines
 
     def build(self, name="DynamicModelForm"):
         return modelform_factory(
@@ -62,6 +66,15 @@ class ModelFormBuilder:
             error_messages=self.error_messages,
             field_classes=self.field_classes,
         )
+
+    def build_inlines(self):
+        from .inlines import InlineFormBuilder
+
+        return InlineFormBuilder(
+            parent_model=self.model,
+            inlines=self.inlines,
+            auto_discover=self.auto_inlines,
+        ).build()
 
     @classmethod
     def create(cls, model, **kwargs):

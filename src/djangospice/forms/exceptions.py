@@ -8,3 +8,7 @@ class InvalidModelError(FormBuilderError):
 
 class InvalidLookupError(FormBuilderError):
     """Raised when lookup configuration is invalid."""
+
+
+class InvalidInlineError(FormBuilderError):
+    """Raised when an inline declaration is invalid."""
