@@ -182,6 +182,7 @@
             this.syncFromSelect();
         }
 
+                
         createInterface() {
             const parent = this.select.parentNode;
             if (!parent) return;
@@ -189,8 +190,16 @@
             this.wrapper = createElement("div", "djangospice-lookup");
             this.wrapper.dataset.djangospiceLookupWrapper = "";
 
+            this.control = createElement(
+                "div",
+                "djangospice-lookup__control"
+            );
+
             if (this.select.multiple) {
-                this.selection = createElement("div", "djangospice-lookup__selection");
+                this.selection = createElement(
+                    "div",
+                    "djangospice-lookup__selection"
+                );
             } else {
                 this.selection = null;
             }
@@ -226,24 +235,32 @@
             });
             this.status.hidden = true;
 
+            // Build the shared input control.
+            if (this.selection) {
+                this.control.appendChild(this.selection);
+            }
+
+            this.control.appendChild(this.search);
+
+            if (this.clearButton) {
+                this.control.appendChild(this.clearButton);
+            }
+
             parent.insertBefore(this.wrapper, this.select);
 
-            if (this.selection) {
-                this.wrapper.appendChild(this.selection);
-            }
-            this.wrapper.appendChild(this.search);
-            if (this.clearButton) {
-                this.wrapper.appendChild(this.clearButton);
-            }
+            this.wrapper.appendChild(this.control);
             this.wrapper.appendChild(this.listbox);
             this.wrapper.appendChild(this.status);
             this.wrapper.appendChild(this.select);
 
             this.select.classList.add("djangospice-lookup__native");
+
             this.listbox.id = this.getListboxId();
             this.search.setAttribute("aria-controls", this.listbox.id);
+
             this.wrapper.classList.add("is-enhanced");
         }
+
 
         syncDisabledState() {
             const disabled =
@@ -346,6 +363,14 @@
 
             this.select.addEventListener("change", () => {
                 this.syncFromSelect();
+            });
+
+            this.control.addEventListener("click", (event) => {
+                if (event.target.closest("[data-lookup-remove]")) {
+                    return;
+                }
+
+                this.search.focus();
             });
 
             if (this.clearButton) {

@@ -64,8 +64,8 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
         self,
         queryset,
         *,
-        placeholder=None,
-        search_placeholder=None,
+        placeholder="Select...",
+        search_placeholder="Search...",
         depends_on=None,
         **kwargs,
     ):
