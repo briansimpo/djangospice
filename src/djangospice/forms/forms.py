@@ -87,7 +87,7 @@ class DynamicModelForm(forms.ModelForm, metaclass=DynamicModelFormMetaclass):
 
     @classmethod
     def get_inline_formsets(cls):
-        from .inlines import InlineFormBuilder
+        from .builders import InlineFormBuilder
 
         return InlineFormBuilder(
             cls._meta.model,
