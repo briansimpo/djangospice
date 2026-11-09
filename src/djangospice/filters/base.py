@@ -1,5 +1,4 @@
 import django_filters
-from django.db.models import QuerySet
 
 
 class OptionFilter(django_filters.FilterSet):

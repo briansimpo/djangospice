@@ -6,10 +6,11 @@ from typing import Any
 from django import forms
 from django.db import models
 from djangospice.exec.identity import ClassIdentity
-from djangospice.lookup.decorators import lookup
 from djangospice.utils import safe_reverse
 
+
 from .conf import LookupConfig, lookup_config
+from .registry import lookup_registry
 from .definition import LookupDefinition
 from .dependencies import LookupDependencyResolver
 from .apps import namespace
@@ -32,36 +33,6 @@ class LookupWidget(forms.Select):
     A lookup can be configured using either a registered model or
     an existing LookupDefinition.
 
-    Example:
-
-        course = forms.ModelChoiceField(
-            queryset=Course.objects.all(),
-            widget=LookupWidget(
-                model=Course,
-            ),
-        )
-
-    With a lookup definition:
-
-        course = forms.ModelChoiceField(
-            queryset=Course.objects.all(),
-            widget=LookupWidget(
-                definition=course_lookup,
-            ),
-        )
-
-    Cascading lookups:
-
-        course = forms.ModelChoiceField(
-            queryset=Course.objects.all(),
-            widget=LookupWidget(
-                model=Course,
-                depends_on=(
-                    "program",
-                    "program__department",
-                ),
-            ),
-        )
     """
 
     def __init__(
@@ -70,7 +41,7 @@ class LookupWidget(forms.Select):
         choices: Iterable | None = (),
         *,
         model: type[models.Model] | None = None,
-        definition: LookupDefinition | None = None,
+        queryset: models.QuerySet | None = None,
         depends_on: (
             str
             | type[models.Model]
@@ -89,52 +60,41 @@ class LookupWidget(forms.Select):
         **kwargs: Any,
     ) -> None:
 
-        
-        model = self.resolve_model(
-            model=model,
-            definition=definition,
-        )
-
-        dependencies = self.resolve_dependencies(
-            definition=definition,
-            depends_on=depends_on,
-        )
+        model = self.resolve_model(model=model, queryset=queryset)
 
         self.model = model
-        self.definition = definition
+        self.queryset = queryset
         self.token = token
         self.config = config
 
-        self.depends_on = self.normalize_depends_on(
-            dependencies,
-        )
+        self.depends_on = self.normalize_depends_on(depends_on)
 
-        self.dependencies = (
-            LookupDependencyResolver.normalize(
-                model,
-                self.depends_on,
-            )
-        )
+        self.dependencies = LookupDependencyResolver.normalize(model, self.depends_on)
 
         self.placeholder = placeholder
         self.search_placeholder = search_placeholder
 
         self.page_size = self.validate_page_size(
-            page_size
-            if page_size is not None
-            else config.page_size,
+            page_size if page_size is not None else config.page_size,
         )
 
-        self.min_search_length = (
-            self.validate_min_search_length(
-                min_search_length,
-            )
+        self.min_search_length = self.validate_min_search_length(
+            min_search_length,
         )
 
         self.allow_clear = allow_clear
         self.multi_select = multi_select
-
         self.url = url
+
+        definition = LookupDefinition(
+            model=model,
+            queryset=queryset,
+            depends_on=depends_on,
+            **kwargs,
+        )
+       
+       
+        lookup_registry.register(definition)
 
         super().__init__(
             attrs=attrs,
@@ -142,82 +102,56 @@ class LookupWidget(forms.Select):
             **kwargs,
         )
 
+
     # ------------------------------------------------------------------
     # Configuration
     # ------------------------------------------------------------------
 
     @staticmethod
-    def resolve_model(
-        *,
-        model: type[models.Model] | None,
-        definition: LookupDefinition | None,
-    ) -> type[models.Model]:
-        if definition is not None:
-            if (
-                model is not None
-                and model is not definition.model
-            ):
+    def resolve_model(*, model: type[models.Model] | None, queryset: models.QuerySet | None) -> type[models.Model]:
+
+        if queryset is not None:
+            if not isinstance(queryset, models.QuerySet):
+                raise TypeError(
+                    "queryset must be a Django QuerySet."
+                )
+
+            queryset_model = queryset.model
+
+            if model is not None and model is not queryset_model:
                 raise ValueError(
-                    "model and definition.model must refer "
+                    "model and queryset.model must refer "
                     "to the same model."
                 )
 
-            return definition.model
+            model = queryset_model
 
         if model is None:
             raise ValueError(
-                "LookupWidget requires either "
-                "model or definition."
+                "LookupWidget requires either model or queryset."
             )
 
-        if not isinstance(model, type) or not issubclass(
-            model,
-            models.Model,
-        ):
+        if not isinstance(model, type) or not issubclass(model, models.Model):
             raise TypeError(
                 "model must be a Django model class."
             )
 
-        lookup(model)
-
         return model
 
     @staticmethod
-    def resolve_dependencies(
-        *,
-        definition: LookupDefinition | None,
-        depends_on,
-    ):
-        if depends_on is not None:
-            return depends_on
+    def normalize_depends_on(depends_on) -> tuple[str | type[models.Model], ...]:
 
-        if definition is not None:
-            return definition.depends_on
-
-        return ()
-
-    @staticmethod
-    def normalize_depends_on(
-        depends_on,
-    ) -> tuple[
-        str | type[models.Model],
-        ...,
-    ]:
         if depends_on is None:
             return ()
 
-        if isinstance(
-            depends_on,
-            (str, type),
-        ):
+        if isinstance(depends_on, (str, type)):
             return (depends_on,)
 
         return tuple(depends_on)
 
+    
     @staticmethod
-    def validate_page_size(
-        page_size: int,
-    ) -> int:
+    def validate_page_size(page_size: int) -> int:
         if page_size <= 0:
             raise ValueError(
                 "page_size must be greater than zero."
@@ -226,9 +160,7 @@ class LookupWidget(forms.Select):
         return page_size
 
     @staticmethod
-    def validate_min_search_length(
-        value: int,
-    ) -> int:
+    def validate_min_search_length(value: int) -> int:
         if value < 0:
             raise ValueError(
                 "min_search_length cannot be negative."
@@ -261,21 +193,13 @@ class LookupWidget(forms.Select):
     # Select behaviour
     # ------------------------------------------------------------------
 
-    def use_required_attribute(
-        self,
-        initial,
-    ) -> bool:
+    def use_required_attribute(self, initial) -> bool:
         """
         Preserve Django's normal Select behaviour.
         """
-        return super().use_required_attribute(
-            initial,
-        )
+        return super().use_required_attribute(initial)
 
-    def format_value(
-        self,
-        value,
-    ):
+    def format_value(self,value):
         """
         Preserve Django's normal value handling.
 
@@ -299,12 +223,6 @@ class LookupWidget(forms.Select):
         )
 
     def get_client_config(self, *, name: str) -> dict[str, Any]:
-        """
-        Return the client-side configuration for this lookup widget.
-        """
-        if multi_select is None:
-            multi_select = self.multi_select
-
         return {
             "type": "lookup",
             "name": name,
@@ -325,15 +243,8 @@ class LookupWidget(forms.Select):
     # HTML attributes
     # ------------------------------------------------------------------
 
-    def build_attrs(
-        self,
-        base_attrs: dict[str, Any] | None = None,
-        extra_attrs: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        attrs = super().build_attrs(
-            base_attrs,
-            extra_attrs,
-        )
+    def build_attrs(self, base_attrs: dict[str, Any] | None = None, extra_attrs: dict[str, Any] | None = None) -> dict[str, Any]:
+        attrs = super().build_attrs(base_attrs, extra_attrs)
 
         attrs.update(
             {
@@ -392,12 +303,7 @@ class LookupWidget(forms.Select):
     # Context
     # ------------------------------------------------------------------
 
-    def get_context(
-        self,
-        name: str,
-        value,
-        attrs: dict[str, Any],
-    ) -> dict[str, Any]:
+    def get_context(self,name: str, value, attrs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context(
             name,
             value,

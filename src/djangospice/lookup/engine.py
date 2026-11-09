@@ -103,6 +103,8 @@ class LookupEngine:
     # ---------------------------------------------------------
 
     def get_queryset(self, query: LookupQuery) -> QuerySet:
+        if query.queryset is not None:
+            return query.queryset
         return query.model._default_manager.all()
 
     # ---------------------------------------------------------

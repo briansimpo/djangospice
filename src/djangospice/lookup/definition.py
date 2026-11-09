@@ -1,10 +1,13 @@
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable, TypeAlias
 
 from django.db import models
+
 from djangospice.exec.identity import ClassIdentity
+
 from .dependencies import (
     LookupDependency,
     LookupDependencyDeclaration,
@@ -21,9 +24,14 @@ LookupSearchField: TypeAlias = str
 class LookupDefinition:
     """
     Declarative definition of a model lookup.
+
+    A lookup can be initialized using either a model class
+    or a queryset. When a queryset is supplied, its model
+    is resolved automatically.
     """
 
-    model: type[models.Model]
+    model: type[models.Model] | None = None
+    queryset: models.QuerySet | None = None
 
     depends_on: (
         LookupDependencyDeclaration
@@ -46,13 +54,38 @@ class LookupDefinition:
     scope: str | None = None
 
     def __post_init__(self) -> None:
-        if not isinstance(self.model, type) or not issubclass(
-            self.model,
+        model = self.model
+        queryset = self.queryset
+
+        if queryset is not None:
+            if not isinstance(queryset, models.QuerySet):
+                raise LookupConfigurationError(
+                    "LookupDefinition.queryset must be a Django QuerySet."
+                )
+
+            queryset_model = queryset.model
+
+            if model is not None and model is not queryset_model:
+                raise LookupConfigurationError(
+                    "model and queryset.model must refer to the same model."
+                )
+
+            model = queryset_model
+
+        if model is None:
+            raise LookupConfigurationError(
+                "LookupDefinition requires either model or queryset."
+            )
+
+        if not isinstance(model, type) or not issubclass(
+            model,
             models.Model,
         ):
             raise LookupConfigurationError(
                 "LookupDefinition.model must be a Django model class."
             )
+
+        object.__setattr__(self, "model", model)
 
         if self.page_size < 1:
             raise LookupConfigurationError(
@@ -81,18 +114,16 @@ class LookupDefinition:
                 )
 
     @property
-    def identity(self):
+    def identity(self) -> ClassIdentity:
         return ClassIdentity.from_model(self.model)
 
     @property
     def app_name(self) -> str:
         return self.identity.app_name
 
-
     @property
     def model_name(self) -> str:
         return self.identity.class_name
-
 
     @property
     def identifier(self) -> str:

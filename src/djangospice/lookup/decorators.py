@@ -5,32 +5,21 @@ from typing import Any
 from django.db import models
 
 from .definition import LookupDefinition
-from .exceptions import LookupConfigurationError
 from .registry import lookup_registry
 
 
-def lookup(model: type[models.Model], **kwargs: Any) -> LookupDefinition:
+def lookup(model: type[models.Model] | models.QuerySet | None = None, **kwargs: Any) -> LookupDefinition:
     """
-    Register a Django model as a lookup.
+    Register a Django model or queryset as a lookup.
 
-    The lookup identity is derived from:
-
-        model._meta.app_label
-        model._meta.model_name
+    The lookup identity is derived from the queryset's model
+    or the supplied model class.
     """
+    if isinstance(model, models.QuerySet):
+        kwargs["queryset"] = model
+    elif model is not None:
+        kwargs["model"] = model
 
-    if not isinstance(model, type) or not issubclass(
-        model,
-        models.Model,
-    ):
-        raise LookupConfigurationError(
-            "lookup() requires a Django model class."
-        )
-
-    definition = LookupDefinition(
-        model=model,
-        **kwargs,
-    )
-
+    definition = LookupDefinition(**kwargs)
 
     return lookup_registry.register(definition)

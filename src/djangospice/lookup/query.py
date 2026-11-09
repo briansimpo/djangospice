@@ -42,3 +42,7 @@ class LookupQuery:
     @property
     def model(self):
         return self.definition.model
+
+    @property
+    def queryset(self):
+        return self.definition.queryset
