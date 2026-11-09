@@ -7,7 +7,7 @@ from django.forms.models import inlineformset_factory, modelform_factory
 
 from .exceptions import InvalidModelError
 from .helpers import create_form_field
-from .inlines import Inline
+from .inline import Inline
 from .relations import InlineRelation, get_inline_relations
 
 
@@ -239,7 +239,7 @@ class ModelFormBuilder:
         )
 
     def build_inlines(self):
-        from .inlines import InlineFormBuilder
+        from .inline import InlineFormBuilder
 
         return InlineFormBuilder(
             parent_model=self.model,
