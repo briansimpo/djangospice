@@ -14,7 +14,7 @@ class HTMXTemplateMixin:
     materialized by HTMXMiddleware.
     """
 
-    htmx_template_name: str | None = None
+    template_name: str | None = None
 
     # ------------------------------------------------------------------
     # HTMX
@@ -28,13 +28,13 @@ class HTMXTemplateMixin:
     # ------------------------------------------------------------------
 
     def get_htmx_template_name(self) -> str:
-        if not self.htmx_template_name:
+        if not self.template_name:
             raise AttributeError(
                 f"{self.__class__.__name__} requires "
-                "'htmx_template_name' when handling an HTMX request."
+                "'template_name' when handling an HTMX request."
             )
 
-        return self.htmx_template_name
+        return self.template_name
 
     def get_template_names(self):
         """

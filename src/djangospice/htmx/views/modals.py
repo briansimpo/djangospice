@@ -30,7 +30,7 @@ class HTMXModal(
     The modal itself is just another HTMX template response.
     """
 
-    htmx_template_name = get_template_name("modal/modal.html", namespace)
+    template_name = get_template_name("modal/modal.html", namespace)
 
     def get_context_data(
         self,
@@ -138,7 +138,7 @@ class HTMXObjectModal(
     CreateView/UpdateView/DeleteView semantics.
     """
 
-    htmx_template_name = get_template_name("modal/modal.html", namespace)
+    template_name = get_template_name("modal/modal.html", namespace)
 
     def get_context_data(
         self,
