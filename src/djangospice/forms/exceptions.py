@@ -12,3 +12,15 @@ class InvalidLookupError(FormBuilderError):
 
 class InvalidInlineError(FormBuilderError):
     """Raised when an inline declaration is invalid."""
+
+
+class FormProcessingError(Exception):
+    """Base exception for form processing errors."""
+
+
+class InvalidFormError(FormProcessingError):
+    """Raised when attempting to save invalid forms."""
+
+
+class FormAlreadySavedError(FormProcessingError):
+    """Raised when attempting to save a processor twice."""
