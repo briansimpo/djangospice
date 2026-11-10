@@ -155,15 +155,14 @@ class Executable:
     
 
     def authorize(self) -> None:
-        user = self.user
-        
-        if self.login_required and not user.is_authenticated:
+
+        if self.login_required and not self.user.is_authenticated:
             raise PermissionDenied
 
-        if self.staff_required and not user.is_staff:
+        if self.staff_required and not self.user.is_staff:
             raise PermissionDenied
 
-        if self.permissions and not user.has_perms(self.permissions):
+        if self.permissions and not self.user.has_perms(self.permissions):
             raise PermissionDenied
 
     # -------------------------------------------------------------
