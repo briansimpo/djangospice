@@ -5,7 +5,6 @@ from copy import deepcopy
 from typing import Any, ClassVar
 
 from django.db.models import Model, QuerySet
-from django.http import HttpRequest
 
 from djangospice.exec.mixin import Executable
 from djangospice.htmx.component import Component
@@ -16,7 +15,7 @@ from .actions import Action, ActionContext, Actions, BoundAction
 from .apps import namespace
 
 
-class Widget(Component, Executable):
+class Widget(Executable, Component):
     """
     Base class for Djangospice UI widgets.
 
@@ -65,30 +64,8 @@ class Widget(Component, Executable):
     # Initialization
     # ------------------------------------------------------------------
 
-    def __init__(
-        self,
-        request: HttpRequest | None = None,
-        *,
-        parent: Component | None = None,
-        children: list[Component] | None = None,
-        slots: dict[str, list[Component]] | None = None,
-        component_kwargs: dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        Component.__init__(
-            self,
-            request=request,
-            parent=parent,
-            children=children,
-            slots=slots,
-            **(component_kwargs or {}),
-        )
-
-        Executable.__init__(
-            self,
-            request=request,
-            **kwargs,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
     
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -125,10 +102,10 @@ class Widget(Component, Executable):
             else:
                 normalized[name] = actions
 
-        cls._actions = cls.merge_actions(*normalized.values())
+        cls._actions = cls._merge_actions(*normalized.values())
 
     @classmethod
-    def merge_actions(cls, *collections: Actions) -> Actions:
+    def _merge_actions(cls, *collections: Actions) -> Actions:
         actions: dict[str, Action] = {}
 
         for collection in collections:
@@ -145,7 +122,7 @@ class Widget(Component, Executable):
             action=action,
             context=context,
         )
-
+    
     # ------------------------------------------------------------------
     # Request & visibility
     # ------------------------------------------------------------------
@@ -154,7 +131,10 @@ class Widget(Component, Executable):
     def is_lazy_fetch(self) -> bool:
         request = self.request
 
-        if request is None or request.headers.get("HX-Request") != "true":
+        if request is None:
+            return False
+
+        if request.headers.get("HX-Request") != "true":
             return False
 
         match = request.resolver_match
@@ -166,8 +146,7 @@ class Widget(Component, Executable):
             and match.kwargs.get("class_name") == self.class_name
         )
 
-    @property
-    def request_data(self) -> Any:
+    def get_data(self):
         if self.request is None:
             return None
 
@@ -176,12 +155,12 @@ class Widget(Component, Executable):
 
         return self.request.GET
 
-    def request_value(self, name: str) -> Any:
-        data = self.request_data
+    def get_value(self, name: str) -> Any:
+        data = self.get_data()
         return data.get(name) if data is not None else None
 
-    def request_values(self, name: str) -> list[Any]:
-        data = self.request_data
+    def get_list(self, name: str) -> list[Any]:
+        data = self.get_data()
         return data.getlist(name) if data is not None else []
 
     # ------------------------------------------------------------------
@@ -198,7 +177,7 @@ class Widget(Component, Executable):
         return self.model._default_manager.all()
 
     def get_object(self) -> Model | None:
-        pk = self.request_value(self.object_parameter)
+        pk = self.get_value(self.object_parameter)
 
         if not pk:
             return None
@@ -206,7 +185,7 @@ class Widget(Component, Executable):
         return self.get_queryset().filter(pk=pk).first()
 
     def get_objects(self) -> tuple[Model, ...]:
-        ids = self.request_values(self.objects_parameter)
+        ids = self.get_list(self.objects_parameter)
 
         if not ids:
             obj = self.get_object()
@@ -215,9 +194,6 @@ class Widget(Component, Executable):
         return tuple(
             self.get_queryset().filter(pk__in=ids)
         )
-
-    def get_data(self) -> Any:
-        return self.request_data
 
     # ------------------------------------------------------------------
     # Refresh
@@ -292,7 +268,7 @@ class Widget(Component, Executable):
 
     def response(self) -> Response:
         return Response.html(
-            self.render(request=self.request)
+            self.render_to_string()
         )
 
     def get(self) -> Response:

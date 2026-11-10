@@ -40,12 +40,17 @@ class Notification(Executable):
     priority: int = 0
 
 
-    def __init__(self, *args: Any, request = None, model = None, action = None, **kwargs: Any) -> None:
-        super().__init__(*args, request=request, **kwargs)
-
+    def __init__(self, **kwargs: Any) -> None:
+        action = kwargs.pop("action", None)
+        model = kwargs.pop("model", None)
+       
+        super().__init__(**kwargs)
+        
         from djangospice.notification.models import Notification
+       
         self.notification: Notification | None = model
         self.action = action
+                
         
     @cached_property
     def type(self) -> str:

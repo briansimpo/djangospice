@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, ClassVar
-from django.http import HttpRequest
 from slugify import slugify
 
 from django.apps import apps
@@ -33,16 +32,28 @@ class Executable:
     staff_required: ClassVar[bool] = False
     permissions: ClassVar[tuple[str, ...]] = ()
 
-    def __init__(self, *, request: HttpRequest | None = None, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
+        self.request =  kwargs.get("request", None)
+        self.user = getattr(self.request, "user", None)
+        self.kwargs = kwargs
+
         super().__init__()
 
-        self.request = request
-        self.user = getattr(request, "user", None)
-        self.kwargs = kwargs
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls._configure_identity()
+
+    # --------------------------------------------------------
+    # Lifecycle
+    # --------------------------------------------------------
+
+    def initialize(self) -> None:
+        """Initialize the component."""
+
+    def configure(self) -> None:
+        """Configure component attributes and interactions."""
+
 
     # ------------------------------------------------------------------
     # Bindings
@@ -58,9 +69,6 @@ class Executable:
     def set_property(self, name: str, value: Any) -> None:
         setattr(self, name, value)
 
-    def set_properties(self, **properties: Any) -> None:
-        for name, value in properties.items():
-            self.set_property(name, value)
 
     # -------------------------------------------------------------
     # Identity

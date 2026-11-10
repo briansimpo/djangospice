@@ -1,5 +1,7 @@
+
 from __future__ import annotations
 
+from string import ascii_uppercase
 from typing import Any, ClassVar
 
 import django_filters
@@ -8,35 +10,25 @@ import django_tables2 as tables
 from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
 from djangospice.widget.actions import Actions
-from djangospice.widget.pagination import (
-    PaginationConfig,
-    PaginationState
-)
 from djangospice.widget.composers import (
     ActionComposer,
     FilterComposer,
-    PaginationComposer,
     SearchComposer,
 )
 
-from .composers import TableComposer, TablePageComposer
-from .fields import TableField
-from .apps import namespace
+from djangospice.table.fields import TableField
 
+from .apps import namespace
+from .composers import TableComposer
 
 
 class TableWidget(Widget):
-    """
-    Request-aware server-side table widget built on django-tables2.
-
-    The widget composes generic queryset, filtering, search, pagination,
-    and action services with table-specific django-tables2 behavior.
-    """
+    """A configurable, server-rendered django-tables2 widget."""
 
     template_name = get_template_name("table_widget.html", namespace)
 
     # ------------------------------------------------------------------
-    # Table
+    # TABLE
     # ------------------------------------------------------------------
 
     table_class: ClassVar[type[tables.Table] | None] = None
@@ -44,90 +36,82 @@ class TableWidget(Widget):
     exclude: ClassVar[tuple[str, ...] | str | None] = None
 
     # ------------------------------------------------------------------
-    # Actions
+    # SEARCH
+    # ------------------------------------------------------------------
+
+    show_search = True
+    search_fields: ClassVar[tuple[str, ...]] = ()
+    search_parameter = "q"
+
+    # ------------------------------------------------------------------
+    # FILTERING
+    # ------------------------------------------------------------------
+
+    show_filters = True
+    filterset_class: ClassVar[type[django_filters.FilterSet] | None] = None
+
+    # ------------------------------------------------------------------
+    # ALPHABET FILTER
+    # ------------------------------------------------------------------
+
+    show_alphabet_filter = False
+    alphabet: ClassVar[tuple[str, ...]] = tuple(ascii_uppercase)
+    alphabet_parameter = "letter"
+    alphabet_field: str | None = None
+
+    # ------------------------------------------------------------------
+    # PAGINATION
+    # ------------------------------------------------------------------
+
+    paginate = True
+    paginate_by = 20
+
+    page_parameter = "page"
+    page_size_parameter = "page_size"
+
+    page_size_options: ClassVar[tuple[int, ...]] = (10, 20, 50, 100)
+    max_page_size = 100
+
+    show_pagination = True
+    show_page_size = True
+
+    # ------------------------------------------------------------------
+    # ACTIONS
     # ------------------------------------------------------------------
 
     actions: ClassVar[Actions] = Actions()
     row_actions: ClassVar[Actions] = Actions()
     bulk_actions: ClassVar[Actions] = Actions()
 
-    context_menu: ClassVar[bool] = True
-    context_menu_actions: ClassVar[Actions | None] = None
+    context_menu = True
 
     # ------------------------------------------------------------------
-    # Search
+    # SELECTION
     # ------------------------------------------------------------------
 
-    search_fields: ClassVar[tuple[str, ...]] = ()
-    search_parameter: ClassVar[str] = "q"
+    selectable = False
+    objects_parameter = "objects"
 
     # ------------------------------------------------------------------
-    # Filtering
+    # DISPLAY
     # ------------------------------------------------------------------
 
-    filterset_class: ClassVar[
-        type[django_filters.FilterSet] | None
-    ] = None
+    show_header = True
+    show_footer = False
+    empty_message = "No records found."
 
     # ------------------------------------------------------------------
-    # Pagination
+    # LIFECYCLE
     # ------------------------------------------------------------------
 
-    page_size_options: ClassVar[tuple[int, ...]] = (
-        10,
-        20,
-        50,
-        100,
-        500,
-    )
-
-    paginate: ClassVar[bool] = True
-    paginate_by: ClassVar[int] = 20
-    max_page_size: ClassVar[int] = 100
-
-    page_parameter: ClassVar[str] = "page"
-    page_size_parameter: ClassVar[str] = "page_size"
-
-    # ------------------------------------------------------------------
-    # Selection
-    # ------------------------------------------------------------------
-
-    selectable: ClassVar[bool] = False
-
-    # ------------------------------------------------------------------
-    # UI
-    # ------------------------------------------------------------------
-
-    toolbar: ClassVar[bool] = True
-    show_search: ClassVar[bool] = True
-    show_filters: ClassVar[bool] = True
-
-    show_header: ClassVar[bool] = True
-    show_footer: ClassVar[bool] = True
-
-    empty_message: ClassVar[str] = "No records found."
-
-    # ------------------------------------------------------------------
-    # Runtime state
-    # ------------------------------------------------------------------
-
-    table: tables.Table
-    filterset: django_filters.FilterSet | None
-    pagination_config: PaginationConfig
-    pagination_state: PaginationState
-
-    alphabet_parameter: ClassVar[str] = "letter"
-    alphabet_field: ClassVar[str | None] = None
-
-    # ==================================================================
-    # Lifecycle
-    # ==================================================================
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def initialize(self) -> None:
         super().initialize()
 
+        self.table: tables.Table | None = None
         self.filterset = None
-        self.pagination_state = None
 
         self.search = SearchComposer(
             request=self.request,
@@ -137,219 +121,193 @@ class TableWidget(Widget):
 
         self.filters = FilterComposer(
             request=self.request,
-            filterset_class=self.filterset_class,
+            filterset_class=(
+                self.filterset_class
+                if self.show_filters
+                else None
+            ),
         )
 
-        self.pagination = PaginationComposer(
+        self.table_composer = TableComposer(
             request=self.request,
+            model=self.model,
+            table_class=self.table_class,
+            fields=self.fields,
+            exclude=self.exclude,
+            row_actions=bool(self.row_actions),
             paginate=self.paginate,
-            default_size=self.paginate_by,
-            size_options=self.page_size_options,
-            max_size=self.max_page_size,
+            paginate_by=self.paginate_by,
             page_parameter=self.page_parameter,
-            size_parameter=self.page_size_parameter,
+            page_size_parameter=self.page_size_parameter,
+            page_size_options=self.page_size_options,
+            max_page_size=self.max_page_size,
         )
-
-        self.pagination_config = self.pagination.compose()
-
-        self.table_composer = TableComposer(self)
 
     def configure(self) -> None:
         super().configure()
-
         self.table = self.build_table()
 
-        self.pagination_state = TablePageComposer(
-            table=self.table,
-            config=self.pagination_config,
-        ).compose()
+    # ------------------------------------------------------------------
+    # QUERYSET
+    # ------------------------------------------------------------------
 
-    def get_alphabet_options(self) -> list[str]:
-        """Returns uppercase letters A through Z."""
-        import string
-        return list(string.ascii_uppercase)
+    def get_queryset(self):
+        queryset = super().get_queryset()
 
-    def get_current_letter(self) -> str | None:
-        """Retrieves the currently selected letter from QueryState or request."""
-        return self.query_state.get(self.alphabet_parameter)
-
-
-    # ==================================================================
-    # Queryset
-    # ==================================================================
-    def get_table_queryset(self):
-        queryset = self.get_queryset()
-        queryset = self.apply_filters(queryset)
-        queryset = self.search.apply(queryset)
-        
-        # Apply alphabet filtering if configured
-        letter = self.get_current_letter()
-        if letter and self.alphabet_field:
-            filter_kwargs = {f"{self.alphabet_field}__startswith": letter}
-            queryset = queryset.filter(**filter_kwargs)
-            
-        return queryset
-
-    def apply_filters(self, queryset):
         queryset = self.filters.apply(queryset)
         self.filterset = self.filters.filterset
-        return queryset
 
-    # ==================================================================
-    # Table
-    # ==================================================================
+        if self.show_search:
+            queryset = self.search.apply(queryset)
 
-    def get_table_class(self) -> type[tables.Table]:
-        return self.table_composer.get_class()
+        return self.apply_alphabet_filter(queryset)
 
-    def build_table(self) -> tables.Table:
-        queryset = self.get_table_queryset()
+    def apply_alphabet_filter(self, queryset):
+        if not self.show_alphabet_filter or not self.alphabet_field:
+            return queryset
 
-        return self.table_composer.compose(queryset)
+        letter = self.get_current_letter()
 
-    # ==================================================================
-    # Pagination
-    # ==================================================================
+        if letter not in self.alphabet:
+            return queryset
 
-    def get_page_size_options(self) -> tuple[int, ...]:
-        return self.pagination_config.page_size_options
-
-    def get_page_size(self) -> int:
-        return self.pagination_config.page_size
-
-    def get_page(self):
-        return self.pagination_state
-
-    # ==================================================================
-    # Actions
-    # ==================================================================
-
-    def get_table_actions(self):
-        return ActionComposer(
-            widget=self,
-            request=self.request,
-            actions=self.actions,
-            data=self.get_data(),
-        ).compose()
-
-    def get_row_actions(self, obj):
-        return ActionComposer(
-            widget=self,
-            request=self.request,
-            actions=self.row_actions,
-            object=obj,
-            objects=(obj,),
-            data=self.get_data(),
-        ).compose()
-
-    def get_bulk_actions(self):
-        return ActionComposer(
-            widget=self,
-            request=self.request,
-            actions=self.bulk_actions,
-            objects=self.get_objects(),
-            data=self.get_data(),
-        ).compose()
-
-    def get_context_menu_actions(self):
-        return (
-            self.context_menu_actions
-            or self.row_actions
+        return queryset.filter(
+            **{
+                f"{self.alphabet_field}__istartswith": letter,
+            }
         )
 
-    def get_row_context_actions(self, obj):
-        return self.get_row_actions(obj)
+    def get_current_letter(self) -> str | None:
+        letter = self.query_state.get(self.alphabet_parameter)
 
-    # ==================================================================
-    # IDs
-    # ==================================================================
+        return str(letter).upper() if letter else None
 
-    @property
-    def table_id(self) -> str:
-        return f"{self.class_name}_table"
+    # ------------------------------------------------------------------
+    # TABLE
+    # ------------------------------------------------------------------
 
-    @property
-    def table_wrapper_id(self) -> str:
-        return f"{self.class_name}_wrapper"
+    def build_table(self) -> tables.Table:
+        table = self.table_composer.compose(self.get_queryset())
 
-    @property
-    def selection_id(self) -> str:
-        return f"{self.class_name}_selection"
+        # Used by RowActionsColumn to resolve row-specific actions.
+        table.widget = self
 
-    @property
-    def htmx_target(self) -> str:
-        return f"#{self.table_wrapper_id}"
+        return table
 
-    @property
-    def htmx_indicator(self) -> str:
-        return f"{self.class_name}_loader"
+    # ------------------------------------------------------------------
+    # PAGINATION
+    # ------------------------------------------------------------------
 
-    @property
-    def context_menu_id(self) -> str:
-        return f"{self.class_name}_contextmenu"
+    def get_page_size(self) -> int:
+        return self.table_composer.pagination.get_page_size()
 
-    @property
-    def page_size_id(self) -> str:
-        return f"{self.table_id}_pagesize"
+    def get_page_size_options(self) -> tuple[int, ...]:
+        return tuple(
+            size
+            for size in self.page_size_options
+            if 0 < size <= self.max_page_size
+        )
 
+    # ------------------------------------------------------------------
+    # ACTIONS
+    # ------------------------------------------------------------------
 
-    # ==================================================================
-    # Context
-    # ==================================================================
+    def compose_actions(
+        self,
+        actions: Actions,
+        *,
+        obj: Any = None,
+        objects: Any = None,
+    ):
+        return ActionComposer(
+            widget=self,
+            request=self.request,
+            actions=actions,
+            object=obj,
+            objects=objects,
+            data=self.get_data(),
+        ).compose()
+
+    def get_table_actions(self):
+        return self.compose_actions(self.actions)
+
+    def get_row_actions(self, obj: Any):
+        return self.compose_actions(
+            self.row_actions,
+            obj=obj,
+            objects=(obj,),
+        )
+
+    def get_bulk_actions(self):
+        return self.compose_actions(
+            self.bulk_actions,
+            objects=self.get_objects(),
+        )
+
+    def get_context_menu_actions(self):
+        if not self.context_menu:
+            return Actions()
+
+        return self.row_actions
+
+    # ------------------------------------------------------------------
+    # CONTEXT
+    # ------------------------------------------------------------------
 
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()
 
         context.update(
-            table=self.table,
-            filterset=self.filterset,
+            {
+                # Table
+                "table": self.table,
+                "table_target": f"#{self.id}",
+                "empty_message": self.empty_message,
 
-            search_term=self.search.get_term(),
-            search_parameter=self.search_parameter,
-            search_enabled=bool(self.search_fields),
+                # Search
+                "show_search": self.show_search,
+                "search_parameter": self.search_parameter,
+                "search_term": self.query_state.get(self.search_parameter),
 
-            table_actions=self.get_table_actions(),
-            bulk_actions=self.get_bulk_actions(),
+                # Filters
+                "show_filters": self.show_filters,
+                "filterset": self.filterset,
 
-            table_id=self.table_id,
-            table_wrapper_id=self.table_wrapper_id,
-            selection_id=self.selection_id,
+                # Alphabet
+                "show_alphabet_filter": (
+                    self.show_alphabet_filter
+                    and bool(self.alphabet_field)
+                ),
+                "alphabet": self.alphabet,
+                "alphabet_parameter": self.alphabet_parameter,
+                "current_letter": self.get_current_letter(),
 
-            table_url=self.base_url,
+                # Pagination
+                "show_pagination": self.show_pagination and self.paginate,
+                "show_page_size": self.show_page_size and self.paginate,
+                "page_size": self.get_page_size(),
+                "page_size_options": self.get_page_size_options(),
+                "page_size_parameter": self.page_size_parameter,
 
-            page=self.pagination_state,
+                # Actions
+                "table_actions": self.get_table_actions(),
+                "bulk_actions": self.get_bulk_actions(),
 
-            empty_message=self.empty_message,
+                # Selection
+                "selectable": self.selectable,
+                "objects_parameter": self.objects_parameter,
 
-            htmx_target=self.htmx_target,
-            htmx_indicator=self.htmx_indicator,
+                # Display
+                "show_header": self.show_header,
+                "show_footer": self.show_footer,
 
-            selectable=self.selectable,
-            objects_parameter=self.objects_parameter,
-
-            toolbar=self.toolbar,
-            show_search=self.show_search,
-            show_filters=self.show_filters,
-
-            show_header=self.show_header,
-            show_footer=self.show_footer,
-
-            context_menu_enabled=(
-                self.context_menu
-                and bool(self.get_context_menu_actions())
-            ),
-
-            context_menu_id=self.context_menu_id,
-            context_menu_actions=self.get_context_menu_actions(),
-
-            page_size=self.get_page_size(),
-            page_size_options=self.get_page_size_options(),
-            page_size_parameter=self.page_size_parameter,
-            page_size_id=self.page_size_id,
-            
-            alphabet=self.get_alphabet_options(),
-            current_letter=self.get_current_letter(),
-            alphabet_parameter=self.alphabet_parameter,
+                # Context menu
+                "context_menu_enabled": (
+                    self.context_menu
+                    and bool(self.row_actions)
+                ),
+                "context_menu_actions": self.get_context_menu_actions(),
+            }
         )
 
         return context

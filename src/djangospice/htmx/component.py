@@ -10,7 +10,6 @@ from django.utils.safestring import SafeString, mark_safe
 
 from .attributes import HTMLAttributeRenderer, HTMXAttributes
 
-
 class Component:
     """
     Base class for composable UI components.
@@ -21,50 +20,30 @@ class Component:
 
     template_name: ClassVar[str | None] = None
 
-    def __init__(
-        self,
-        *children: Any,
-        request: HttpRequest | None = None,
-        parent: Component | None = None,
-        slots: dict[str, list[Component]] | None = None,
-        context: dict[str, Any] | None = None,
-        attributes: dict[str, Any] | None = None,
-        htmx: HTMXAttributes | None = None,
-        css_class: str = "",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__()
+    def __init__(self, *args, **kwargs: Any) -> None:
 
-        self.request = request
-        self.parent = None
+        self.request = kwargs.get("request", None)
+        self.parent = kwargs.pop("parent", None)
 
-        self.context = context or {}
-        self.attributes = attributes or {}
-        self.htmx = htmx or HTMXAttributes()
-        self.css_class = css_class
-        self.kwargs = kwargs
+        self.context =   kwargs.pop("context", {})
+        self.attributes =  kwargs.pop("attributes", {})
+        self.htmx = kwargs.pop("htmx", HTMXAttributes()) 
+        self.css_class = kwargs.pop("css_class", None)
 
         self.children = []
-        self.slots = {}
+        self.slots =  kwargs.pop("slots", {})
 
-        self.add_children(*children)
+        self.add_children(*args)
 
-        for name, components in (slots or {}).items():
+        for name, components in (self.slots or {}).items():
             self.set_slot(name, *components)
 
-        if isinstance(parent, Component):
-            parent.add_child(self)
+        if isinstance(self.parent, Component):
+            self.parent.add_child(self)
 
-    # --------------------------------------------------------
-    # Lifecycle
-    # --------------------------------------------------------
+        super().__init__()
 
-    def initialize(self) -> None:
-        """Initialize the component."""
-
-    def configure(self) -> None:
-        """Configure component attributes and interactions."""
-
+    
     # --------------------------------------------------------
     # Attributes
     # --------------------------------------------------------
@@ -96,10 +75,10 @@ class Component:
             return explicit_id
 
         name = self.attributes.get("name") or type(self).__name__.lower()
-        return str(name).replace("_", "-")
+        return str(name)
 
     @property
-    def attr(self) -> SafeString:
+    def attrs(self) -> SafeString:
         return mark_safe(
             HTMLAttributeRenderer.render(self.get_html_attributes())
         )
@@ -273,54 +252,34 @@ class Component:
     # Rendering
     # --------------------------------------------------------
 
-    def render_child(
-        self,
-        child: Any,
-        request: HttpRequest | None = None,
-    ) -> SafeString:
+    def render_child(self, child: Any) -> SafeString:
         if child is None:
             return mark_safe("")
 
         if isinstance(child, Component):
-            return child.render(request=request)
+            return child.render()
 
         if isinstance(child, (list, tuple)):
-            return self.render_children(child, request=request)
+            return self.render_children(child)
 
         return conditional_escape(child)
 
-    def render_children(
-        self,
-        children: Iterable[Any] | None = None,
-        request: HttpRequest | None = None,
-    ) -> SafeString:
+    def render_children(self, children: Iterable[Any] | None = None) -> SafeString:
         children = self.get_children() if children is None else children
 
         return mark_safe(
             "".join(
-                str(self.render_child(child, request))
+                str(self.render_child(child))
                 for child in children
             )
         )
 
-    def render_slot(
-        self,
-        name: str,
-        request: HttpRequest | None = None,
-    ) -> SafeString:
-        return self.render_children(
-            self.get_slot(name),
-            request=request,
-        )
+    def render_slot(self, name: str) -> SafeString:
+        return self.render_children(self.get_slot(name))
 
-    def render_template(
-        self,
-        template: str,
-        context: dict[str, Any],
-        request: HttpRequest | None = None,
-    ) -> SafeString:
+    def render_template(self, template: str, context: dict[str, Any]) -> SafeString:
         return mark_safe(
-            render_to_string(template, context, request=request)
+            render_to_string(template, context, request=self.request)
         )
 
     def render_content(self, content: Any) -> SafeString:
@@ -329,12 +288,8 @@ class Component:
 
         return mark_safe(str(content))
 
-    def render(self, request: HttpRequest | None = None) -> SafeString:
-        if request is not None:
-            self.set_request(request)
-
-        actual_request = request or self.request
-
+    def render_to_string(self) -> SafeString:
+        
         content = self.get_content()
 
         if content is not None:
@@ -346,11 +301,10 @@ class Component:
             return self.render_template(
                 template,
                 self.get_context(),
-                request=actual_request,
             )
 
         if self.children:
-            return self.render_children(request=actual_request)
+            return self.render_children()
 
         raise ValueError(
             f"{type(self).__name__} has no content, "
@@ -358,7 +312,7 @@ class Component:
         )
 
     def __html__(self) -> SafeString:
-        return self.render()
+        return self.render_to_string()
 
     def __str__(self) -> str:
-        return str(self.render())
+        return str(self.render_to_string())

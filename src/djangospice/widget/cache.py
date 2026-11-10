@@ -6,7 +6,6 @@ from typing import Any
 from django.core.cache import cache
 from django.utils.safestring import SafeString
 
-from .builder import WidgetBuilder
 from .widget import Widget
 
 
@@ -149,10 +148,10 @@ class WidgetCache:
             The cached or newly rendered widget HTML content.
         """
         if not widget.should_cache():
-            return WidgetBuilder(widget).build()
+            return widget.render_to_string()
 
         return cache.get_or_set(
             cls.key(widget),
-            lambda: WidgetBuilder(widget).build(),
+            lambda: widget.render_to_string(),
             widget.cache_timeout,
         )

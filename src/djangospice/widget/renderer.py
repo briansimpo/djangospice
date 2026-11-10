@@ -5,7 +5,6 @@ from django.utils.safestring import SafeString, mark_safe
 
 from djangospice.utils import get_template_name
 
-from .builder import WidgetBuilder
 from .cache import WidgetCache
 from .exceptions import WidgetNotVisible
 from .widget import Widget
@@ -29,7 +28,7 @@ class WidgetRenderer:
         if cached is not None:
             return cached
 
-        content = self.build()
+        content = self.render_widget()
 
         self.cache(content)
 
@@ -58,8 +57,8 @@ class WidgetRenderer:
             }
         )   
 
-    def build(self) -> SafeString:
-        return WidgetBuilder(self.widget).build()
+    def render_widget(self) -> SafeString:
+        return self.widget.render_to_string()
 
     def get_cached(self) -> SafeString | None:
         if not self.widget.should_cache():

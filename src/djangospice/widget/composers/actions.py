@@ -30,7 +30,7 @@ class ActionComposer:
         self.actions = actions
         self.data = data
         self.object = object
-        self.objects = tuple(objects)
+        self.objects = objects
 
     def context(self) -> ActionContext:
         return ActionContext(

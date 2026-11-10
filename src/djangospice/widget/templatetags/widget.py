@@ -23,7 +23,7 @@ def render_widget(context: template.Context, identifier: str, **kwargs: Any) -> 
     Usage:
         {% render_widget "analytics:monthly_chart" period="year" %}
     """
-    request = context.get("request")
+   
 
   
     try:
@@ -33,7 +33,18 @@ def render_widget(context: template.Context, identifier: str, **kwargs: Any) -> 
 
    
     try:
-        widget = widget_klass(request=request, **kwargs)
+        request = context.get("request")
+
+        exec_kwargs = {
+            **request.GET.dict(),
+            **kwargs
+        }
+
+        widget = widget_klass(**exec_kwargs)
+        widget.set_request(request)
+        widget.initialize()
+        widget.configure()
+        
         return render(widget)
     except WidgetNotVisible:
         return mark_safe("")
