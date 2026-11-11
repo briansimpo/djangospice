@@ -18,9 +18,9 @@ class WidgetView(View):
     
     dispatchers: ClassVar[tuple[type[Dispatcher], ...]] = (
         ActionDispatcher,
-        MethodDispatcher,
-        UnknownDispatcher,
+        MethodDispatcher, 
         HttpDispatcher,
+        UnknownDispatcher,
     )
    
 
