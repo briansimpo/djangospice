@@ -33,7 +33,7 @@ class InlineFormViewMixin:
 
         context["processor"] = processor
         context["form"] = processor.form
-        context["inline_formsets"] = processor.formsets
+        context["formsets"] = processor.formsets
 
         return context
 
