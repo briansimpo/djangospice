@@ -225,7 +225,7 @@ class LookupEngine:
 
     def apply_search(self, queryset: QuerySet, query: LookupQuery) -> QuerySet:
 
-        search = query.search.strip()
+        search = query.search.strip().lower()
 
         if not search:
             return queryset
