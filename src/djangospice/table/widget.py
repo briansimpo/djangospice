@@ -64,7 +64,7 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
 
     paginate = True
-    paginate_by = 20
+    page_size = 20
 
     page_parameter = "page"
     page_size_parameter = "page_size"
@@ -136,14 +136,14 @@ class TableWidget(Widget):
             exclude=self.exclude,
             row_actions=bool(self.row_actions),
             paginate=self.paginate,
-            paginate_by=self.paginate_by,
+            page_size=self.page_size,
             page_parameter=self.page_parameter,
             page_size_parameter=self.page_size_parameter,
             page_size_options=self.page_size_options,
             max_page_size=self.max_page_size,
         )
 
-        self.page_size_options = tuple(sorted(set(self.page_size_options) | {self.paginate_by}))
+        self.page_size_options = tuple(sorted(set(self.page_size_options) | {self.page_size}))
 
     def configure(self) -> None:
         super().configure()

@@ -88,7 +88,7 @@ class TableComposer:
         exclude: Iterable[str] | str | None = None,
         row_actions: bool = False,
         paginate: bool = True,
-        paginate_by: int = 20,
+        page_size: int = 20,
         page_parameter: str = "page",
         page_size_parameter: str = "page_size",
         page_size_options: Iterable[int] = (10, 20, 50, 100),
@@ -104,7 +104,7 @@ class TableComposer:
         self.pagination = PaginationComposer(
             request=request,
             enabled=paginate,
-            page_size=paginate_by,
+            page_size=page_size,
             page_parameter=page_parameter,
             page_size_parameter=page_size_parameter,
             page_size_options=page_size_options,
