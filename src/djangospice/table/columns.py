@@ -42,7 +42,7 @@ class RowActionsColumn(tables.TemplateColumn):
     django-tables2 column for rendering Table row actions.
     """
 
-    template_name = "table/ctions.html"
+    template_name = "table/actions.html"
 
     def __init__(self,*args,**kwargs) -> None:
         kwargs.setdefault("template_name", self.template_name)
