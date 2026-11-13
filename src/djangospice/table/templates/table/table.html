@@ -1,86 +1,12 @@
-
 {% load django_tables2 %}
 {% load i18n l10n %}
 {% load widget_tweaks %}
+{% load static %}
+
+
 
 <div {{ widget.attrs }}
-    x-data="{
-        search: '{{ search_term|default:''|escapejs }}',
-        selected: [],
-        filtersOpen: false,
-
-        contextMenu: {
-            open: false,
-            x: 0,
-            y: 0,
-            recordId: null
-        },
-
-        get selectedCount() {
-            return this.selected.length;
-        },
-
-        get allSelected() {
-            const rows = [...this.$el.querySelectorAll('[data-table-select]')];
-
-            return rows.length > 0 &&
-                rows.every(el => this.selected.includes(el.value));
-        },
-
-        toggleAll(checked) {
-            const rows = [...this.$el.querySelectorAll('[data-table-select]')];
-            const ids = rows.map(el => el.value);
-
-            if (checked) {
-                ids.forEach(id => {
-                    if (!this.selected.includes(id)) {
-                        this.selected.push(id);
-                    }
-                });
-            } else {
-                this.selected = this.selected.filter(
-                    id => !ids.includes(id)
-                );
-            }
-        },
-
-        toggleRow(id, checked) {
-            if (checked && !this.selected.includes(id)) {
-                this.selected.push(id);
-            } else if (!checked) {
-                this.selected = this.selected.filter(
-                    item => item !== id
-                );
-            }
-        },
-
-        clearSelection() {
-            this.selected = [];
-        },
-
-        openContextMenu(event, id) {
-            const width = 224;
-            const height = 260;
-
-            this.contextMenu.recordId = id;
-            this.contextMenu.x = Math.max(
-                8,
-                Math.min(event.clientX, window.innerWidth - width - 8)
-            );
-            this.contextMenu.y = Math.max(
-                8,
-                Math.min(event.clientY, window.innerHeight - height - 8)
-            );
-            this.contextMenu.open = true;
-        },
-
-        closeContextMenu() {
-            this.contextMenu.open = false;
-        }
-    }"
-    @click="closeContextMenu()"
-    @keydown.escape.window="closeContextMenu(); filtersOpen = false"
-    @scroll.window="closeContextMenu()"
+    data-table
     class="card relative flex flex-col"
 >
 
@@ -104,14 +30,14 @@
 
              <!-- Header Actions -->
             <div class="flex items-center gap-2">
-                <button class="btn btn-secondary btn-md">
+                <button type="button" class="btn btn-secondary btn-md">
                     <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                     Export CSV
                 </button>
 
-                <button class="btn btn-primary btn-md">
+                <button type="button" class="btn btn-primary btn-md">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -156,7 +82,7 @@
                         value="{{ search_term }}"
                         placeholder="Search all records..."
                         autocomplete="off"
-                        class="w-full pl-9 pr-8 py-2 text-sm  focus:!bg-white">
+                        class="w-full pl-9 pr-8 py-2 text-sm focus:!bg-white">
 
                 </div>
 
@@ -168,8 +94,8 @@
 
                         <button
                             type="button"
-                            @click="filtersOpen = !filtersOpen"
-                            :aria-expanded="filtersOpen"
+                            data-toggle="dropdown" 
+                            data-target="#bulkDropdownMenu"
                             class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition">
 
                             <svg class="h-4 w-4 text-slate-500"
@@ -191,7 +117,6 @@
                             {% endif %}
 
                             <svg class="h-3.5 w-3.5 text-slate-400 transition-transform"
-                                 :class="{ 'rotate-180': filtersOpen }"
                                  fill="none"
                                  stroke="currentColor"
                                  viewBox="0 0 24 24">
@@ -205,16 +130,10 @@
 
                         <!-- Filter Panel -->
                         <div
-                            x-show="filtersOpen"
-                            x-cloak
-                            x-transition:enter="transition ease-out duration-150"
-                            x-transition:enter-start="translate-y-1 opacity-0"
-                            x-transition:enter-end="translate-y-0 opacity-100"
-                            x-transition:leave="transition ease-in duration-100"
-                            x-transition:leave-start="opacity-100"
-                            x-transition:leave-end="opacity-0"
-                            @click.outside="filtersOpen = false"
-                            class="absolute top-12 z-40 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 text-sm animate-in fade-in zoom-in-95 duration-150">
+                            id="bulkDropdownMenu"
+                            data-dropdown-menu
+                            data-open="false"
+                            class="absolute top-12 z-40 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 text-sm">
 
                             <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
 
@@ -228,64 +147,46 @@
                                     </p>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    @click="filtersOpen = false"
-                                    aria-label="{% trans 'Close filters' %}"
-                                    class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                                >
-                                    <svg class="h-4 w-4"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         viewBox="0 0 24 24">
-                                        <path stroke-linecap="round"
-                                              stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-
                             </div>
 
                             <div class="space-y-3.5">
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                {% for field in filterset.form %}
-                                <div class="min-w-0 space-y-1.5">
-                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">
-                                        {{ field.label }}
-                                    </label>
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    {% for field in filterset.form %}
+                                    <div class="min-w-0 space-y-1.5">
+                                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">
+                                            {{ field.label }}
+                                        </label>
 
-                                    {% render_field field class="w-full min-w-0" %}
-                                    
-                                    {% if field.help_text %}
-                                        <p class="text-xs text-slate-500">
-                                            {{ field.help_text }}
-                                        </p>
-                                    {% endif %}
-                                    {% for error in field.errors %}
-                                        <p class="text-xs text-red-600">
-                                            {{ error }}
-                                        </p>
+                                        {% render_field field class="w-full min-w-0" %}
+                                        
+                                        {% if field.help_text %}
+                                            <p class="text-xs text-slate-500">
+                                                {{ field.help_text }}
+                                            </p>
+                                        {% endif %}
+                                        {% for error in field.errors %}
+                                            <p class="text-xs text-red-600">
+                                                {{ error }}
+                                            </p>
+                                        {% endfor %}
+                                    </div>
                                     {% endfor %}
                                 </div>
-                                {% endfor %}
                             </div>
-                        </div>
 
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                           <a hx-get="{{ table_url }}" class="btn btn-secondary">
-                                {% trans "Clear filters" %}
-                            </a>
-                            <button type="submit" @click="open = false" class="btn btn-primary">
-                                {% trans "Apply filters" %}
-                            </button>
-                        </div>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <a hx-get="{{ table_url }}" class="btn btn-secondary">
+                                    {% trans "Clear filters" %}
+                                </a>
+                                <button type="submit" data-action="toggle-filters" class="btn btn-primary">
+                                    {% trans "Apply filters" %}
+                                </button>
+                            </div>
 
                         </div>
 
                     </div>
 
-                    
                     <!-- Reset All -->
                     <a
                         hx-get="{{ table_url }}"
@@ -314,83 +215,6 @@
         </form>
 
     </div>
-
-
-    <!-- ====================================================== -->
-    <!-- BULK ACTIONS -->
-    <!-- ====================================================== -->
-
-    {% if selectable %}
-
-    <div
-        x-show="selectedCount > 0"
-        x-cloak
-        x-transition
-        class="flex flex-col gap-3 border-b border-primary-200 bg-primary-50/80 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-
-        <div class="flex items-center gap-2">
-
-            <span class="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-blue-600 px-2 text-sm font-bold " 
-                x-text="selectedCount">
-            </span>
-
-            <span class="text-sm font-medium text-primary-900">
-                {% trans "selected" %}
-            </span>
-
-            <button type="button" @click="clearSelection()" class="ml-2 text-xs font-semibold text-primary-700 hover:text-primary-900">
-                {% trans "Clear selection" %}
-            </button>
-
-        </div>
-
-        <form
-            hx-post="{{ bulk_action_url }}"
-            hx-target="{{ table_target }}"
-            hx-swap="outerHTML"
-            hx-indicator="#table-loading-{{ table_id }}"
-            class="flex flex-wrap items-center gap-2">
-
-            {% csrf_token %}
-
-            <template x-for="id in selected" :key="id">
-                <input
-                    type="hidden"
-                    name="{{ objects_parameter }}"
-                    :value="id"
-                >
-            </template>
-
-            <button type="submit" name="action" value="activate"
-                    class="btn btn-secondary btn-sm">
-                {% trans "Set Active" %}
-            </button>
-
-            <button type="submit" name="action" value="deactivate"
-                    class="btn btn-secondary btn-sm">
-                {% trans "Set Inactive" %}
-            </button>
-
-            <button type="submit" name="action" value="export"
-                    class="btn btn-secondary btn-sm">
-                {% trans "Export Selected" %}
-            </button>
-
-            <button
-                type="submit"
-                name="action"
-                value="delete"
-                hx-confirm="{% trans 'Are you sure you want to delete the selected records?' %}"
-                class="btn btn-danger btn-sm">
-                {% trans "Delete Selected" %}
-            </button>
-
-        </form>
-
-    </div>
-
-    {% endif %}
-
 
     <!-- ====================================================== -->
     <!-- ALPHABET NAVIGATION -->
@@ -440,7 +264,115 @@
 
     {% endif %}
 
+    <!-- ====================================================== -->
+    <!-- BULK ACTIONS -->
+    <!-- ====================================================== -->
 
+    {% if selectable %}
+    <div
+        data-bulk-actions
+        data-open="false"
+        class="hidden bg-blue-50 border-b border-blue-50 px-5 py-2.5 flex items-center justify-between transition-all">
+
+        <div class="flex items-center gap-2">
+            <span
+                class="inline-flex min-w-7 h-7 items-center justify-center rounded-full bg-blue-100 px-2 text-sm font-semibold text-blue-700 ring-1 ring-inset ring-blue-200"
+                data-selected-count>
+                0
+            </span>
+
+            <span class="text-sm font-medium text-blue-800">
+                {% trans "selected" %}
+            </span>
+
+            <button type="button" data-action="clear-selection" class="ml-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                {% trans "Clear selection" %}
+            </button>
+        </div>
+
+        <div class="relative">
+
+            <form
+                hx-post="{{ table_url }}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-indicator="#table-loading-{{ table_id }}">
+
+                {% csrf_token %}
+
+                <!-- Hidden inputs managed via vanilla JS delegation -->
+                <div data-hidden-inputs data-param-name="{{ objects_parameter }}"></div>
+
+                <!-- Native SpiceUI Dropdown Trigger -->
+                <button
+                    type="button"
+                    data-toggle="dropdown"
+                    data-target="#bulk-action-menu-{{ table_id }}"
+                    class="btn btn-secondary inline-flex items-center gap-2"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-list-check"></i>
+                    {% trans "Actions" %}
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" data-chevron></i>
+                </button>
+
+                <!-- Native SpiceUI Dropdown Menu -->
+                <div
+                    id="bulk-action-menu-{{ table_id }}"
+                    data-dropdown-menu
+                    data-open="false"
+                    class="hidden absolute right-0 top-full mt-2 z-50 w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+
+                    <div class="px-3 py-2 border-b border-slate-100">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            {% trans "Bulk actions" %}
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="activate"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left">
+                        <i class="fa-solid fa-check-circle w-4 text-emerald-600"></i>
+                        {% trans "Set Active" %}
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="deactivate"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left">
+                        <i class="fa-solid fa-ban w-4 text-amber-600"></i>
+                        {% trans "Set Inactive" %}
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="export"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left">
+                        <i class="fa-solid fa-file-export w-4 text-blue-600"></i>
+                        {% trans "Export Selected" %}
+                    </button>
+
+                    <div class="my-1 border-t border-slate-100"></div>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="delete"
+                        hx-confirm="{% trans 'Are you sure you want to delete the selected records?' %}"
+                        class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 text-left">
+                        <i class="fa-solid fa-trash-can w-4"></i>
+                        {% trans "Delete Selected" %}
+                    </button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
     <!-- ====================================================== -->
     <!-- DATA TABLE -->
     <!-- ====================================================== -->
@@ -465,11 +397,9 @@
 
                             <input
                                 type="checkbox"
-                                :checked="allSelected"
-                                @change="toggleAll($event.target.checked)"
+                                data-action="toggle-all"
                                 aria-label="{% trans 'Select all visible records' %}"
-                                class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                            >
+                                class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
 
                         </th>
 
@@ -559,7 +489,6 @@
                             <tr
                                 data-table-row
                                 data-object-id="{{ row.record.pk }}"
-                                @contextmenu.prevent="openContextMenu($event, '{{ row.record.pk|escapejs }}')"
                                 class="group transition-colors duration-150 hover:bg-slate-50">
 
                                 {% if selectable %}
@@ -570,9 +499,8 @@
                                         type="checkbox"
                                         name="{{ objects_parameter }}"
                                         value="{{ row.record.pk }}"
-                                        data-table-select
-                                        :checked="selected.includes('{{ row.record.pk|escapejs }}')"
-                                        @change="toggleRow('{{ row.record.pk|escapejs }}', $event.target.checked)"
+                                        data-action="toggle-row"
+                                        data-row-checkbox
                                         aria-label="{% trans 'Select record' %}"
                                         class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
 
@@ -702,11 +630,11 @@
 
     </div>
 
-
     <!-- ====================================================== -->
     <!-- PAGINATION -->
     <!-- ====================================================== -->
 
+    
     <div class="flex flex-col items-center justify-between gap-4 border-t border-slate-200 bg-white p-4 text-sm text-slate-600 sm:flex-row">
 
         <!-- Pagination Information -->
@@ -888,8 +816,7 @@
                     hx-indicator="#table-loading-{{ table_id }}"
                     aria-label="{% trans 'Last page' %}"
                     title="{% trans 'Last page' %}"
-                    class="btn-icon h-8 w-8 border border-slate-300"
-                >
+                    class="btn-icon h-8 w-8 border border-slate-300">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
                     </svg>
@@ -905,28 +832,17 @@
 
     </div>
 
-
     <!-- ====================================================== -->
     <!-- LOADING INDICATOR -->
     <!-- ====================================================== -->
 
-    <div
-        id="table-loading-{{ table_id }}"
-        class="htmx-indicator pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-white/60 backdrop-blur-[1px]"
-    >
+    <div id="table-loading-{{ table_id }}" class="htmx-indicator pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
 
         <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-lg">
 
-            <svg class="h-5 w-5 animate-spin text-primary-600"
-                 viewBox="0 0 24 24"
-                 fill="none">
-                <circle class="opacity-25"
-                        cx="12" cy="12" r="10"
-                        stroke="currentColor"
-                        stroke-width="4"/>
-                <path class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            <svg class="h-5 w-5 animate-spin text-primary-600" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
 
             <span class="text-sm font-medium text-slate-600">
@@ -939,83 +855,29 @@
 
 
     <!-- ====================================================== -->
-    <!-- CONTEXT MENU -->
+    <!-- DECLARATIVE CONTEXT MENU -->
     <!-- ====================================================== -->
-
-    <div
-        x-show="contextMenu.open"
-        x-cloak
-        x-transition
-        @click.stop
-        :style="`position: fixed; left: ${contextMenu.x}px; top: ${contextMenu.y}px`"
-        class="z-50 w-56 rounded-lg border border-slate-200 bg-white py-1.5 text-sm text-slate-700 shadow-xl"
-        role="menu"
-    >
-
-        <div class="border-b border-slate-100 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            {% trans "Record actions" %}
+    <div data-context-menu
+        class="hidden fixed z-50 w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-xl text-sm">
+        <div class="px-3 py-2 border-b border-slate-100">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {% trans "Actions" %}
+            </p>
         </div>
-
-        <!-- Preview -->
         <button
             type="button"
-            @click="$dispatch('table-row-action', {action: 'view', id: contextMenu.recordId}); closeContextMenu()"
-            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
-            role="menuitem"
-        >
-            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-
-            {% trans "Preview details" %}
+            hx-get="{{ widget.base_url }}?id=[id]"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 text-left">
+            <i class="fa-solid fa-eye w-4 text-blue-600"></i>
+            {% trans "View Details" %}
         </button>
-
-        <!-- Edit -->
         <button
             type="button"
-            @click="$dispatch('table-row-action', {action: 'edit', id: contextMenu.recordId}); closeContextMenu()"
-            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
-            role="menuitem"
-        >
-            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/>
-            </svg>
-
-            {% trans "Edit record" %}
+            hx-get="{{ widget.base_url }}?id=[id]"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 text-left">
+            <i class="fa-solid fa-pen w-4 text-emerald-600"></i>
+            {% trans "Edit Record" %}
         </button>
-
-        <!-- Duplicate -->
-        <button
-            type="button"
-            @click="$dispatch('table-row-action', {action: 'copy', id: contextMenu.recordId}); closeContextMenu()"
-            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
-            role="menuitem"
-        >
-            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-
-            {% trans "Duplicate record" %}
-        </button>
-
-        <div class="my-1 border-t border-slate-100"></div>
-
-        <!-- Delete -->
-        <button
-            type="button"
-            @click="if (confirm('{% trans "Are you sure you want to delete this record?"|escapejs %}')) { $dispatch('table-row-action', {action: 'delete', id: contextMenu.recordId}); } closeContextMenu()"
-            class="flex w-full items-center gap-2.5 px-3 py-2 text-left font-medium text-rose-600 hover:bg-rose-50"
-            role="menuitem"
-        >
-            <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-
-            {% trans "Delete record" %}
-        </button>
-
     </div>
 
 </div>
