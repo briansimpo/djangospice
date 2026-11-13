@@ -25,7 +25,7 @@ from .composers import TableComposer
 class TableWidget(Widget):
     """A configurable, server-rendered django-tables2 widget."""
 
-    template_name = get_template_name("table_widget.html", namespace)
+    template_name = get_template_name("table.html", namespace)
 
     # ------------------------------------------------------------------
     # TABLE
@@ -54,10 +54,10 @@ class TableWidget(Widget):
     # ALPHABET FILTER
     # ------------------------------------------------------------------
 
-    show_alphabet_filter = False
+    show_alphabet_filter = True
     alphabet: ClassVar[tuple[str, ...]] = tuple(ascii_uppercase)
     alphabet_parameter = "letter"
-    alphabet_field: str | None = None
+    alphabet_field= "name"
 
     # ------------------------------------------------------------------
     # PAGINATION
@@ -89,7 +89,7 @@ class TableWidget(Widget):
     # SELECTION
     # ------------------------------------------------------------------
 
-    selectable = False
+    selectable = True
     objects_parameter = "objects"
 
     # ------------------------------------------------------------------
@@ -97,7 +97,7 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
 
     show_header = True
-    show_footer = False
+    show_footer = True
     empty_message = "No records found."
 
     # ------------------------------------------------------------------
@@ -142,6 +142,8 @@ class TableWidget(Widget):
             page_size_options=self.page_size_options,
             max_page_size=self.max_page_size,
         )
+
+        self.page_size_options = tuple(sorted(set(self.page_size_options) | {self.paginate_by}))
 
     def configure(self) -> None:
         super().configure()
@@ -250,6 +252,10 @@ class TableWidget(Widget):
 
         return self.row_actions
 
+    @property
+    def table_target(self):
+        return f"#{self.id}"
+
     # ------------------------------------------------------------------
     # CONTEXT
     # ------------------------------------------------------------------
@@ -259,9 +265,14 @@ class TableWidget(Widget):
 
         context.update(
             {
+                "title": getattr(self, "title", ""),
+                "description": getattr(self, "description", ""),
+
                 # Table
                 "table": self.table,
-                "table_target": f"#{self.id}",
+                "table_id": self.id,
+                "table_url": self.base_url,
+                "table_target": self.table_target,
                 "empty_message": self.empty_message,
 
                 # Search
@@ -286,6 +297,9 @@ class TableWidget(Widget):
                 "show_pagination": self.show_pagination and self.paginate,
                 "show_page_size": self.show_page_size and self.paginate,
                 "page_size": self.get_page_size(),
+                # Display
+
+                "page_parameter": self.page_parameter,
                 "page_size_options": self.get_page_size_options(),
                 "page_size_parameter": self.page_size_parameter,
 

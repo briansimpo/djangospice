@@ -1,0 +1,1021 @@
+
+{% load django_tables2 %}
+{% load i18n l10n %}
+{% load widget_tweaks %}
+
+<div {{ widget.attrs }}
+    x-data="{
+        search: '{{ search_term|default:''|escapejs }}',
+        selected: [],
+        filtersOpen: false,
+
+        contextMenu: {
+            open: false,
+            x: 0,
+            y: 0,
+            recordId: null
+        },
+
+        get selectedCount() {
+            return this.selected.length;
+        },
+
+        get allSelected() {
+            const rows = [...this.$el.querySelectorAll('[data-table-select]')];
+
+            return rows.length > 0 &&
+                rows.every(el => this.selected.includes(el.value));
+        },
+
+        toggleAll(checked) {
+            const rows = [...this.$el.querySelectorAll('[data-table-select]')];
+            const ids = rows.map(el => el.value);
+
+            if (checked) {
+                ids.forEach(id => {
+                    if (!this.selected.includes(id)) {
+                        this.selected.push(id);
+                    }
+                });
+            } else {
+                this.selected = this.selected.filter(
+                    id => !ids.includes(id)
+                );
+            }
+        },
+
+        toggleRow(id, checked) {
+            if (checked && !this.selected.includes(id)) {
+                this.selected.push(id);
+            } else if (!checked) {
+                this.selected = this.selected.filter(
+                    item => item !== id
+                );
+            }
+        },
+
+        clearSelection() {
+            this.selected = [];
+        },
+
+        openContextMenu(event, id) {
+            const width = 224;
+            const height = 260;
+
+            this.contextMenu.recordId = id;
+            this.contextMenu.x = Math.max(
+                8,
+                Math.min(event.clientX, window.innerWidth - width - 8)
+            );
+            this.contextMenu.y = Math.max(
+                8,
+                Math.min(event.clientY, window.innerHeight - height - 8)
+            );
+            this.contextMenu.open = true;
+        },
+
+        closeContextMenu() {
+            this.contextMenu.open = false;
+        }
+    }"
+    @click="closeContextMenu()"
+    @keydown.escape.window="closeContextMenu(); filtersOpen = false"
+    @scroll.window="closeContextMenu()"
+    class="card relative flex flex-col"
+>
+
+    <!-- ====================================================== -->
+    <!-- HEADER -->
+    <!-- ====================================================== -->
+
+    <div class="border-b border-slate-200 bg-white p-5">
+
+        <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">
+                    {{ title }}
+                </h1>
+
+                <p class="mt-1 text-sm text-slate-500">
+                    {{ description }}
+                </p>
+            </div>
+
+             <!-- Header Actions -->
+            <div class="flex items-center gap-2">
+                <button class="btn btn-secondary btn-md">
+                    <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export CSV
+                </button>
+
+                <button class="btn btn-primary btn-md">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Member
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ================================================== -->
+        <!-- SEARCH AND FILTERS -->
+        <!-- ================================================== -->
+
+        <form
+            hx-get="{{ table_url }}"
+            hx-trigger="submit"
+            hx-target="{{ table_target }}"
+            hx-swap="outerHTML"
+            hx-push-url="false"
+            hx-indicator="#table-loading-{{ table_id }}">
+
+            <div class="mt-5 flex flex-col sm:flex-row sm:items-center gap-2 pt-4 border-t border-slate-100 relative">
+
+                <!-- Search -->
+                <div class="relative flex-1 min-w-[240px] max-w-md">
+
+                    <div class="pointer-events-none absolute inset-y-0 px-2 left-0 flex items-center pl-3">
+                        <svg class="h-4 w-4 text-slate-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+
+                    <input
+                        type="search"
+                        name="{{ search_parameter }}"
+                        value="{{ search_term }}"
+                        placeholder="Search all records..."
+                        autocomplete="off"
+                        class="w-full pl-9 pr-8 py-2 text-sm  focus:!bg-white">
+
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="flex items-center gap-2">
+
+                    <!-- Filter Dropdown -->
+                    <div class="relative">
+
+                        <button
+                            type="button"
+                            @click="filtersOpen = !filtersOpen"
+                            :aria-expanded="filtersOpen"
+                            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition">
+
+                            <svg class="h-4 w-4 text-slate-500"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+
+                            {% trans "Filters" %}
+
+                            {% if active_filter_count %}
+                            <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                                {{ active_filter_count }}
+                            </span>
+                            {% endif %}
+
+                            <svg class="h-3.5 w-3.5 text-slate-400 transition-transform"
+                                 :class="{ 'rotate-180': filtersOpen }"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="m6 9 6 6 6-6"/>
+                            </svg>
+
+                        </button>
+
+                        <!-- Filter Panel -->
+                        <div
+                            x-show="filtersOpen"
+                            x-cloak
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="translate-y-1 opacity-0"
+                            x-transition:enter-end="translate-y-0 opacity-100"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            @click.outside="filtersOpen = false"
+                            class="absolute top-12 z-40 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 text-sm animate-in fade-in zoom-in-95 duration-150">
+
+                            <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">
+                                        {% trans "Filter records" %}
+                                    </h3>
+
+                                    <p class="mt-0.5 text-xs text-slate-500">
+                                        {% trans "Refine your results using the available fields." %}
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    @click="filtersOpen = false"
+                                    aria-label="{% trans 'Close filters' %}"
+                                    class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                >
+                                    <svg class="h-4 w-4"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+
+                            </div>
+
+                            <div class="space-y-3.5">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {% for field in filterset.form %}
+                                <div class="min-w-0 space-y-1.5">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700">
+                                        {{ field.label }}
+                                    </label>
+
+                                    {% render_field field class="w-full min-w-0" %}
+                                    
+                                    {% if field.help_text %}
+                                        <p class="text-xs text-slate-500">
+                                            {{ field.help_text }}
+                                        </p>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <p class="text-xs text-red-600">
+                                            {{ error }}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                           <a hx-get="{{ table_url }}" class="btn btn-secondary">
+                                {% trans "Clear filters" %}
+                            </a>
+                            <button type="submit" @click="open = false" class="btn btn-primary">
+                                {% trans "Apply filters" %}
+                            </button>
+                        </div>
+
+                        </div>
+
+                    </div>
+
+                    
+                    <!-- Reset All -->
+                    <a
+                        hx-get="{{ table_url }}"
+                        hx-target="{{ table_target }}"
+                        hx-swap="outerHTML"
+                        hx-push-url="false"
+                        hx-indicator="#table-loading-{{ table_id }}"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100">
+                        <svg class="h-3.5 w-3.5"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+
+                        {% trans "Reset" %}
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- BULK ACTIONS -->
+    <!-- ====================================================== -->
+
+    {% if selectable %}
+
+    <div
+        x-show="selectedCount > 0"
+        x-cloak
+        x-transition
+        class="flex flex-col gap-3 border-b border-primary-200 bg-primary-50/80 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+        <div class="flex items-center gap-2">
+
+            <span class="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-blue-600 px-2 text-sm font-bold " 
+                x-text="selectedCount">
+            </span>
+
+            <span class="text-sm font-medium text-primary-900">
+                {% trans "selected" %}
+            </span>
+
+            <button type="button" @click="clearSelection()" class="ml-2 text-xs font-semibold text-primary-700 hover:text-primary-900">
+                {% trans "Clear selection" %}
+            </button>
+
+        </div>
+
+        <form
+            hx-post="{{ bulk_action_url }}"
+            hx-target="{{ table_target }}"
+            hx-swap="outerHTML"
+            hx-indicator="#table-loading-{{ table_id }}"
+            class="flex flex-wrap items-center gap-2">
+
+            {% csrf_token %}
+
+            <template x-for="id in selected" :key="id">
+                <input
+                    type="hidden"
+                    name="{{ objects_parameter }}"
+                    :value="id"
+                >
+            </template>
+
+            <button type="submit" name="action" value="activate"
+                    class="btn btn-secondary btn-sm">
+                {% trans "Set Active" %}
+            </button>
+
+            <button type="submit" name="action" value="deactivate"
+                    class="btn btn-secondary btn-sm">
+                {% trans "Set Inactive" %}
+            </button>
+
+            <button type="submit" name="action" value="export"
+                    class="btn btn-secondary btn-sm">
+                {% trans "Export Selected" %}
+            </button>
+
+            <button
+                type="submit"
+                name="action"
+                value="delete"
+                hx-confirm="{% trans 'Are you sure you want to delete the selected records?' %}"
+                class="btn btn-danger btn-sm">
+                {% trans "Delete Selected" %}
+            </button>
+
+        </form>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ====================================================== -->
+    <!-- ALPHABET NAVIGATION -->
+    <!-- ====================================================== -->
+
+    {% if alphabet %}
+
+    <div class="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50/70 p-4 text-sm font-medium text-slate-500">
+
+        <span class="mr-1 shrink-0 text-xs font-bold uppercase tracking-wider text-slate-400">
+            {% trans "Jump:" %}
+        </span>
+
+        <div class="flex shrink-0 items-center gap-1" role="group">
+
+            <a
+                hx-get="{{ table_url }}{% querystring_replace alphabet_parameter='' %}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-push-url="false"
+                hx-indicator="#table-loading-{{ table_id }}"
+                class="inline-flex h-8 min-w-9 items-center justify-center rounded-lg px-2 font-semibold transition
+                    {% if not current_letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                {% trans "All" %}
+            </a>
+
+            {% for letter in alphabet %}
+
+            <a
+                hx-get="{{ table_url }}{% querystring_replace alphabet_parameter=letter %}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-push-url="false"
+                hx-indicator="#table-loading-{{ table_id }}"
+                {% if current_letter == letter %}aria-current="true"{% endif %}
+                class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-semibold transition
+                    {% if current_letter == letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}"
+            >
+                {{ letter }}
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ====================================================== -->
+    <!-- DATA TABLE -->
+    <!-- ====================================================== -->
+
+    <div class="relative min-h-[350px] overflow-x-auto">
+
+        <table {{ table.attrs.as_html }} class="w-full border-collapse text-left">
+
+            {% block table_head %}
+
+                {% if show_header %}
+
+                <thead {{ table.attrs.thead.as_html }} class="sticky top-0 z-10 bg-slate-50">
+
+                    {% block table_head_row %}
+
+                    <tr class="border-b border-slate-200 bg-slate-50/80 text-sm font-semibold uppercase tracking-wider text-slate-500">
+
+                        {% if selectable %}
+
+                        <th class="w-10 px-4 py-3 text-center">
+
+                            <input
+                                type="checkbox"
+                                :checked="allSelected"
+                                @change="toggleAll($event.target.checked)"
+                                aria-label="{% trans 'Select all visible records' %}"
+                                class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            >
+
+                        </th>
+
+                        {% endif %}
+
+                        {% for column in table.columns %}
+
+                        {% block table_head_cell %}
+
+                        <th scope="col" class="select-none whitespace-nowrap px-4 py-3">
+
+                            {% if column.orderable %}
+
+                            <a
+                                hx-get="{{ table_url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
+                                hx-target="{{ table_target }}"
+                                hx-swap="outerHTML"
+                                hx-push-url="false"
+                                hx-indicator="#table-loading-{{ table_id }}"
+                                class="group inline-flex items-center gap-2 rounded-sm outline-none transition hover:text-blue-700 focus:ring-2 focus:ring-blue-200"
+                            >
+
+                                <span>{{ column.header }}</span>
+
+                                <span class="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 transition group-hover:bg-slate-200 group-hover:text-slate-600
+                                    {% if column.is_ordered %}bg-blue-100 text-blue-700{% endif %}">
+
+                                    {% if column.is_ordered %}
+
+                                        {% if column.order_by_alias.is_descending %}
+
+                                        <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v9.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4 4.5a.75.75 0 0 1-1.06 0l-4-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd"/>
+                                        </svg>
+
+                                        {% else %}
+
+                                        <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V6.56L6.03 9.78a.75.75 0 1 1-1.06-1.06l4-4.5a.75.75 0 0 1 1.06 0l4 4.5a.75.75 0 1 1-1.06 1.06l-3.22-3.22v9.69A.75.75 0 0 1 10 17Z" clip-rule="evenodd"/>
+                                        </svg>
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path d="M8 7h12M8 12h8M8 17h4M4 5v14m0 0-2-2m2 2 2-2"/>
+                                    </svg>
+
+                                    {% endif %}
+
+                                </span>
+
+                            </a>
+
+                            {% else %}
+
+                                {{ column.header }}
+
+                            {% endif %}
+
+                        </th>
+
+                        {% endblock table_head_cell %}
+
+                        {% endfor %}
+
+                    </tr>
+
+                    {% endblock table_head_row %}
+
+                </thead>
+
+                {% endif %}
+
+            {% endblock table_head %}
+
+
+            {% block table_body %}
+
+                <tbody {{ table.attrs.tbody.as_html }} class="divide-y divide-slate-100 bg-white text-sm font-normal text-slate-700">
+
+                    {% for row in table.paginated_rows %}
+
+                        {% block table_row %}
+
+                            <tr
+                                data-table-row
+                                data-object-id="{{ row.record.pk }}"
+                                @contextmenu.prevent="openContextMenu($event, '{{ row.record.pk|escapejs }}')"
+                                class="group transition-colors duration-150 hover:bg-slate-50">
+
+                                {% if selectable %}
+
+                                <td class="w-10 px-4 py-3 text-center">
+
+                                    <input
+                                        type="checkbox"
+                                        name="{{ objects_parameter }}"
+                                        value="{{ row.record.pk }}"
+                                        data-table-select
+                                        :checked="selected.includes('{{ row.record.pk|escapejs }}')"
+                                        @change="toggleRow('{{ row.record.pk|escapejs }}', $event.target.checked)"
+                                        aria-label="{% trans 'Select record' %}"
+                                        class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+
+                                </td>
+
+                                {% endif %}
+
+                                {% for column, cell in row.items %}
+
+                                {% block table_cell %}
+
+                                <td {{ column.attrs.td.as_html }} class="px-4 py-3">
+
+                                    {% if column.localize == None %}
+                                        {{ cell }}
+                                    {% elif column.localize %}
+                                        {{ cell|localize }}
+                                    {% else %}
+                                        {{ cell|unlocalize }}
+                                    {% endif %}
+
+                                </td>
+
+                                {% endblock table_cell %}
+
+                                {% endfor %}
+
+                            </tr>
+
+                        {% endblock table_row %}
+
+                    {% empty %}
+
+                        {% block table_empty %}
+
+                            <tr>
+
+                                <td colspan="{{ empty_colspan|default:table.columns|length }}" class="px-6 py-16 text-center">
+
+                                    <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+
+                                        <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+
+                                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                                <circle cx="11" cy="11" r="7"/>
+                                                <path d="m16 16 4 4"/>
+                                            </svg>
+
+                                        </span>
+
+                                        <div class="space-y-1">
+
+                                            <p class="font-semibold text-slate-800">
+                                                {{ empty_message|default:_("No records found") }}
+                                            </p>
+
+                                            <p class="text-sm text-slate-500">
+                                                {% trans "Try changing your search or filters." %}
+                                            </p>
+
+                                        </div>
+
+                                        {% if search_term or current_letter %}
+
+                                        <a
+                                            hx-get="{{ table_url }}"
+                                            hx-target="{{ table_target }}"
+                                            hx-swap="outerHTML"
+                                            hx-push-url="false"
+                                            class="mt-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
+                                            {% trans "Clear search and filters" %}
+                                        </a>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endblock table_empty %}
+
+                    {% endfor %}
+
+                </tbody>
+
+            {% endblock table_body %}
+
+
+            {% block table_foot %}
+
+                {% if show_footer %}
+
+                    <tfoot {{ table.attrs.tfoot.as_html }}>
+
+                        {% block table_foot_row %}
+
+                        <tr>
+
+                            {% for column in table.columns %}
+
+                            {% block table_foot_cell %}
+
+                            <td
+                                {{ column.attrs.tf.as_html }}
+                                class="px-4 py-3 font-semibold text-slate-700 first:pl-5 last:pr-5"
+                            >
+                                {{ column.footer }}
+                            </td>
+
+                            {% endblock table_foot_cell %}
+
+                            {% endfor %}
+
+                        </tr>
+
+                        {% endblock table_foot_row %}
+
+                    </tfoot>
+
+                {% endif %}
+
+            {% endblock table_foot %}
+
+        </table>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- PAGINATION -->
+    <!-- ====================================================== -->
+
+    <div class="flex flex-col items-center justify-between gap-4 border-t border-slate-200 bg-white p-4 text-sm text-slate-600 sm:flex-row">
+
+        <!-- Pagination Information -->
+        <div class="font-medium">
+
+            {% if table.page and table.paginator.count %}
+
+                {% blocktrans with start=table.page.start_index end=table.page.end_index total=table.paginator.count %}
+                    Showing <span class="font-semibold text-slate-800">{{ start }} to {{ end }}</span> of <span class="font-semibold text-slate-800">{{ total }}</span> records
+                {% endblocktrans %}
+
+            {% else %}
+
+                <span class="font-semibold text-slate-800">
+                    {{ table.paginator.count|default:0 }}
+                </span>
+
+                {% trans "records" %}
+
+            {% endif %}
+
+        </div>
+
+        {% if current_letter %}
+
+        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+            {% trans "Letter" %} {{ current_letter }}
+        </span>
+
+        {% endif %}
+
+        <div class="flex flex-wrap items-center justify-center gap-4">
+
+            <!-- Page Size -->
+            <div class="flex items-center gap-2">
+
+                <label for="pageSizeSelect" class="whitespace-nowrap text-slate-500">
+                    {% trans "Rows per page:" %}
+                </label>
+
+                <select
+                    id="pageSizeSelect"
+                    name="{{ page_size_parameter }}"
+                    hx-get="{{ table_url }}"
+                    hx-trigger="change"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    hx-indicator="#table-loading-{{ table_id }}"
+                    class="!w-auto !rounded-lg !border-slate-300 !px-2 !py-1.5 text-sm focus:!border-primary-500 focus:!ring-primary-100"
+                >
+
+                    {% for size in page_size_options %}
+
+                    <option value="{{ size }}" {% if size == page_size %}selected{% endif %}>
+                        {{ size }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- Page Navigation -->
+            {% if table.page and table.paginator.num_pages > 1 %}
+
+            <nav class="flex items-center gap-1" aria-label="{% trans 'Pagination' %}">
+
+                <!-- First Page -->
+                {% if table.page.has_previous %}
+
+                <a
+                    hx-get="{{ table_url }}{% querystring_replace table.prefixed_page_field=1 %}"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    hx-indicator="#table-loading-{{ table_id }}"
+                    aria-label="{% trans 'First page' %}"
+                    title="{% trans 'First page' %}"
+                    class="btn-icon h-8 w-8 border border-slate-300"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                    </svg>
+                </a>
+
+                {% endif %}
+
+
+                <!-- Previous Page -->
+                {% if table.page.has_previous %}
+
+                <a
+                    hx-get="{{ table_url }}{% querystring_replace table.prefixed_page_field=table.page.previous_page_number %}"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    hx-indicator="#table-loading-{{ table_id }}"
+                    aria-label="{% trans 'Previous page' %}"
+                    title="{% trans 'Previous page' %}"
+                    class="btn-icon h-8 w-8 border border-slate-300"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+
+                {% endif %}
+
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1 px-1">
+
+                    {% for p in table.page|table_page_range:table.paginator %}
+
+                        {% if p == '...' %}
+
+                        <span class="px-2 text-sm text-slate-400" aria-hidden="true">
+                            …
+                        </span>
+
+                        {% else %}
+
+                        <a
+                            hx-get="{{ table_url }}{% querystring_replace table.prefixed_page_field=p %}"
+                            hx-target="{{ table_target }}"
+                            hx-swap="outerHTML"
+                            hx-push-url="false"
+                            hx-indicator="#table-loading-{{ table_id }}"
+                            {% if p == table.page.number %}aria-current="page"{% endif %}
+                            class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-medium transition
+                                {% if p == table.page.number %}
+                                    btn btn-primary btn-sm text-white shadow-sm
+                                {% else %}
+                                    text-slate-600 hover:bg-slate-100 hover:text-slate-900
+                                {% endif %}"
+                        >
+                            {{ p }}
+                        </a>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- Next Page -->
+                {% if table.page.has_next %}
+
+                <a
+                    hx-get="{{ table_url }}{% querystring_replace table.prefixed_page_field=table.page.next_page_number %}"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    hx-indicator="#table-loading-{{ table_id }}"
+                    aria-label="{% trans 'Next page' %}"
+                    title="{% trans 'Next page' %}"
+                    class="btn-icon h-8 w-8 border border-slate-300"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+
+                {% endif %}
+
+
+                <!-- Last Page -->
+                {% if table.page.has_next %}
+
+                <a
+                    hx-get="{{ table_url }}{% querystring_replace table.prefixed_page_field=table.paginator.num_pages %}"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    hx-indicator="#table-loading-{{ table_id }}"
+                    aria-label="{% trans 'Last page' %}"
+                    title="{% trans 'Last page' %}"
+                    class="btn-icon h-8 w-8 border border-slate-300"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                    </svg>
+                </a>
+
+                {% endif %}
+
+            </nav>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- LOADING INDICATOR -->
+    <!-- ====================================================== -->
+
+    <div
+        id="table-loading-{{ table_id }}"
+        class="htmx-indicator pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-white/60 backdrop-blur-[1px]"
+    >
+
+        <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-lg">
+
+            <svg class="h-5 w-5 animate-spin text-primary-600"
+                 viewBox="0 0 24 24"
+                 fill="none">
+                <circle class="opacity-25"
+                        cx="12" cy="12" r="10"
+                        stroke="currentColor"
+                        stroke-width="4"/>
+                <path class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            </svg>
+
+            <span class="text-sm font-medium text-slate-600">
+                {% trans "Loading records..." %}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- CONTEXT MENU -->
+    <!-- ====================================================== -->
+
+    <div
+        x-show="contextMenu.open"
+        x-cloak
+        x-transition
+        @click.stop
+        :style="`position: fixed; left: ${contextMenu.x}px; top: ${contextMenu.y}px`"
+        class="z-50 w-56 rounded-lg border border-slate-200 bg-white py-1.5 text-sm text-slate-700 shadow-xl"
+        role="menu"
+    >
+
+        <div class="border-b border-slate-100 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {% trans "Record actions" %}
+        </div>
+
+        <!-- Preview -->
+        <button
+            type="button"
+            @click="$dispatch('table-row-action', {action: 'view', id: contextMenu.recordId}); closeContextMenu()"
+            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
+            role="menuitem"
+        >
+            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+
+            {% trans "Preview details" %}
+        </button>
+
+        <!-- Edit -->
+        <button
+            type="button"
+            @click="$dispatch('table-row-action', {action: 'edit', id: contextMenu.recordId}); closeContextMenu()"
+            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
+            role="menuitem"
+        >
+            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/>
+            </svg>
+
+            {% trans "Edit record" %}
+        </button>
+
+        <!-- Duplicate -->
+        <button
+            type="button"
+            @click="$dispatch('table-row-action', {action: 'copy', id: contextMenu.recordId}); closeContextMenu()"
+            class="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50"
+            role="menuitem"
+        >
+            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+
+            {% trans "Duplicate record" %}
+        </button>
+
+        <div class="my-1 border-t border-slate-100"></div>
+
+        <!-- Delete -->
+        <button
+            type="button"
+            @click="if (confirm('{% trans "Are you sure you want to delete this record?"|escapejs %}')) { $dispatch('table-row-action', {action: 'delete', id: contextMenu.recordId}); } closeContextMenu()"
+            class="flex w-full items-center gap-2.5 px-3 py-2 text-left font-medium text-rose-600 hover:bg-rose-50"
+            role="menuitem"
+        >
+            <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+
+            {% trans "Delete record" %}
+        </button>
+
+    </div>
+
+</div>

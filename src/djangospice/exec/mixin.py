@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 from slugify import slugify
+from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 
 from django.apps import apps
 from django.core.exceptions import AppRegistryNotReady, PermissionDenied
@@ -214,7 +215,6 @@ class Executable:
     def base_url(self) -> str:
         return self.dispatch_url()
 
-
     def build_url(self, *, action: str | None = None, state: QueryState | None = None, **params: Any) -> str:
         state = state or self.query_state
 
@@ -224,12 +224,25 @@ class Executable:
         path = self.base_url
 
         if action:
-            path = f"{path}{action}/"
+            path = f"{path.rstrip('/')}/{action}/"
 
-        query = state.encode()
-        url = f"{path}?{query}" if query else path
+        parts = urlsplit(path)
 
-        return url
+        # Merge any existing query parameters.
+        query_params = dict(parse_qsl(parts.query, keep_blank_values=True))
+
+        # QueryState parameters take precedence.
+        query_params.update(state.to_dict())
+
+        query = urlencode(query_params, doseq=True)
+
+        return urlunsplit((
+            parts.scheme,
+            parts.netloc,
+            parts.path,
+            query,
+            parts.fragment,
+        ))
     
     def get_method_url(self, name: str) -> str:
         self.get_method(name)

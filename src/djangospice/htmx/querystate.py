@@ -59,3 +59,8 @@ class QueryState:
                 for value in values
             ]
         )
+
+    
+    def to_dict(self) -> dict[str, tuple[str, ...]]:
+        """Convert query state into a dictionary preserving multiple values."""
+        return dict(self.values)
