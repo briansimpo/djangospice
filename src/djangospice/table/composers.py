@@ -5,7 +5,6 @@ from typing import Any, Iterable
 
 import django_tables2 as tables
 
-from djangospice.table.columns import RowActionsColumn
 from djangospice.table.fields import TableField
 
 
@@ -181,18 +180,6 @@ class TableComposer:
                         (table_class,),
                         custom_columns,
                     )
-
-        if self.row_actions:
-            table_class = type(
-                f"{table_class.__name__}WithRowActions",
-                (table_class,),
-                {
-                    "row_actions": RowActionsColumn(
-                        verbose_name="",
-                        orderable=False,
-                    ),
-                },
-            )
 
         return table_class
 

@@ -1,7 +1,5 @@
-from typing import Any
 
 import django_tables2 as tables
-from django_tables2.columns.base import BoundColumn
 from django.utils.formats import number_format
 
 
@@ -35,29 +33,5 @@ class SelectionColumn(tables.CheckBoxColumn):
 
         super().__init__(*args, **kwargs)
 
-
-
-class RowActionsColumn(tables.TemplateColumn):
-    """
-    django-tables2 column for rendering Table row actions.
-    """
-
-    template_name = "table/actions.html"
-
-    def __init__(self,*args,**kwargs) -> None:
-        kwargs.setdefault("template_name", self.template_name)
-        super().__init__(*args,**kwargs )
-
-    def render(self, record: Any, table: tables.Table, value: Any, bound_column: BoundColumn, **kwargs: Any) -> str:
-        widget = table.widget
-
-        return super().render(
-            record,
-            table,
-            value,
-            bound_column,
-            actions=widget.get_row_actions(record),
-            **kwargs,
-        )
 
 
