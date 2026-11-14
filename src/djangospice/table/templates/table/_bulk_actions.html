@@ -1,0 +1,115 @@
+{% load i18n %}
+    <!-- ====================================================== -->
+    <!-- BULK ACTIONS -->
+    <!-- ====================================================== -->
+
+    {% if selectable %}
+    <div
+        data-bulk-actions
+        data-open="false"
+        class="hidden bg-blue-50 border-b border-blue-50 px-3 py-2.5 flex items-center justify-between transition-all">
+
+        <div class="flex items-center gap-2">
+            <span
+                class="inline-flex min-w-7 h-6 px-2 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700 ring-1 ring-inset ring-blue-200"
+                data-selected-count>
+                0
+            </span>
+
+            <span class="text-sm font-medium text-blue-800">
+                {% trans "selected" %}
+            </span>
+
+            <button type="button" data-action="clear-selection" class="ml-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                {% trans "Clear selection" %}
+            </button>
+        </div>
+
+        <div class="relative">
+            <form
+                id="bulk-actions-form-{{ table_id }}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-indicator="#table-loading-{{ table_id }}">
+
+                {% csrf_token %}
+
+                <!-- Selected record IDs are managed by your existing JS -->
+                <div
+                    data-hidden-inputs
+                    data-param-name="{{ objects_parameter }}">
+                </div>
+
+                <!-- Dropdown trigger -->
+                <button
+                    type="button"
+                    data-toggle="dropdown"
+                    data-target="#bulk-action-menu-{{ table_id }}"
+                    class="btn btn-secondary inline-flex items-center gap-2"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-list-check"></i>
+                    {% trans "Actions" %}
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" data-chevron></i>
+                </button>
+
+                <!-- Dropdown menu -->
+                <div
+                    id="bulk-action-menu-{{ table_id }}"
+                    data-dropdown-menu
+                    data-open="false"
+                    class="hidden absolute right-0 top-full mt-2 z-50 w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+
+                    <div class="px-3 py-2 border-b border-slate-100">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            {% trans "Bulk actions" %}
+                        </p>
+                    </div>
+
+                    <ul class="space-y-0.5 px-1">
+                        {% for action in bulk_actions %}
+                            <li>
+                                <button
+                                    type="button"
+                                    name="action"
+                                    value="{{ action.name }}"
+                                    hx-{{ action.method }}="{{ action.url }}"
+                                    hx-include="closest form"
+                                    hx-target="{{ table_target }}"
+                                    hx-swap="outerHTML"
+                                    hx-indicator="#table-loading-{{ table_id }}"
+                                    {% if action.confirm %}
+                                        hx-confirm="{{ action.confirm }}"
+                                    {% endif %}
+                                    class="w-full flex items-center gap-3 px-3 py-2.5
+                                        rounded-lg text-left text-sm font-medium
+                                        transition-colors duration-150
+                                        {% if action.is_danger %}
+                                            text-red-600 hover:bg-red-50 focus:bg-red-50
+                                        {% else %}
+                                            text-slate-700 hover:bg-slate-100 focus:bg-slate-100
+                                        {% endif %}">
+
+                                    {% if action.icon %}
+                                        <span class="w-5 shrink-0 text-center
+                                            {% if action.is_danger %}
+                                                text-red-500
+                                            {% else %}
+                                                text-slate-400
+                                            {% endif %}">
+                                            <i class="{{ action.icon }}"></i>
+                                        </span>
+                                    {% endif %}
+
+                                    <span class="min-w-0 break-words">
+                                        {{ action.label }}
+                                    </span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}

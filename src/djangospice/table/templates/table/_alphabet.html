@@ -1,0 +1,47 @@
+{% load i18n %}
+{% load django_tables2 %}
+    <!-- ====================================================== -->
+    <!-- ALPHABET NAVIGATION -->
+    <!-- ====================================================== -->
+
+    {% if alphabet %}
+    <div class="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50/70 p-4 text-sm font-medium text-slate-500">
+
+        <span class="mr-1 shrink-0 text-xs font-bold uppercase tracking-wider text-slate-400">
+            {% trans "Jump:" %}
+        </span>
+
+        <div class="flex shrink-0 items-center gap-1" role="group">
+
+            <a
+                hx-get="{{ table_url }}{% querystring_replace alphabet_parameter='' %}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-push-url="false"
+                hx-indicator="#table-loading-{{ table_id }}"
+                class="inline-flex h-8 min-w-9 items-center justify-center rounded-lg px-2 font-semibold transition
+                    {% if not current_letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                {% trans "All" %}
+            </a>
+
+            {% for letter in alphabet %}
+
+            <a
+                hx-get="{{ table_url }}{% querystring_replace alphabet_parameter=letter %}"
+                hx-target="{{ table_target }}"
+                hx-swap="outerHTML"
+                hx-push-url="false"
+                hx-indicator="#table-loading-{{ table_id }}"
+                {% if current_letter == letter %}aria-current="true"{% endif %}
+                class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-semibold transition
+                    {% if current_letter == letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}"
+            >
+                {{ letter }}
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+    {% endif %}

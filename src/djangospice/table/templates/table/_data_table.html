@@ -1,0 +1,218 @@
+{% load i18n %}
+{% load django_tables2 %}
+    <!-- ====================================================== -->
+    <!-- DATA TABLE -->
+    <!-- ====================================================== -->
+
+    <div class="relative max-h-[450px] overflow-y-auto overflow-x-auto">
+
+        {% if table.paginated_rows|length > 0 %}
+            <table {{ table.attrs.as_html }} class="w-full border-collapse text-left">
+
+                {% block table_head %}
+
+                    {% if show_header %}
+
+                    <thead {{ table.attrs.thead.as_html }} class="sticky top-0 z-20 bg-slate-50 shadow-sm">
+
+                        {% block table_head_row %}
+
+                        <tr class="border-b border-slate-200 bg-slate-50 text-sm font-semibold uppercase tracking-wider text-slate-500">
+
+                            {% if selectable %}
+
+                            <th class="sticky top-0 z-20 bg-slate-50 w-10 px-4 py-3 text-center">
+
+                                <input
+                                    type="checkbox"
+                                    data-action="toggle-all"
+                                    aria-label="{% trans 'Select all visible records' %}"
+                                    class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+
+                            </th>
+
+                            {% endif %}
+
+                            {% for column in table.columns %}
+
+                            {% block table_head_cell %}
+
+                            <th scope="col" class="sticky top-0 z-20 bg-slate-50 select-none whitespace-nowrap px-4 py-3">
+
+                                {% if column.orderable %}
+
+                                <a
+                                    hx-get="{{ table_url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
+                                    hx-target="{{ table_target }}"
+                                    hx-swap="outerHTML"
+                                    hx-push-url="false"
+                                    hx-indicator="#table-loading-{{ table_id }}"
+                                    class="group inline-flex items-center gap-2 rounded-sm outline-none transition hover:text-blue-700 focus:ring-2 focus:ring-blue-200">
+
+                                    <span>{{ column.header }}</span>
+
+                                    <span class="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 transition group-hover:bg-slate-200 group-hover:text-slate-600
+                                        {% if column.is_ordered %}bg-blue-100 text-blue-700{% endif %}">
+
+                                        {% if column.is_ordered %}
+
+                                            {% if column.order_by_alias.is_descending %}
+
+                                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v9.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4 4.5a.75.75 0 0 1-1.06 0l-4-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd"/>
+                                            </svg>
+
+                                            {% else %}
+
+                                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V6.56L6.03 9.78a.75.75 0 1 1-1.06-1.06l4-4.5a.75.75 0 0 1 1.06 0l4 4.5a.75.75 0 1 1-1.06 1.06l-3.22-3.22v9.69A.75.75 0 0 1 10 17Z" clip-rule="evenodd"/>
+                                            </svg>
+
+                                            {% endif %}
+
+                                        {% else %}
+
+                                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                            <path d="M8 7h12M8 12h8M8 17h4M4 5v14m0 0-2-2m2 2 2-2"/>
+                                        </svg>
+
+                                        {% endif %}
+
+                                    </span>
+
+                                </a>
+
+                                {% else %}
+
+                                    {{ column.header }}
+
+                                {% endif %}
+
+                            </th>
+
+                            {% endblock table_head_cell %}
+
+                            {% endfor %}
+
+                        </tr>
+
+                        {% endblock table_head_row %}
+
+                    </thead>
+
+                    {% endif %}
+
+                {% endblock table_head %}
+
+
+                {% block table_body %}
+
+                    <tbody {{ table.attrs.tbody.as_html }} class="divide-y divide-slate-100 bg-white text-sm font-normal text-slate-700">
+
+                        {% for row in table.paginated_rows %}
+
+                            {% block table_row %}
+
+                                <tr
+                                    data-table-row
+                                    data-object-id="{{ row.record.pk }}"
+                                    class="group transition-colors duration-150 hover:bg-slate-50">
+
+                                    {% if selectable %}
+
+                                    <td class="w-10 px-4 py-3 text-center">
+
+                                        <input
+                                            type="checkbox"
+                                            name="{{ objects_parameter }}"
+                                            value="{{ row.record.pk }}"
+                                            data-action="toggle-row"
+                                            data-row-checkbox
+                                            aria-label="{% trans 'Select record' %}"
+                                            class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+
+                                    </td>
+
+                                    {% endif %}
+
+                                    {% for column, cell in row.items %}
+
+                                    {% block table_cell %}
+
+                                    <td {{ column.attrs.td.as_html }} class="px-4 py-3">
+
+                                        {% if column.localize == None %}
+                                            {{ cell }}
+                                        {% elif column.localize %}
+                                            {{ cell|localize }}
+                                        {% else %}
+                                            {{ cell|unlocalize }}
+                                        {% endif %}
+
+                                    </td>
+
+                                    {% endblock table_cell %}
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            {% endblock table_row %}
+
+                        
+                        {% endfor %}
+
+                    </tbody>
+
+                {% endblock table_body %}
+
+            </table>
+        {% else %}
+
+            {% block table_empty %}
+            <div class="px-6 py-16 text-center">
+
+                <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <circle cx="11" cy="11" r="7"/>
+                            <path d="m16 16 4 4"/>
+                        </svg>
+
+                    </span>
+
+                    <div class="space-y-1">
+
+                        <p class="font-semibold text-slate-800">
+                            {{ empty_message|default:_("No records found") }}
+                        </p>
+
+                        <p class="text-sm text-slate-500">
+                            {% trans "Try changing your search or filters." %}
+                        </p>
+
+                    </div>
+
+                    {% if search_term or current_letter %}
+
+                    <a
+                        hx-get="{{ table_url }}"
+                        hx-target="{{ table_target }}"
+                        hx-swap="outerHTML"
+                        hx-push-url="false"
+                        class="mt-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
+                        {% trans "Clear search and filters" %}
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+            {% endblock table_empty %}
+
+        {% endif %}
+
+    </div>
