@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any, ClassVar
 
 from django.db.models import Model, QuerySet
@@ -11,7 +10,6 @@ from djangospice.htmx.component import Component
 from djangospice.htmx.response import Response
 from djangospice.utils import safe_reverse
 
-from .actions import Action, ActionContext, Actions, BoundAction
 from .apps import namespace
 
 
@@ -40,9 +38,6 @@ class Widget(Executable, Component):
     description: ClassVar[str] = ""
     suffix: ClassVar[str] = "Widget"
 
-    actions: ClassVar[Actions] = Actions()
-    _actions: ClassVar[Actions] = Actions()
-
     priority: ClassVar[int] = 100
 
     model: ClassVar[type[Model] | None] = None
@@ -66,62 +61,7 @@ class Widget(Executable, Component):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        cls._normalize_actions()
-
-    # ------------------------------------------------------------------
-    # Actions
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def _declared_action_groups(cls) -> dict[str, Actions]:
-        groups: dict[str, Actions] = {}
-
-        for base in reversed(cls.__mro__):
-            for name, value in base.__dict__.items():
-                if isinstance(value, Actions):
-                    groups[name] = value
-
-        return groups
-
-    @classmethod
-    def _normalize_actions(cls) -> None:
-        groups = cls._declared_action_groups()
-        normalized: dict[str, Actions] = {}
-
-        for name, actions in groups.items():
-            if (
-                name in cls.__dict__
-                and isinstance(cls.__dict__[name], Actions)
-            ):
-                collection = Actions(*deepcopy(actions))
-                setattr(cls, name, collection)
-                normalized[name] = collection
-            else:
-                normalized[name] = actions
-
-        cls._actions = cls._merge_actions(*normalized.values())
-
-    @classmethod
-    def _merge_actions(cls, *collections: Actions) -> Actions:
-        actions: dict[str, Action] = {}
-
-        for collection in collections:
-            for action in collection:
-                actions[action.name] = deepcopy(action)
-
-        return Actions(*actions.values())
-
-    def get_action_collection(self) -> Actions:
-        return self._actions
-
-    def bind_action(self, action: Action, context: ActionContext) -> BoundAction:
-        return BoundAction(
-            action=action,
-            context=context,
-        )
+   
     
     # ------------------------------------------------------------------
     # Request & visibility

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, ClassVar
+from django.http import HttpRequest
 from slugify import slugify
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 
@@ -10,7 +11,7 @@ from django.utils.text import camel_case_to_spaces
 
 from djangospice.core.formatting import snake_case
 from djangospice.htmx.querystate import QueryState
-from .action import Action
+from .action import Action, Actions
 from .identity import ClassIdentity
 from .method import Method
 
@@ -34,7 +35,7 @@ class Executable:
     permissions: ClassVar[tuple[str, ...]] = ()
 
     def __init__(self, **kwargs: Any) -> None:
-        self.request =  kwargs.get("request", None)
+        self.request: HttpRequest =  kwargs.get("request", None)
         self.user = getattr(self.request, "user", None)
         self.kwargs = kwargs
 
@@ -205,6 +206,23 @@ class Executable:
             method.to_action(self)
             for method in self.get_methods().values()
         ]
+
+    def get_actions_by_group(self, group: str) -> Actions:
+        methods = (
+            method
+            for method in self.get_methods().values()
+            if method.metadata.group == group
+        )
+
+        actions = [
+            method.to_action(self)
+            for method in methods
+            if method.metadata.visible
+        ]
+
+        actions = sorted(actions, key=lambda action: action.order)
+
+        return Actions(actions)
 
     # -------------------------------------------------------------
     # URLs

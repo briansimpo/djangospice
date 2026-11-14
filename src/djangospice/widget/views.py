@@ -10,14 +10,13 @@ from djangospice.exec.identity import ClassIdentity
 from djangospice.exec.resolver import Resolver
 from djangospice.htmx.shortcuts import dispatch
 
-from .dispatchers import ActionDispatcher, HttpDispatcher
+from .dispatchers import HttpDispatcher
 
 
 class WidgetView(View):
 
     
     dispatchers: ClassVar[tuple[type[Dispatcher], ...]] = (
-        ActionDispatcher,
         MethodDispatcher, 
         HttpDispatcher,
         UnknownDispatcher,

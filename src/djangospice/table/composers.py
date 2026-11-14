@@ -3,7 +3,11 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+import django_filters
+
 import django_tables2 as tables
+
+from django.db.models import Q, QuerySet
 
 from djangospice.table.fields import TableField
 
@@ -75,6 +79,83 @@ class PaginationComposer:
         ).configure(table)
 
 
+class FilterComposer:
+    """
+    Integrates a django-filter FilterSet into a queryset pipeline.
+    """
+
+    def __init__(
+        self,
+        *,
+        request=None,
+        filterset_class: type[django_filters.FilterSet] | None = None,
+       
+    ) -> None:
+        self.request = request
+        self.filterset_class = filterset_class
+        self.filterset: django_filters.FilterSet | None = None
+
+    def compose(
+        self,
+        queryset: QuerySet[Any],
+    ) -> django_filters.FilterSet | None:
+        if self.filterset_class is None:
+            self.filterset = None
+            return None
+
+        self.filterset = self.filterset_class(
+            data=self.request.GET if self.request else None,
+            queryset=queryset,
+            request=self.request,
+        )
+
+        return self.filterset
+
+    def apply(self, queryset: QuerySet[Any]) -> QuerySet[Any]:
+        filterset = self.compose(queryset)
+
+        if filterset is None:
+            return queryset
+
+        return filterset.qs
+
+
+class SearchComposer:
+    """
+    Applies OR-based icontains search across configured fields.
+    """
+
+    def __init__(
+        self,
+        *,
+        request=None,
+        fields: Iterable[str] = (),
+        parameter: str = "q",
+    ) -> None:
+        self.request = request
+        self.fields = tuple(fields)
+        self.parameter = parameter
+
+    def get_term(self) -> str:
+        if self.request is None:
+            return ""
+
+        return self.request.GET.get(self.parameter, "").strip()
+
+    def apply(self, queryset: QuerySet[Any]) -> QuerySet[Any]:
+        term = self.get_term()
+
+        if not term or not self.fields:
+            return queryset
+
+        query = Q()
+
+        for field in self.fields:
+            query |= Q(**{f"{field}__icontains": term})
+
+        return queryset.filter(query)
+
+
 class TableComposer:
     """Build and configure a django-tables2 table."""
 
@@ -86,7 +167,6 @@ class TableComposer:
         table_class: type[tables.Table] | None = None,
         fields: Iterable[TableField | str] | str | TableField | None = None,
         exclude: Iterable[str] | str | None = None,
-        row_actions: bool = False,
         paginate: bool = True,
         page_size: int = 20,
         page_parameter: str = "page",
@@ -99,7 +179,6 @@ class TableComposer:
         self.table_class = table_class
         self.fields = fields
         self.exclude = exclude
-        self.row_actions = row_actions
 
         self.pagination = PaginationComposer(
             request=request,

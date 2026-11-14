@@ -7,19 +7,13 @@ from typing import Any, ClassVar
 import django_filters
 import django_tables2 as tables
 
+from djangospice.exec.action import Actions
 from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
-from djangospice.widget.actions import Actions
-from djangospice.widget.composers import (
-    ActionComposer,
-    FilterComposer,
-    SearchComposer,
-)
 
-from djangospice.table.fields import TableField
-
+from .fields import TableField
+from .composers import TableComposer, FilterComposer, SearchComposer
 from .apps import namespace
-from .composers import TableComposer
 
 
 class TableWidget(Widget):
@@ -75,14 +69,6 @@ class TableWidget(Widget):
     show_pagination = True
     show_page_size = True
 
-    # ------------------------------------------------------------------
-    # ACTIONS
-    # ------------------------------------------------------------------
-
-    actions: ClassVar[Actions] = Actions()
-    row_actions: ClassVar[Actions] = Actions()
-    bulk_actions: ClassVar[Actions] = Actions()
-
     context_menu = True
 
     # ------------------------------------------------------------------
@@ -90,7 +76,8 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
 
     selectable = True
-    objects_parameter = "objects"
+    object_parameter = "id"
+    objects_parameter = "ids"
 
     # ------------------------------------------------------------------
     # DISPLAY
@@ -134,7 +121,6 @@ class TableWidget(Widget):
             table_class=self.table_class,
             fields=self.fields,
             exclude=self.exclude,
-            row_actions=bool(self.row_actions),
             paginate=self.paginate,
             page_size=self.page_size,
             page_parameter=self.page_parameter,
@@ -148,6 +134,31 @@ class TableWidget(Widget):
     def configure(self) -> None:
         super().configure()
         self.table = self.build_table()
+
+
+    @property
+    def table_actions(self) -> Actions:
+        return self.get_actions_by_group("table")
+
+    @property
+    def row_actions(self) -> Actions:
+        return self.get_actions_by_group("row")
+
+    @property
+    def bulk_actions(self) -> Actions:
+        return self.get_actions_by_group("bulk")
+
+    def get_selected_rows(self):
+        if not self.request:
+            return []
+
+        return self.get_list(self.objects_parameter)
+
+    def get_selected_row(self):
+        if not self.request:
+            return None
+
+        return self.get_value(self.object_parameter)
 
     # ------------------------------------------------------------------
     # QUERYSET
@@ -210,48 +221,7 @@ class TableWidget(Widget):
             if 0 < size <= self.max_page_size
         )
 
-    # ------------------------------------------------------------------
-    # ACTIONS
-    # ------------------------------------------------------------------
-
-    def compose_actions(
-        self,
-        actions: Actions,
-        *,
-        obj: Any = None,
-        objects: Any = None,
-    ):
-        return ActionComposer(
-            widget=self,
-            request=self.request,
-            actions=actions,
-            object=obj,
-            objects=objects,
-            data=self.get_data(),
-        ).compose()
-
-    def get_table_actions(self):
-        return self.compose_actions(self.actions)
-
-    def get_row_actions(self, obj: Any):
-        return self.compose_actions(
-            self.row_actions,
-            obj=obj,
-            objects=(obj,),
-        )
-
-    def get_bulk_actions(self):
-        return self.compose_actions(
-            self.bulk_actions,
-            objects=self.get_objects(),
-        )
-
-    def get_context_menu_actions(self):
-        if not self.context_menu:
-            return Actions()
-
-        return self.row_actions
-
+   
     @property
     def table_target(self):
         return f"#{self.id}"
@@ -304,11 +274,13 @@ class TableWidget(Widget):
                 "page_size_parameter": self.page_size_parameter,
 
                 # Actions
-                "table_actions": self.get_table_actions(),
-                "bulk_actions": self.get_bulk_actions(),
+                "table_actions": self.table_actions,
+                "bulk_actions": self.bulk_actions,
+                "row_actions": self.row_actions,
 
                 # Selection
                 "selectable": self.selectable,
+                "object_parameter": self.object_parameter,
                 "objects_parameter": self.objects_parameter,
 
                 # Display
@@ -320,7 +292,7 @@ class TableWidget(Widget):
                     self.context_menu
                     and bool(self.row_actions)
                 ),
-                "context_menu_actions": self.get_context_menu_actions(),
+              
             }
         )
 

@@ -50,7 +50,7 @@ class LookupWidget(forms.Select):
         ) = None,
         placeholder: str = "Select...",
         search_placeholder: str = "Search...",
-        page_size: int | None = None,
+        page_size: int = 20,
         min_search_length: int = 0,
         allow_clear: bool = True,
         url: str | None = None,

@@ -26,15 +26,16 @@ class MultipleDocumentsField(forms.FileField):
         kwargs["widget"] = forms.TextInput(attrs={"type": "file", "multiple": "True"})
         kwargs["validators"] = [FileExtensionValidator(allowed_extensions=self.allowed_extensions)]
         super().__init__(label=label, required=required, **kwargs)
-        
 
+        
 class LookupChoiceField(forms.ModelChoiceField):
     widget = LookupWidget
 
     def __init__(
         self,
-        queryset,
+        queryset=None,
         *,
+        model=None,
         placeholder="Select...",
         search_placeholder="Search...",
         depends_on=None,
@@ -45,13 +46,14 @@ class LookupChoiceField(forms.ModelChoiceField):
         if widget is None:
             widget = LookupWidget(
                 queryset=queryset,
+                model=model,
                 placeholder=placeholder,
                 search_placeholder=search_placeholder,
                 depends_on=depends_on,
             )
 
         super().__init__(
-            queryset=queryset,
+            queryset=queryset or model._default_manager.all(),
             widget=widget,
             **kwargs,
         )
@@ -62,8 +64,9 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
 
     def __init__(
         self,
-        queryset,
+        queryset=None,
         *,
+        model=None,
         placeholder="Select...",
         search_placeholder="Search...",
         depends_on=None,
@@ -74,6 +77,7 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
         if widget is None:
             widget = LookupWidget(
                 queryset=queryset,
+                model=model,
                 placeholder=placeholder,
                 search_placeholder=search_placeholder,
                 depends_on=depends_on,
@@ -81,7 +85,7 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
             )
 
         super().__init__(
-            queryset=queryset,
+            queryset=queryset or model._default_manager.all(),
             widget=widget,
             **kwargs,
         )

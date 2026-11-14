@@ -22,16 +22,3 @@ class TableColumn(tables.Column):
     pass
 
 
-class SelectionColumn(tables.CheckBoxColumn):
-    """
-    Checkbox column for row selection.
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("accessor", "pk")
-        kwargs.setdefault("orderable", False)
-
-        super().__init__(*args, **kwargs)
-
-
-
