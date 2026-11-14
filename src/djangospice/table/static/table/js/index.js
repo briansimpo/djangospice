@@ -43,33 +43,41 @@ class SpiceTable {
                 }
             }
 
-            // -------------------------------------------------------------
-            // ROW CLICK SELECTION
-            // -------------------------------------------------------------
+            // =====================================================================
+            // ROW CLICK: NAVIGATION OR SELECTION
+            // =====================================================================
 
             const row = e.target.closest('[data-table-row]');
 
             if (!row || !this.el.contains(row)) return;
 
             // Ignore clicks on interactive elements.
-            if (
-                e.target.closest(
-                    'a, button, input, select, textarea, label, ' +
-                    '[data-no-row-select], [contenteditable="true"], ' +
-                    '[role="button"], [role="menuitem"]'
-                )
-            ) {
+            if (e.target.closest('a, button, input, select, textarea, label, [data-no-row-select], [contenteditable="true"], [role="button"], [role="menuitem"]')) {
                 return;
             }
 
+            // If a row URL exists, navigate instead of selecting.
+            const url = row.dataset.rowUrl;
+
+            if (url) {
+                const target = row.dataset.rowTarget || '_self';
+
+                if (target === '_blank') {
+                    window.open(url, '_blank', 'noopener');
+                } else {
+                    window.location.assign(url);
+                }
+
+                return;
+            }
+
+            // Otherwise, perform row selection.
             const checkbox = row.querySelector('[data-row-checkbox]');
 
             if (!checkbox || checkbox.disabled) return;
 
-            // Toggle checkbox.
             checkbox.checked = !checkbox.checked;
 
-            // Trigger normal selection synchronization.
             checkbox.dispatchEvent(
                 new Event('change', { bubbles: true })
             );

@@ -116,7 +116,14 @@
                                 <tr
                                     data-table-row
                                     data-object-id="{{ row.record.pk }}"
-                                    class="group transition-colors duration-150 hover:bg-slate-50">
+                                    {% if row_url %}
+                                        data-row-url="{{ row_url }}"
+                                        data-row-target="{{ row_target }}"
+                                        class="group cursor-pointer transition-colors duration-150 hover:bg-slate-50"
+                                    {% else %}
+                                        class="group transition-colors duration-150 hover:bg-slate-50"
+                                    {% endif %}
+                                >
 
                                     {% if selectable %}
 

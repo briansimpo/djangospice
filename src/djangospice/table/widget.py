@@ -87,6 +87,9 @@ class TableWidget(Widget):
     show_footer = True
     empty_message = "No records found."
 
+    row_url = None
+    row_target = "_self"
+
     # ------------------------------------------------------------------
     # LIFECYCLE
     # ------------------------------------------------------------------
@@ -160,6 +163,13 @@ class TableWidget(Widget):
 
         return self.get_value(self.object_parameter)
 
+    def get_row_url(self):
+        return self.row_url
+
+    def get_row_target(self):
+        return self.row_target
+
+    
     # ------------------------------------------------------------------
     # QUERYSET
     # ------------------------------------------------------------------
@@ -220,7 +230,7 @@ class TableWidget(Widget):
             for size in self.page_size_options
             if 0 < size <= self.max_page_size
         )
-
+    
    
     @property
     def table_target(self):
@@ -292,6 +302,9 @@ class TableWidget(Widget):
                     self.context_menu
                     and bool(self.row_actions)
                 ),
+
+                "row_url": self.get_row_url(),
+                "row_target": self.get_row_target(),
               
             }
         )
