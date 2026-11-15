@@ -56,27 +56,10 @@ class SpiceTable {
                 return;
             }
 
-            // If a row URL exists, navigate instead of selecting.
-            const url = row.dataset.rowUrl;
+            // Check if data-navigation is explicitly "true"
+            const isNavigation = row.dataset.navigation === 'true';
 
-            if (url) {
-                const objectId = row.dataset.objectId;
-
-                if (!objectId) return;
-
-                const targetUrl = url.replace(
-                    "__ID__",
-                    encodeURIComponent(objectId)
-                );
-
-                const target = row.dataset.rowTarget || "_self";
-
-                if (target === "_blank") {
-                    window.open(targetUrl, "_blank", "noopener");
-                } else {
-                    window.location.assign(targetUrl);
-                }
-
+            if (isNavigation) {
                 return;
             }
 

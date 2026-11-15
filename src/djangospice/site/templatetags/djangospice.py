@@ -1,5 +1,6 @@
 
 import json
+from urllib.parse import quote
 from django import template
 from django.apps import apps
 from django.conf import settings
@@ -34,6 +35,20 @@ def object_url(object, url_name):
         return safe_reverse(url_name, args=[object.pk])
     except NoReverseMatch:
         return "#"
+
+
+@register.simple_tag
+def replace_url(url, object_id):
+    """
+    Replace the __ID__ placeholder with the supplied object ID.
+    """
+    if not url or object_id is None:
+        return url or ""
+
+    return str(url).replace(
+        "__ID__",
+        quote(str(object_id), safe=""),
+    )
 
 
 @register.filter

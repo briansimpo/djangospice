@@ -45,6 +45,7 @@ class Widget(Executable, Component):
     objects_parameter: ClassVar[str] = "selected_ids"
 
     namespace: ClassVar[str] = namespace
+    app_root: ClassVar[str] = "spa-root"
 
     lazy: ClassVar[bool] = True
     skeleton: ClassVar[bool] = True
@@ -56,6 +57,7 @@ class Widget(Executable, Component):
 
     template_name: ClassVar[str | None] = None
     placeholder: ClassVar[str | None] = None 
+
    
 
     # ------------------------------------------------------------------
@@ -203,6 +205,7 @@ class Widget(Executable, Component):
         """
         context = super().get_context()
         context["widget"] = self
+        context["app_root"] = self.app_root
         return context
 
     # ------------------------------------------------------------------

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.shortcuts import redirect
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse
 
@@ -117,10 +116,8 @@ def htmx_redirect(to: str, *, safe: bool = False, app_name: str | None = None, a
     return Response.empty(status=status).redirect(to)
 
 
-from django.http import HttpResponse
 
-def spa_redirect(url):
+def htmx_refresh(url):
     response = HttpResponse(status=200)
-    # Tells HTMX to navigate to this URL like a true SPA link click
     response['HX-Location'] = url
     return response
