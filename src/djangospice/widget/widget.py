@@ -47,6 +47,7 @@ class Widget(Executable, Component):
     namespace: ClassVar[str] = namespace
 
     lazy: ClassVar[bool] = True
+    skeleton: ClassVar[bool] = True
 
     refreshable: ClassVar[bool] = False
     refresh_interval: ClassVar[int | None] = None
@@ -54,6 +55,8 @@ class Widget(Executable, Component):
     cache_timeout: ClassVar[int | None] = None
 
     template_name: ClassVar[str | None] = None
+    placeholder: ClassVar[str | None] = None 
+   
 
     # ------------------------------------------------------------------
     # Initialization
@@ -236,7 +239,7 @@ class Widget(Executable, Component):
     def dispatch_url(self):
         return safe_reverse(
             view_name="widget_view",
-            namespace=self.namespace,
+            app_name=self.namespace,
             kwargs={
                 "app_name": self.identity.app_name,
                 "class_name": self.identity.class_name,

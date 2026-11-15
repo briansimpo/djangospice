@@ -16,7 +16,7 @@ def _group_action(
     return wrapped(func) if func is not None else wrapped
 
 
-def table_action(func=None, **attributes: Any):
+def menu_action(func=None, **attributes: Any):
     """Declare a table-level action."""
     return _group_action(get, "table", func, **attributes)
 

@@ -182,7 +182,7 @@ class LookupWidget(forms.Select):
     def dispatch_url(self) -> str:
         return safe_reverse(
             view_name="lookup_view",
-            namespace=namespace,
+            app_name=namespace,
             kwargs={
                 "app_name": self.identity.app_name,
                 "model_name": self.identity.class_name,

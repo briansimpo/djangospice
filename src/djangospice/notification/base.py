@@ -164,7 +164,7 @@ class Notification(Executable):
     def dispatch_url(self):
         return safe_reverse(
             view_name="notification_view",
-            namespace=self.namespace,
+            app_name=self.namespace,
             kwargs={
                 "app_name": self.identity.app_name,
                 "class_name": self.identity.class_name,

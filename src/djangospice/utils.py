@@ -1,4 +1,5 @@
 import re
+import uuid
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.urls import reverse, NoReverseMatch
@@ -15,46 +16,70 @@ def get_view_name(view_name, app_name=None):
         return f"{app_name}:{view_name}" 
 
 
-def get_template_name(template_path, namespace=None):
+def get_template_name(template_path, app_name=None):
     # Check if the extension is missing and add it if necessary
     if not template_path.endswith('.html'):
         template_path += '.html'
         
-    if namespace:
-        return f"{namespace}/{template_path}"
+    if app_name:
+        return f"{app_name}/{template_path}"
     else:
         return template_path
         
 
-def safe_reverse(view_name, namespace=None, args=None, kwargs=None):
+def safe_reverse(view_name, app_name=None, args=None, kwargs=None, template=False):
     """
     Attempts multiple reverse patterns safely:
-    1. namespace:view_name
-    2. namespace_view_name
+    1. app_name:view_name
+    2. app_name_view_name
     3. view_name
 
-    Supports both args and kwargs.
+    Supports args, kwargs, and URL templates.
+
+    When template=True, placeholder identifies the URL keyword
+    argument to replace with __ID__.
+
     Falls back to "/" if no match is found.
     """
+
     candidates = []
 
-    if namespace:
-        candidates.append(f"{namespace}:{view_name}")  # case 1
-        candidates.append(f"{namespace}_{view_name}")  # case 2
+    if app_name:
+        candidates.extend([
+            f"{app_name}:{view_name}",
+            f"{app_name}_{view_name}",
+        ])
 
-    candidates.append(view_name)  # case 3
+    candidates.append(view_name)
+
+    if template:
+        kwargs = {
+            **(kwargs or {}),
+            "pk": str(uuid.uuid4()),
+        }
 
     for name in candidates:
         try:
-            return reverse(name, args=args or None, kwargs=kwargs or None)
+            url = reverse(
+                name,
+                args=args or None,
+                kwargs=kwargs or None,
+            )
+
+            if template:
+                url = url.replace(kwargs["pk"], "__ID__")
+
+            return url
+
         except NoReverseMatch:
             continue
 
     return "/"
 
+
 def safe_action(app_name, action_name, args=None, kwargs=None):
     """
-    Shortcut for reversing namespaced actions.
+    Shortcut for reversing app_named actions.
 
     Uses lazy evaluation so URL resolution happens at render time, not
     app import/startup time.
@@ -62,7 +87,7 @@ def safe_action(app_name, action_name, args=None, kwargs=None):
     lazy_safe_reverse = lazy(safe_reverse, str)
     return lazy_safe_reverse(
         view_name=action_name,
-        namespace=app_name,
+        app_name=app_name,
         args=args,
         kwargs=kwargs,
     )
@@ -110,7 +135,7 @@ def safe_redirect(view_name, app_name=None, args=None, kwargs=None):
     """
     url = safe_reverse(
         view_name=view_name,
-        namespace=app_name,
+        app_name=app_name,
         args=args,
         kwargs=kwargs,
     )
@@ -118,7 +143,7 @@ def safe_redirect(view_name, app_name=None, args=None, kwargs=None):
 
 def redirect_to(view_name, args=None, kwargs=None):
     """
-    Redirect without namespace.
+    Redirect without app_name.
     """
     url = safe_reverse(
         view_name=view_name,

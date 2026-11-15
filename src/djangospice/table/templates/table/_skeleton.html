@@ -1,0 +1,26 @@
+
+<div class="w-full overflow-hidden rounded-lg border border-slate-200">
+    <table class="w-full min-w-full divide-y divide-slate-200 animate-pulse">
+        <thead class="bg-slate-50">
+            <tr>
+                {% for column in columns %}
+                    <th class="px-4 py-3">
+                        <div class="h-3 w-20 rounded bg-slate-200"></div>
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100 bg-white">
+            {% for row in rows %}
+                <tr>
+                    {% for column in columns %}
+                        <td class="px-4 py-4">
+                            <div class="h-4 rounded bg-slate-100" style="width: {{ column.width }}"></div>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

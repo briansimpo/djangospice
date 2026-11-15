@@ -20,6 +20,7 @@ class TableWidget(Widget):
     """A configurable, server-rendered django-tables2 widget."""
 
     template_name = get_template_name("table.html", namespace)
+    placeholder = get_template_name("placeholder.html", namespace)
 
     # ------------------------------------------------------------------
     # TABLE
@@ -90,6 +91,7 @@ class TableWidget(Widget):
     row_url = None
     row_target = "_self"
 
+
     # ------------------------------------------------------------------
     # LIFECYCLE
     # ------------------------------------------------------------------
@@ -138,10 +140,6 @@ class TableWidget(Widget):
         super().configure()
         self.table = self.build_table()
 
-
-    @property
-    def table_actions(self) -> Actions:
-        return self.get_actions_by_group("table")
 
     @property
     def row_actions(self) -> Actions:
@@ -284,7 +282,6 @@ class TableWidget(Widget):
                 "page_size_parameter": self.page_size_parameter,
 
                 # Actions
-                "table_actions": self.table_actions,
                 "bulk_actions": self.bulk_actions,
                 "row_actions": self.row_actions,
 

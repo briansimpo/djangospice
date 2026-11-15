@@ -119,10 +119,6 @@ class Response:
         self._htmx.reswap = strategy
         return self
 
-    def select(self, selector: str | None) -> Self:
-        self._htmx.reselect(selector)
-        return self
-
     def redirect(self, url: str) -> Self:
         self._htmx.redirect = url
         return self

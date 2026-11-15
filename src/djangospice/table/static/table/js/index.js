@@ -60,12 +60,21 @@ class SpiceTable {
             const url = row.dataset.rowUrl;
 
             if (url) {
-                const target = row.dataset.rowTarget || '_self';
+                const objectId = row.dataset.objectId;
 
-                if (target === '_blank') {
-                    window.open(url, '_blank', 'noopener');
+                if (!objectId) return;
+
+                const targetUrl = url.replace(
+                    "__ID__",
+                    encodeURIComponent(objectId)
+                );
+
+                const target = row.dataset.rowTarget || "_self";
+
+                if (target === "_blank") {
+                    window.open(targetUrl, "_blank", "noopener");
                 } else {
-                    window.location.assign(url);
+                    window.location.assign(targetUrl);
                 }
 
                 return;

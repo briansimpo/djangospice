@@ -42,18 +42,27 @@ class WidgetRenderer:
 
     def should_render_placeholder(self) -> bool:
         return (
-            self.widget.lazy
+            self.widget.lazy 
             and not self.widget.is_lazy_fetch
         )
 
     def render_placeholder(self) -> SafeString:
-        template_name = get_template_name("placeholder.html", "widget")
+        if self.widget.placeholder is not None and self.widget.skeleton:
+            template_name = self.widget.placeholder
+        else:
+            template_name = get_template_name("placeholder.html", "widget")
+
         return render_to_string(
             template_name=template_name,
             context={
                 "target_id":self.widget.id,
                 "target_url":self.widget.url,
                 "target_title":self.widget.title,
+                "rows": range(10),
+                "columns": [
+                    {"width": "75%"}
+                    for _ in range(5)
+                ],
             }
         )   
 
