@@ -37,7 +37,11 @@ class Executable:
     def __init__(self, **kwargs: Any) -> None:
         self.request: HttpRequest =  kwargs.get("request", None)
         self.user = getattr(self.request, "user", None)
-        self.kwargs = kwargs
+        existing_kwargs = getattr(self, "kwargs", {})
+        if kwargs:
+            self.kwargs = {**existing_kwargs, **kwargs}
+        elif not hasattr(self, "kwargs"):
+            self.kwargs = {}
 
         super().__init__()
 

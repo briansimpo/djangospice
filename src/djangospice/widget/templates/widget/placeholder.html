@@ -1,8 +1,3 @@
-<div 
-    id="{{ target_id }}" 
-    hx-get="{{ target_url }}" 
-    hx-trigger="load" 
-    hx-swap="outerHTML"
-    class="widget-placeholder">
-     {{ component.render_children }}
+<div id="{{ target_id }}" hx-get="{{ target_url }}" hx-trigger="load" hx-swap="outerHTML">
+    {{ component.render_children }}
 </div>
