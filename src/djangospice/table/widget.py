@@ -34,7 +34,7 @@ class TableWidget(Widget):
     # SEARCH
     # ------------------------------------------------------------------
 
-    show_search = True
+    searchable = True
     search_fields: ClassVar[tuple[str, ...]] = ()
     search_parameter = "q"
 
@@ -42,14 +42,14 @@ class TableWidget(Widget):
     # FILTERING
     # ------------------------------------------------------------------
 
-    show_filters = True
+    filterable = True
     filterset_class: ClassVar[type[django_filters.FilterSet] | None] = None
 
     # ------------------------------------------------------------------
     # ALPHABET FILTER
     # ------------------------------------------------------------------
 
-    show_alphabet_filter = True
+    show_alphabet = True
     alphabet: ClassVar[tuple[str, ...]] = tuple(ascii_uppercase)
     alphabet_parameter = "letter"
     alphabet_field= "name"
@@ -59,18 +59,12 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
 
     paginate = True
+    sortable = True
     page_size = 20
-
     page_parameter = "page"
     page_size_parameter = "page_size"
-
     page_size_options: ClassVar[tuple[int, ...]] = (10, 20, 50, 100)
     max_page_size = 100
-
-    show_pagination = True
-    show_page_size = True
-
-    context_menu = True
 
     # ------------------------------------------------------------------
     # SELECTION
@@ -116,7 +110,7 @@ class TableWidget(Widget):
             request=self.request,
             filterset_class=(
                 self.filterset_class
-                if self.show_filters
+                if self.filterable
                 else None
             ),
         )
@@ -179,13 +173,13 @@ class TableWidget(Widget):
         queryset = self.filters.apply(queryset)
         self.filterset = self.filters.filterset
 
-        if self.show_search:
+        if self.searchable:
             queryset = self.search.apply(queryset)
 
         return self.apply_alphabet_filter(queryset)
 
     def apply_alphabet_filter(self, queryset):
-        if not self.show_alphabet_filter or not self.alphabet_field:
+        if not self.show_alphabet or not self.alphabet_field:
             return queryset
 
         letter = self.get_current_letter()
@@ -251,29 +245,23 @@ class TableWidget(Widget):
                 "empty_message": self.empty_message,
 
                 # Search
-                "show_search": self.show_search,
+                "searchable": self.searchable,
+                "sortable": self.sortable,
                 "search_parameter": self.search_parameter,
                 "search_term": self.query_state.get(self.search_parameter),
 
                 # Filters
-                "show_filters": self.show_filters,
+                "filterable": self.filterable,
                 "filterset": self.filterset,
 
                 # Alphabet
-                "show_alphabet_filter": (
-                    self.show_alphabet_filter
-                    and bool(self.alphabet_field)
-                ),
+                "show_alphabet": self.show_alphabet,
                 "alphabet": self.alphabet,
                 "alphabet_parameter": self.alphabet_parameter,
                 "current_letter": self.get_current_letter(),
 
                 # Pagination
-                "show_pagination": self.show_pagination and self.paginate,
-                "show_page_size": self.show_page_size and self.paginate,
                 "page_size": self.get_page_size(),
-                # Display
-
                 "page_parameter": self.page_parameter,
                 "page_size_options": self.get_page_size_options(),
                 "page_size_parameter": self.page_size_parameter,
@@ -290,12 +278,6 @@ class TableWidget(Widget):
                 # Display
                 "show_header": self.show_header,
                 "show_footer": self.show_footer,
-
-                # Context menu
-                "context_menu_enabled": (
-                    self.context_menu
-                    and bool(self.row_actions)
-                ),
 
                 "row_url": self.get_row_url(),
                 "row_target": self.get_row_target(),

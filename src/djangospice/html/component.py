@@ -21,17 +21,18 @@ class Component:
     template_name: ClassVar[str | None] = None
 
     def __init__(self, *args, **kwargs: Any) -> None:
-
-        self.request: HttpRequest = kwargs.get("request", None)
+        self.request: HttpRequest = kwargs.pop("request", None)
         self.parent = kwargs.pop("parent", None)
 
-        self.context: Dict =   kwargs.pop("context", {})
-        self.attributes: Dict =  kwargs.pop("attributes", {})
-        self.htmx: HTMXAttributes = kwargs.pop("htmx", HTMXAttributes()) 
+        self.context: Dict = kwargs.pop("context", {})
+        self.attributes: Dict = kwargs.pop("attributes", {})
+        self.htmx: HTMXAttributes = kwargs.pop("htmx", HTMXAttributes())
         self.css_class = kwargs.pop("css_class", None)
 
         self.children: List = []
-        self.slots: Dict =  kwargs.pop("slots", {})
+        self.slots: Dict = kwargs.pop("slots", {})
+
+        self.kwargs = kwargs
 
         self.add_children(*args)
 
@@ -257,7 +258,7 @@ class Component:
             return mark_safe("")
 
         if isinstance(child, Component):
-            return child.render()
+            return child.render_to_string()
 
         if isinstance(child, (list, tuple)):
             return self.render_children(child)

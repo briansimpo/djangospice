@@ -42,10 +42,12 @@
                                 {% if column.orderable %}
 
                                 <a
+                                    {% if sortable %}
                                     hx-get="{{ table_url }}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.next %}"
                                     hx-target="{{ table_target }}"
                                     hx-swap="outerHTML"
                                     hx-push-url="false"
+                                    {% endif %}
                                     class="group inline-flex items-center gap-2 rounded-sm outline-none transition hover:text-blue-700 focus:ring-2 focus:ring-blue-200">
 
                                     <span>{{ column.header }}</span>

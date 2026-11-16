@@ -3,7 +3,9 @@ from __future__ import annotations
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
 
+from djangospice.html.skeleton import Skeleton
 from djangospice.utils import get_template_name
+from djangospice.widget.placeholder import WidgetPlaceholder
 
 from .cache import WidgetCache
 from .exceptions import WidgetNotVisible
@@ -34,6 +36,17 @@ class WidgetRenderer:
 
         return content
 
+    def get_skeleton(self):
+        if self.widget.has_skeleton():
+            return self.widget.get_skeleton()
+        return Skeleton()
+
+    def get_placeholder(self):
+        return WidgetPlaceholder(
+            widget=self.widget,
+            skeleton=self.get_skeleton(),
+        )
+
     def check_visibility(self) -> None:
         if not self.widget.visible():
             raise WidgetNotVisible(
@@ -47,24 +60,8 @@ class WidgetRenderer:
         )
 
     def render_placeholder(self) -> SafeString:
-        if self.widget.placeholder is not None and self.widget.skeleton:
-            template_name = self.widget.placeholder
-        else:
-            template_name = get_template_name("placeholder.html", "widget")
-
-        return render_to_string(
-            template_name=template_name,
-            context={
-                "target_id":self.widget.id,
-                "target_url":self.widget.url,
-                "target_title":self.widget.title,
-                "rows": range(10),
-                "columns": [
-                    {"width": "75%"}
-                    for _ in range(5)
-                ],
-            }
-        )   
+        placeholder = self.get_placeholder()
+        return placeholder.render_to_string()
 
     def render_widget(self) -> SafeString:
         return self.widget.render_to_string()

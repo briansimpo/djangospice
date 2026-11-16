@@ -56,10 +56,6 @@ class Widget(Executable, Component):
 
     cache_timeout: ClassVar[int | None] = None
 
-    template_name: ClassVar[str | None] = None
-    placeholder: ClassVar[str | None] = None 
-
-   
 
     # ------------------------------------------------------------------
     # Initialization
@@ -67,31 +63,6 @@ class Widget(Executable, Component):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    
-    def get_refresh_event(self) -> str:
-        return f"refresh_{self.id}"
-
-    def get_widget_target(self) -> str:
-        return f"#{self.id}"
-
-    def get_refresh_swap(self) -> str:
-        return "outerHTML"
-
-    def get_refresh_command(self) -> str:
-        return f"{self.get_refresh_event()} from:body"
-
-    def configure(self) -> None:
-        (
-            self.htmx.get(self.url)
-            .target(self.get_widget_target())
-            .trigger(self.get_refresh_command())
-            .swap(self.get_refresh_swap())
-        )
-    
-    # ------------------------------------------------------------------
-    # Request & visibility
-    # ------------------------------------------------------------------
 
     @property
     def is_lazy_fetch(self) -> bool:
@@ -112,6 +83,32 @@ class Widget(Executable, Component):
             and match.kwargs.get("class_name") == self.class_name
         )
 
+    def get_skeleton(self):
+        return None
+
+    def has_skeleton(self):
+        return bool(self.get_skeleton())
+
+    def get_refresh_event(self) -> str:
+        return f"refresh_{self.id}"
+
+    def get_widget_target(self) -> str:
+        return f"#{self.id}"
+
+    def get_refresh_swap(self) -> str:
+        return "outerHTML"
+
+    def get_refresh_command(self) -> str:
+        return f"{self.get_refresh_event()} from:body"
+
+    def configure(self) -> None:
+        (
+            self.htmx.get(self.url)
+            .target(self.get_widget_target())
+            .trigger(self.get_refresh_command())
+            .swap(self.get_refresh_swap())
+        )
+
     def get_data(self):
         if self.request is None:
             return None
@@ -128,10 +125,6 @@ class Widget(Executable, Component):
     def get_list(self, name: str) -> list[Any]:
         data = self.get_data()
         return data.getlist(name) if data is not None else []
-
-    # ------------------------------------------------------------------
-    # Data resolution
-    # ------------------------------------------------------------------
 
     def get_queryset(self) -> QuerySet[Model]:
         if self.model is None:
@@ -161,10 +154,6 @@ class Widget(Executable, Component):
             self.get_queryset().filter(pk__in=ids)
         )
 
-    # ------------------------------------------------------------------
-    # Caching
-    # ------------------------------------------------------------------
-
     def should_cache(self) -> bool:
         return self.cache_timeout is not None
 
@@ -189,10 +178,6 @@ class Widget(Executable, Component):
     def generate_state_hash(self) -> str:
         return "default"
 
-    # ------------------------------------------------------------------
-    # Rendering
-    # ------------------------------------------------------------------
-
     def get_context(self) -> dict[str, Any]:
         """
         Extend the generic Component context with the widget reference.
@@ -201,10 +186,6 @@ class Widget(Executable, Component):
         context["widget"] = self
         context["app_view"] = self.app_view
         return context
-
-    # ------------------------------------------------------------------
-    # HTTP responses
-    # ------------------------------------------------------------------
 
     def response(self,  content: str | bytes = b"",
         *,
@@ -215,9 +196,6 @@ class Widget(Executable, Component):
         htmx: HTMXHeaders | None = None,) -> Response:
         return Response(content, status=status, content_type=content_type, template=template, context=context, htmx=htmx)  
 
-    # ------------------------------------------------------------------
-    # Refresh
-    # ------------------------------------------------------------------
     def refresh(self) -> Response:
         return Response.from_content(
             self.render_to_string()
@@ -242,10 +220,6 @@ class Widget(Executable, Component):
 
     def method_not_allowed(self) -> Response:
         return Response.create(status=405)
-
-    # ------------------------------------------------------------------
-    # URL dispatch
-    # ------------------------------------------------------------------
 
     def dispatch_url(self):
         return safe_reverse(
