@@ -14,7 +14,6 @@ from djangospice.exec.dispatchers import (
 )
 from djangospice.exec.identity import ClassIdentity
 from djangospice.exec.resolver import Resolver
-from djangospice.htmx.shortcuts import dispatch
 
 
 class NotificationView(View):
@@ -72,8 +71,7 @@ class NotificationView(View):
             for dispatcher_cls in self.dispatchers:
                 dispatcher = dispatcher_cls(instance, request, action=action)
                 if dispatcher.can_dispatch():
-                    response = dispatcher.dispatch()
-                    return dispatch(request, response)
+                    return dispatcher.dispatch()
                 
             raise LookupError("No valid dispatcher found for this instance.")
 

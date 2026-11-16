@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from djangospice.exec.dispatchers import Dispatcher
-from djangospice.htmx.response import Response
+from djangospice.http.response import Response
 
 from .widget import Widget
 

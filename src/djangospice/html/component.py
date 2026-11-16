@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Iterable
+from typing import Any, ClassVar, Dict, Iterable, List
 
 from django.http import HttpRequest
 from django.template.loader import render_to_string
@@ -22,16 +22,16 @@ class Component:
 
     def __init__(self, *args, **kwargs: Any) -> None:
 
-        self.request = kwargs.get("request", None)
+        self.request: HttpRequest = kwargs.get("request", None)
         self.parent = kwargs.pop("parent", None)
 
-        self.context =   kwargs.pop("context", {})
-        self.attributes =  kwargs.pop("attributes", {})
-        self.htmx = kwargs.pop("htmx", HTMXAttributes()) 
+        self.context: Dict =   kwargs.pop("context", {})
+        self.attributes: Dict =  kwargs.pop("attributes", {})
+        self.htmx: HTMXAttributes = kwargs.pop("htmx", HTMXAttributes()) 
         self.css_class = kwargs.pop("css_class", None)
 
-        self.children = []
-        self.slots =  kwargs.pop("slots", {})
+        self.children: List = []
+        self.slots: Dict =  kwargs.pop("slots", {})
 
         self.add_children(*args)
 

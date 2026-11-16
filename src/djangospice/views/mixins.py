@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from djangospice.htmx.response import Response
+from djangospice.http.response import Response
 
 class HTMXTemplateMixin:
     """
@@ -68,10 +68,10 @@ class HTMXTemplateMixin:
 
         status = response_kwargs.pop("status", 200)
 
-        return Response.render(
+        return Response.from_template(
             self.get_htmx_template_name(),
+            context=context,
             status=status,
-            **context,
         )
 
 

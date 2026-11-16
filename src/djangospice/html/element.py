@@ -177,7 +177,7 @@ class HTMLElement(Component):
         """
         Render the complete HTML element.
         """
-        attributes = str(self.attr)
+        attributes = str(self.attrs)
         opening_tag = f"<{self.tag_name}"
 
         if attributes:

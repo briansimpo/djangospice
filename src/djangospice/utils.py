@@ -27,7 +27,7 @@ def get_template_name(template_path, app_name=None):
         return template_path
         
 
-def safe_reverse(view_name, app_name=None, args=None, kwargs=None, template=False):
+def safe_reverse(view_name, app_name=None, args=None, kwargs=None, placeholder=False):
     """
     Attempts multiple reverse patterns safely:
     1. app_name:view_name
@@ -36,7 +36,7 @@ def safe_reverse(view_name, app_name=None, args=None, kwargs=None, template=Fals
 
     Supports args, kwargs, and URL templates.
 
-    When template=True, placeholder identifies the URL keyword
+    When placeholder=True, placeholder identifies the URL keyword
     argument to replace with __ID__.
 
     Falls back to "/" if no match is found.
@@ -52,7 +52,7 @@ def safe_reverse(view_name, app_name=None, args=None, kwargs=None, template=Fals
 
     candidates.append(view_name)
 
-    if template:
+    if placeholder:
         kwargs = {
             **(kwargs or {}),
             "pk": str(uuid.uuid4()),
@@ -66,7 +66,7 @@ def safe_reverse(view_name, app_name=None, args=None, kwargs=None, template=Fals
                 kwargs=kwargs or None,
             )
 
-            if template:
+            if placeholder:
                 url = url.replace(kwargs["pk"], "__ID__")
 
             return url

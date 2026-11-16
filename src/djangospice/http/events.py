@@ -5,32 +5,37 @@ from typing import Any, Self
 from djangospice.core.payload import Payload
 
 
-class Event(Payload):
+class HTMXEvent(Payload):
     """
     Collection of client-side events.
 
     Example
     -------
-    >>> events = Event()
+    >>> events = HTMXEvent()
     >>> events.event("saved", id=1)
     >>> events.event("refreshTable")
     """
 
-    def add(self, name: str, payload: dict[str, Any] | None = None) -> Self:
+    def add(self, name: str, payload: dict[str, Any] | None = None, **kwargs: Any) -> Self:
         """
         Add or replace an event.
 
         Args:
-            name: Event name.
-            payload: Event payload dictionary or Payload instance.
+            name: HTMXEvent name.
+            payload: HTMXEvent payload dictionary or Payload instance.
+            **kwargs: Additional keyword arguments to include in the payload.
 
         Returns:
             Self instance for chaining.
         """
+        if payload is None:
+            payload = {}
+        if kwargs:
+            payload.update(kwargs)
         self[name] = payload
         return self
 
-    def merge(self, other: Event) -> Self:
+    def merge(self, other: HTMXEvent) -> Self:
         """
         Merge another event payload into this one.
 

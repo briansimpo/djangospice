@@ -8,7 +8,6 @@ from django.http import Http404, HttpRequest, HttpResponse
 from djangospice.exec.dispatchers import Dispatcher, MethodDispatcher, UnknownDispatcher
 from djangospice.exec.identity import ClassIdentity
 from djangospice.exec.resolver import Resolver
-from djangospice.htmx.shortcuts import dispatch
 
 from .dispatchers import HttpDispatcher
 
@@ -49,8 +48,7 @@ class WidgetView(View):
             for dispatcher_cls in self.dispatchers:
                 dispatcher = dispatcher_cls(instance, request, action=action)
                 if dispatcher.can_dispatch():
-                    response = dispatcher.dispatch()
-                    return dispatch(request, response)
+                    return dispatcher.dispatch()
                 
             raise LookupError("No valid dispatcher found for this instance.")
 

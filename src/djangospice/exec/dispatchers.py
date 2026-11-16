@@ -4,7 +4,7 @@ from typing import Generic, TypeVar
 from django.http import HttpRequest, HttpResponseNotFound
 
 from djangospice.exec.mixin import Executable
-from djangospice.htmx.response import Response
+from djangospice.http.response import Response
 
 
 ExecutableT = TypeVar("ExecutableT", bound=Executable)

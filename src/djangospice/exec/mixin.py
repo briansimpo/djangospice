@@ -10,7 +10,7 @@ from django.core.exceptions import AppRegistryNotReady, PermissionDenied
 from django.utils.text import camel_case_to_spaces
 
 from djangospice.core.formatting import snake_case
-from djangospice.htmx.querystate import QueryState
+from djangospice.http.querystate import QueryState
 from .action import Action, Actions
 from .identity import ClassIdentity
 from .method import Method

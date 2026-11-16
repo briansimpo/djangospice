@@ -16,121 +16,120 @@ class HTMXAttributes(Serializable):
     """
     Represents HTMX attributes with a fluent builder interface.
 
-    The builder API is kept separate from the serialized HTML attribute
-    state so method names such as ``get()`` and ``post()`` never collide
-    with attribute storage.
+    All attributes are private/protected and the builder API uses short,
+    concise action verbs.
     """
 
     # ------------------------------------------------------------------
-    # Standard HTML
+    # Standard HTML Private State
     # ------------------------------------------------------------------
 
-    id: str | None = None
-    css_class: str = ""
-    attrs: dict[str, Any] = field(default_factory=dict)
+    _id: str | None = None
+    _css_class: str = ""
+    _attrs: dict[str, Any] = field(default_factory=dict)
 
     # ------------------------------------------------------------------
-    # HTMX Request
+    # HTMX Request Private State
     # ------------------------------------------------------------------
 
-    request_attrs: dict[str, str] = field(default_factory=dict)
+    _request_attrs: dict[str, str] = field(default_factory=dict)
 
     # ------------------------------------------------------------------
-    # Swapping
+    # Swapping Private State
     # ------------------------------------------------------------------
 
-    target: str | None = None
-    swap: str | None = None
-    swap_oob: str | None = None
-    select: str | None = None
-    select_oob: str | None = None
+    _target: str | None = None
+    _swap: str | None = None
+    _swap_oob: str | None = None
+    _select: str | None = None
+    _select_oob: str | None = None
 
     # ------------------------------------------------------------------
-    # Triggers & Execution
+    # Triggers & Execution Private State
     # ------------------------------------------------------------------
 
-    trigger: str | None = None
-    sync: str | None = None
-    disable: bool | None = None
-    disinherit: str | None = None
+    _trigger: str | None = None
+    _sync: str | None = None
+    _disable: bool | None = None
+    _disinherit: str | None = None
 
     # ------------------------------------------------------------------
-    # Navigation & History
+    # Navigation & History Private State
     # ------------------------------------------------------------------
 
-    push_url: bool | str | None = None
-    replace_url: bool | str | None = None
-    boost: bool | None = None
-    history: bool | None = None
-    history_elt: bool | None = None
+    _push_url: bool | str | None = None
+    _replace_url: bool | str | None = None
+    _boost: bool | None = None
+    _history: bool | None = None
+    _history_elt: bool | None = None
 
     # ------------------------------------------------------------------
-    # Request Configuration
+    # Request Configuration Private State
     # ------------------------------------------------------------------
 
-    include: str | None = None
-    params: str | None = None
+    _include: str | None = None
+    _params: str | None = None
 
-    vals: dict[str, Any] | str = field(default_factory=dict)
-    headers: dict[str, Any] | str = field(default_factory=dict)
+    _vals: dict[str, Any] | str = field(default_factory=dict)
+    _headers: dict[str, Any] | str = field(default_factory=dict)
 
-    encoding: str | None = None
-    ext: str | None = None
-
-    # ------------------------------------------------------------------
-    # UX & Feedback
-    # ------------------------------------------------------------------
-
-    indicator: str | None = None
-    disabled_elt: str | None = None
-    confirm: str | None = None
-    prompt: str | None = None
-    preserve: bool | None = None
+    _encoding: str | None = None
+    _ext: str | None = None
 
     # ------------------------------------------------------------------
-    # Events & WebSockets
+    # UX & Feedback Private State
     # ------------------------------------------------------------------
 
-    on: dict[str, str] = field(default_factory=dict)
+    _indicator: str | None = None
+    _disabled_elt: str | None = None
+    _confirm: str | None = None
+    _prompt: str | None = None
+    _preserve: bool | None = None
 
-    ws: str | None = None
-    sse: str | None = None
+    # ------------------------------------------------------------------
+    # Events & WebSockets Private State
+    # ------------------------------------------------------------------
+
+    _on: dict[str, str] = field(default_factory=dict)
+
+    _ws: str | None = None
+    _sse: str | None = None
 
     # ------------------------------------------------------------------
     # Mapping
     # ------------------------------------------------------------------
 
-    ATTRIBUTE_MAP: ClassVar[dict[str, str]] = {
-        "target": "hx-target",
-        "swap": "hx-swap",
-        "swap_oob": "hx-swap-oob",
-        "select": "hx-select",
-        "select_oob": "hx-select-oob",
+    _ATTRIBUTE_MAP: ClassVar[dict[str, str]] = {
+        "_target": "hx-target",
+        "_swap": "hx-swap",
+        "_swap_oob": "hx-swap-oob",
+        "_select": "hx-select",
+        "_select_oob": "hx-select-oob",
 
-        "trigger": "hx-trigger",
-        "sync": "hx-sync",
-        "disable": "hx-disable",
-        "disinherit": "hx-disinherit",
+        "_trigger": "hx-trigger",
+        "_sync": "hx-sync",
+        "_disable": "hx-disable",
+        "_disinherit": "hx-disinherit",
 
-        "push_url": "hx-push-url",
-        "replace_url": "hx-replace-url",
-        "boost": "hx-boost",
-        "history": "hx-history",
-        "history_elt": "hx-history-elt",
+        "_push_url": "hx-push-url",
+        "_replace_url": "hx-replace-url",
+        "_boost": "hx-boost",
+        "_history": "hx-history",
+        "_history_elt": "hx-history-elt",
 
-        "include": "hx-include",
-        "params": "hx-params",
-        "encoding": "hx-encoding",
-        "ext": "hx-ext",
+        "_include": "hx-include",
+        "_params": "hx-params",
+        "_encoding": "hx-encoding",
+        "_ext": "hx-ext",
 
-        "indicator": "hx-indicator",
-        "disabled_elt": "hx-disabled-elt",
-        "confirm": "hx-confirm",
-        "prompt": "hx-prompt",
-        "preserve": "hx-preserve",
+        "_indicator": "hx-indicator",
+        "_disabled_elt": "hx-disabled-elt",
+        "_confirm": "hx-confirm",
+        "_prompt": "hx-prompt",
+        "_preserve": "hx-preserve",
 
-        "ws": "hx-ws",
-        "sse": "hx-sse",
+        "_ws": "hx-ws",
+        "_sse": "hx-sse",
     }
 
     # ------------------------------------------------------------------
@@ -138,9 +137,7 @@ class HTMXAttributes(Serializable):
     # ------------------------------------------------------------------
 
     def request(self, method: HTTPMethod | str, url: str) -> Self:
-        """
-        Set the HTMX request method and destination URL.
-        """
+        """Set the HTMX request method and destination URL."""
         method_lower = method.lower()
 
         if method_lower not in {
@@ -154,8 +151,7 @@ class HTMXAttributes(Serializable):
                 f"Unsupported HTMX request method: {method}"
             )
 
-        self.request_attrs[f"hx-{method_lower}"] = url
-
+        self._request_attrs[f"hx-{method_lower}"] = url
         return self
 
     def get(self, url: str) -> Self:
@@ -179,81 +175,83 @@ class HTMXAttributes(Serializable):
         return self.request("delete", url)
 
     # ------------------------------------------------------------------
-    # Fluent HTMX API
+    # Fluent HTMX API (Short Verbs)
     # ------------------------------------------------------------------
 
-    def swap_to(self, strategy: str) -> Self:
-        self.swap = strategy
+    def swap(self, strategy: str) -> Self:
+        """Set the ``hx-swap`` strategy."""
+        self._swap = strategy
         return self
 
-    def target_to(self, selector: str) -> Self:
-        self.target = selector
+    def target(self, selector: str) -> Self:
+        """Set the ``hx-target`` selector."""
+        self._target = selector
         return self
 
-    def trigger_on(self, trigger: str) -> Self:
-        self.trigger = trigger
+    def trigger(self, trigger: str) -> Self:
+        """Set the ``hx-trigger`` condition."""
+        self._trigger = trigger
         return self
 
-    def include_data(self, selector: str) -> Self:
-        self.include = selector
+    def include(self, selector: str) -> Self:
+        """Set the ``hx-include`` selector."""
+        self._include = selector
         return self
 
-    def show_indicator(self, selector: str) -> Self:
-        self.indicator = selector
+    def indicator(self, selector: str) -> Self:
+        """Set the ``hx-indicator`` selector."""
+        self._indicator = selector
         return self
 
-    def confirm_with(self, message: str) -> Self:
-        self.confirm = message
+    def confirm(self, message: str) -> Self:
+        """Set the ``hx-confirm`` message."""
+        self._confirm = message
         return self
 
     def push(self, url: bool | str = True) -> Self:
-        self.push_url = url
+        """Set the ``hx-push-url`` state."""
+        self._push_url = url
+        return self
+
+    def replace(self, url: bool | str = True) -> Self:
+        """Set the ``hx-replace-url`` state."""
+        self._replace_url = url
         return self
 
     # ------------------------------------------------------------------
     # Values & Headers
     # ------------------------------------------------------------------
 
-    def with_vals(self, raw_js_str: str | None = None, **kwargs: Any) -> Self:
-        """
-        Add values to ``hx-vals``.
-
-        ``raw_js_str`` can be used for native HTMX JavaScript values,
-        for example::
-
-            raw_js_str="js:{myVar: getVar()}"
-        """
+    def vals(self, raw_js_str: str | None = None, **kwargs: Any) -> Self:
+        """Add values to ``hx-vals``."""
         if raw_js_str is not None:
-            self.vals = raw_js_str
+            self._vals = raw_js_str
             return self
 
-        if not isinstance(self.vals, dict):
-            self.vals = {}
+        if not isinstance(self._vals, dict):
+            self._vals = {}
 
-        self.vals.update(kwargs)
-
+        self._vals.update(kwargs)
         return self
 
-    def with_headers(self, **kwargs: Any) -> Self:
-        """
-        Add request headers to ``hx-headers``.
-        """
-        if not isinstance(self.headers, dict):
-            self.headers = {}
+    def headers(self, **kwargs: Any) -> Self:
+        """Add request headers to ``hx-headers``."""
+        if not isinstance(self._headers, dict):
+            self._headers = {}
 
-        self.headers.update(kwargs)
-
+        self._headers.update(kwargs)
         return self
 
     # ------------------------------------------------------------------
     # HTML Attributes
     # ------------------------------------------------------------------
 
-    def add_class(self, *classes: str) -> Self:
+    def add(self, *classes: str) -> Self:
+        """Add CSS classes."""
         if not classes:
             return self
 
-        current_classes = self.css_class.split()
+        current_classes = self._css_class.split()
         new_classes = [
             c
             for chunk in classes
@@ -263,7 +261,7 @@ class HTMXAttributes(Serializable):
 
         seen: set[str] = set()
 
-        self.css_class = " ".join(
+        self._css_class = " ".join(
             c
             for c in current_classes + new_classes
             if not (c in seen or seen.add(c))
@@ -272,11 +270,13 @@ class HTMXAttributes(Serializable):
         return self
 
     def attr(self, name: str, value: Any) -> Self:
-        self.attrs[name] = value
+        """Set a custom HTML attribute."""
+        self._attrs[name] = value
         return self
 
-    def event(self, name: str, handler: str) -> Self:
-        self.on[name] = handler
+    def on(self, name: str, handler: str) -> Self:
+        """Bind an event handler to ``hx-on:*``."""
+        self._on[name] = handler
         return self
 
     # ------------------------------------------------------------------
@@ -284,22 +284,20 @@ class HTMXAttributes(Serializable):
     # ------------------------------------------------------------------
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Serialize into the final HTML attribute dictionary.
-        """
-        data: dict[str, Any] = dict(self.attrs)
+        """Serialize into the final HTML attribute dictionary."""
+        data: dict[str, Any] = dict(self._attrs)
 
-        if self.id:
-            data["id"] = self.id
+        if self._id:
+            data["id"] = self._id
 
-        if self.css_class:
-            data["class"] = self.css_class
+        if self._css_class:
+            data["class"] = self._css_class
 
         # Request attributes.
-        data.update(self.request_attrs)
+        data.update(self._request_attrs)
 
         # Typed HTMX attributes.
-        for field_name, html_name in self.ATTRIBUTE_MAP.items():
+        for field_name, html_name in self._ATTRIBUTE_MAP.items():
             value = getattr(self, field_name)
 
             if value is None:
@@ -311,27 +309,26 @@ class HTMXAttributes(Serializable):
                 data[html_name] = value
 
         # hx-vals
-        if self.vals:
+        if self._vals:
             data["hx-vals"] = (
-                self.vals
-                if isinstance(self.vals, str)
-                else json.dumps(self.vals)
+                self._vals
+                if isinstance(self._vals, str)
+                else json.dumps(self._vals)
             )
 
         # hx-headers
-        if self.headers:
+        if self._headers:
             data["hx-headers"] = (
-                self.headers
-                if isinstance(self.headers, str)
-                else json.dumps(self.headers)
+                self._headers
+                if isinstance(self._headers, str)
+                else json.dumps(self._headers)
             )
 
         # hx-on:*
-        for event, handler in self.on.items():
+        for event, handler in self._on.items():
             data[f"hx-on:{event}"] = handler
 
         return data
-
 
     # ------------------------------------------------------------------
     # Magic Methods
@@ -339,16 +336,16 @@ class HTMXAttributes(Serializable):
 
     def __bool__(self) -> bool:
         return bool(
-            self.id
-            or self.css_class
-            or self.attrs
-            or self.request_attrs
-            or self.vals
-            or self.headers
-            or self.on
+            self._id
+            or self._css_class
+            or self._attrs
+            or self._request_attrs
+            or self._vals
+            or self._headers
+            or self._on
             or any(
                 getattr(self, field_name) is not None
-                for field_name in self.ATTRIBUTE_MAP
+                for field_name in self._ATTRIBUTE_MAP
             )
         )
 
@@ -378,7 +375,6 @@ class HTMLAttributeRenderer:
             if isinstance(value, bool):
                 if value:
                     parts.append(name)
-
                 continue
 
             value = escape(

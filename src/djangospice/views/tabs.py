@@ -17,7 +17,7 @@ from .mixins import (
     HTMXTabMixin,
     HTMXTemplateMixin,
 )
-from djangospice.htmx.response import Response
+from djangospice.http.response import Response
 
 
 # ============================================================================
@@ -117,7 +117,7 @@ class HTMXDeleteTabView(
         self.object.delete()
 
     def get_delete_response(self) -> Response:
-        return Response.empty().trigger("refreshTab")
+        return Response.create().trigger("refreshTab")
 
 
 # ============================================================================

@@ -15,9 +15,7 @@ from .mixins import (
     HTMXTemplateMixin,
 )
 
-from djangospice.utils import get_template_name
-from djangospice.htmx.response import Response
-from djangospice.htmx.apps import namespace
+from djangospice.http.response import Response
 
 class HTMXModal(
     HTMXModalMixin,
@@ -30,7 +28,7 @@ class HTMXModal(
     The modal itself is just another HTMX template response.
     """
 
-    template_name = get_template_name("modal/modal.html", namespace)
+    template_name = None
 
     def get_context_data(
         self,
@@ -122,7 +120,7 @@ class HTMXDeleteModal(
         self.object.delete()
 
     def get_delete_response(self) -> Response:
-        return Response.empty().refresh_data()
+        return Response.create().refresh()
 
 
 
@@ -138,7 +136,7 @@ class HTMXObjectModal(
     CreateView/UpdateView/DeleteView semantics.
     """
 
-    template_name = get_template_name("modal/modal.html", namespace)
+    template_name = None
 
     def get_context_data(
         self,

@@ -230,11 +230,7 @@ class TableWidget(Widget):
             if 0 < size <= self.max_page_size
         )
     
-   
-    @property
-    def table_target(self):
-        return f"#{self.id}"
-
+  
     # ------------------------------------------------------------------
     # CONTEXT
     # ------------------------------------------------------------------
@@ -251,7 +247,7 @@ class TableWidget(Widget):
                 "table": self.table,
                 "table_id": self.id,
                 "table_url": self.base_url,
-                "table_target": self.table_target,
+                "table_target": self.get_widget_target(),
                 "empty_message": self.empty_message,
 
                 # Search
