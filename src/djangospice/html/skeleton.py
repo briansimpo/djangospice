@@ -87,12 +87,13 @@ class Skeleton(Component):
         radius = self.radius or variant["radius"]
 
         classes = [
-            "bg-slate-200",
-            radius,
+            "skeleton",
+            f"skeleton--{self.variant}",
+            f"skeleton--{radius}",
         ]
 
         if self.animate:
-            classes.append("animate-pulse")
+            classes.append("skeleton--animated")
 
         if self.css_class:
             classes.append(self.css_class)
@@ -108,6 +109,7 @@ class Skeleton(Component):
         context.update({
             "skeleton_classes": " ".join(classes),
             "skeleton_style": "; ".join(styles),
+            "skeleton_animated": self.animate,
         })
 
         return context

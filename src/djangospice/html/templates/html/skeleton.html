@@ -1,7 +1,6 @@
-<div
-    {{ component.attrs }}
-    class="{{ skeleton_classes }}"
-    style="{{ skeleton_style }}"
-    aria-hidden="true">
+<div {{ component.attrs }} class="{{ skeleton_classes }}" style="{{ skeleton_style }}">
+    {% if skeleton_animated %}
+        <span class="skeleton__shimmer"></span>
+    {% endif %}
     {{ component.render_children }}
 </div>
