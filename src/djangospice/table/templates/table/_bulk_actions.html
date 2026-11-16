@@ -29,8 +29,7 @@
             <form
                 id="bulk-actions-form-{{ table_id }}"
                 hx-target="{{ table_target }}"
-                hx-swap="outerHTML"
-                hx-indicator="#table-loading-{{ table_id }}">
+                hx-swap="outerHTML">
 
                 {% csrf_token %}
 
@@ -77,7 +76,6 @@
                                     hx-include="closest form"
                                     hx-target="{{ table_target }}"
                                     hx-swap="outerHTML"
-                                    hx-indicator="#table-loading-{{ table_id }}"
                                     {% if action.confirm %}
                                         hx-confirm="{{ action.confirm }}"
                                     {% endif %}

@@ -53,9 +53,7 @@
                     hx-target="{{ table_target }}"
                     hx-swap="outerHTML"
                     hx-push-url="false"
-                    hx-indicator="#table-loading-{{ table_id }}"
-                    class="!w-auto !rounded-lg !border-slate-300 !px-2 !py-1.5 text-sm focus:!border-primary-500 focus:!ring-primary-100"
-                >
+                    class="!w-auto !rounded-lg !border-slate-300 !px-2 !py-1.5 text-sm focus:!border-primary-500 focus:!ring-primary-100">
 
                     {% for size in page_size_options %}
 
@@ -83,11 +81,9 @@
                     hx-target="{{ table_target }}"
                     hx-swap="outerHTML"
                     hx-push-url="false"
-                    hx-indicator="#table-loading-{{ table_id }}"
                     aria-label="{% trans 'First page' %}"
                     title="{% trans 'First page' %}"
-                    class="btn-icon h-8 w-8 border border-slate-300"
-                >
+                    class="btn-icon h-8 w-8 border border-slate-300">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                     </svg>
@@ -104,11 +100,9 @@
                     hx-target="{{ table_target }}"
                     hx-swap="outerHTML"
                     hx-push-url="false"
-                    hx-indicator="#table-loading-{{ table_id }}"
                     aria-label="{% trans 'Previous page' %}"
                     title="{% trans 'Previous page' %}"
-                    class="btn-icon h-8 w-8 border border-slate-300"
-                >
+                    class="btn-icon h-8 w-8 border border-slate-300">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -135,15 +129,13 @@
                             hx-target="{{ table_target }}"
                             hx-swap="outerHTML"
                             hx-push-url="false"
-                            hx-indicator="#table-loading-{{ table_id }}"
                             {% if p == table.page.number %}aria-current="page"{% endif %}
                             class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-medium transition
                                 {% if p == table.page.number %}
                                     btn btn-primary btn-sm text-white shadow-sm
                                 {% else %}
                                     text-slate-600 hover:bg-slate-100 hover:text-slate-900
-                                {% endif %}"
-                        >
+                                {% endif %}">
                             {{ p }}
                         </a>
 
@@ -162,11 +154,9 @@
                     hx-target="{{ table_target }}"
                     hx-swap="outerHTML"
                     hx-push-url="false"
-                    hx-indicator="#table-loading-{{ table_id }}"
                     aria-label="{% trans 'Next page' %}"
                     title="{% trans 'Next page' %}"
-                    class="btn-icon h-8 w-8 border border-slate-300"
-                >
+                    class="btn-icon h-8 w-8 border border-slate-300">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
@@ -183,7 +173,6 @@
                     hx-target="{{ table_target }}"
                     hx-swap="outerHTML"
                     hx-push-url="false"
-                    hx-indicator="#table-loading-{{ table_id }}"
                     aria-label="{% trans 'Last page' %}"
                     title="{% trans 'Last page' %}"
                     class="btn-icon h-8 w-8 border border-slate-300">

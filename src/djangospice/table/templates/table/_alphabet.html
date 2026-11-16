@@ -18,7 +18,6 @@
                 hx-target="{{ table_target }}"
                 hx-swap="outerHTML"
                 hx-push-url="false"
-                hx-indicator="#table-loading-{{ table_id }}"
                 class="inline-flex h-8 min-w-9 items-center justify-center rounded-lg px-2 font-semibold transition
                     {% if not current_letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
                 {% trans "All" %}
@@ -31,11 +30,9 @@
                 hx-target="{{ table_target }}"
                 hx-swap="outerHTML"
                 hx-push-url="false"
-                hx-indicator="#table-loading-{{ table_id }}"
                 {% if current_letter == letter %}aria-current="true"{% endif %}
                 class="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 font-semibold transition
-                    {% if current_letter == letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}"
-            >
+                    {% if current_letter == letter %}btn btn-primary btn-sm text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
                 {{ letter }}
             </a>
 
