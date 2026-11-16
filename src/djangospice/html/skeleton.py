@@ -54,6 +54,7 @@ class Skeleton(Component):
         variant: str = "default",
         radius: str | None = None,
         animate: bool = True,
+        template_name: str| None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -63,6 +64,8 @@ class Skeleton(Component):
         self.variant = variant
         self.radius = radius
         self.animate = animate
+        if template_name is not None:
+            self.template_name = template_name
 
     @staticmethod
     def _size(value):
