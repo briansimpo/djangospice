@@ -11,8 +11,9 @@ from djangospice.exec.action import Actions
 from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
 
-from .fields import TableField
 from .composers import TableComposer, FilterComposer, SearchComposer
+from .fields import TableField
+from .skeleton import TableSkeleton
 from .apps import namespace
 
 
@@ -20,7 +21,6 @@ class TableWidget(Widget):
     """A configurable, server-rendered django-tables2 widget."""
 
     template_name = get_template_name("table.html", namespace)
-    placeholder = get_template_name("placeholder.html", namespace)
 
     # ------------------------------------------------------------------
     # TABLE
@@ -161,6 +161,11 @@ class TableWidget(Widget):
 
     def get_row_target(self):
         return self.row_target
+
+    def get_skeleton(self):
+        return TableSkeleton(
+            rows=10
+        )
 
     
     # ------------------------------------------------------------------

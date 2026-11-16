@@ -49,7 +49,6 @@ class Widget(Executable, Component):
     app_view: ClassVar[str] = "app-view"
 
     lazy: ClassVar[bool] = True
-    skeleton: ClassVar[bool] = True
 
     refreshable: ClassVar[bool] = False
     refresh_interval: ClassVar[int | None] = None
