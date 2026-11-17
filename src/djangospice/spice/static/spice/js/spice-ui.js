@@ -2,7 +2,7 @@
  * SpiceUI - Lightweight, Framework-Agnostic Vanilla JS UI Library
  * Designed for server-rendered templates (Django/Jinja/Rails) and HTMX.
  */
-class SpiceUI {
+export class SpiceUI {
     constructor() {
         this.activeModals = [];
         this.activeOffcanvas = null;
@@ -755,7 +755,17 @@ class SpiceUI {
     }
 }
 
-// Initialize global `spice` instance on page load
-document.addEventListener('DOMContentLoaded', () => {
-    window.spice = new SpiceUI();
-});
+// Zero-config automatic global initialization on module load
+if (typeof window !== "undefined") {
+    window.SpiceUI = SpiceUI;
+
+    if (typeof document !== "undefined") {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => {
+                window.spice = new SpiceUI();
+            });
+        } else {
+            window.spice = new SpiceUI();
+        }
+    }
+}

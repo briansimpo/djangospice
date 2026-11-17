@@ -34,9 +34,10 @@ def htmx_redirect(to: str,) -> Response:
 def htmx_navigate(
     to: str,
     *,
-    target: str | None = "app-view",
+    target: str | None = "spice-app",
+    select: str | None = "spice-app",
     swap: str | None = "innerHTML",
-    select: str | None = "app-view",
+    
 ) -> Response:
 
     return Response.navigate_to(

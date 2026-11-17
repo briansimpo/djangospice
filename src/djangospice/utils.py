@@ -1,5 +1,8 @@
 import re
 import uuid
+from django.contrib.admin.sites import NotRegistered
+from django.contrib import admin
+from django.conf import settings
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.urls import reverse, NoReverseMatch
@@ -92,6 +95,7 @@ def safe_action(app_name, action_name, args=None, kwargs=None):
         kwargs=kwargs,
     )
 
+
 def get_valid_url(url):
     validate = URLValidator()
 
@@ -129,6 +133,7 @@ def get_valid_url(url):
     except ValidationError:
         return url
 
+
 def safe_redirect(view_name, app_name=None, args=None, kwargs=None):
     """
     Safely reverse and redirect.
@@ -141,6 +146,7 @@ def safe_redirect(view_name, app_name=None, args=None, kwargs=None):
     )
     return redirect(url)
 
+
 def redirect_to(view_name, args=None, kwargs=None):
     """
     Redirect without app_name.
@@ -151,10 +157,49 @@ def redirect_to(view_name, args=None, kwargs=None):
         kwargs=kwargs,
     )
     return redirect(url)
-    
+
+ 
 def redirect_back(request: HttpRequest):
     referer = request.META.get("HTTP_REFERER")
     return redirect(referer)
 
 
-    
+def get_host_name(host_name=None, port=None):
+    # Determine the scheme based on whether SSL redirection is enabled
+    is_secure = getattr(settings, 'SECURE_SSL_REDIRECT', False)
+    scheme = 'https' if is_secure else 'http'
+
+    # Use the provided host name or fall back to the setting
+    host_name = host_name or getattr(settings, 'DJANGO_HOST', 'localhost')
+    port = port or getattr(settings, 'DJANGO_PORT', None)
+
+    # Include the port if specified and not using HTTPS
+    port_part = f":{port}" if port and not is_secure else ''
+
+    # Construct the full host name
+    return f"{scheme}://{host_name}{port_part}"
+
+
+def admin_unregister(model):
+    try:
+        admin.site.unregister(model)
+    except NotRegistered:
+        pass
+
+
+def get_domain_name():
+    domain = getattr(settings, 'DJANGO_HOST')
+    return f"{domain}"
+
+
+def get_app_name(normalize=False):
+    name = getattr(settings, "APP_NAME", None)
+    if normalize:
+        return str(name).capitalize()
+    return name
+
+
+def get_admin_app_title():
+    app_name = get_app_name()
+    return f"{app_name} Admin"
+

@@ -239,7 +239,7 @@ class LookupWidget(forms.Select):
 
         attrs.update(
             {
-                "data-djangospice-lookup": "",
+                "data-spice-lookup": "",
                 "data-lookup-url": self.lookup_url,
 
                 "data-lookup-search-param": (

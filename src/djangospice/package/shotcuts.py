@@ -4,7 +4,7 @@ from typing import Iterable
 from djangospice.package.discovery import PackageDiscovery
 
 
-def djangospice_packages(project_dir: str | Path, app_directories: Iterable[str] = ("apps",)) -> list[str]:
+def packages(project_dir: str | Path, app_directories: Iterable[str] = ("apps",)) -> list[str]:
     """
     Discover Djangospice built-in and project applications.
 

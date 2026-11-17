@@ -1,0 +1,7 @@
+/**
+ * Djangospice - Main Stylesheet Entry Point
+ */
+
+@import "./spice-ui.css";
+@import "./spice-table.css";
+@import "./spice-lookup.css";

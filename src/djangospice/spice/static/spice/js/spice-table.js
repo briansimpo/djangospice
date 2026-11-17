@@ -1,4 +1,3 @@
-
 /**
  * SpiceTable - Dedicated table controller handling:
  * - Row selection and highlighting

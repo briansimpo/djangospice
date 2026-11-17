@@ -46,7 +46,7 @@ class Widget(Executable, Component):
     objects_parameter: ClassVar[str] = "selected_ids"
 
     namespace: ClassVar[str] = namespace
-    app_view: ClassVar[str] = "app-view"
+    app_view: ClassVar[str] = "spice-app"
 
     lazy: ClassVar[bool] = True
 
