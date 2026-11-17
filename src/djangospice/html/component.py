@@ -22,6 +22,10 @@ class Component:
     """
 
     template_name: ClassVar[str | None] = None
+    
+    # Used as app root
+    app_view: ClassVar[str] = "spice-app"
+
 
     def __init__(self, *args, **kwargs: Any) -> None:
         self.request: HttpRequest | None = kwargs.pop("request", None)
