@@ -1,0 +1,15 @@
+spice-toast [data-toast][data-type="success"] {
+    border-left-color: #22c55e;
+}
+
+spice-toast [data-toast][data-type="error"] {
+    border-left-color: #ef4444;
+}
+
+spice-toast [data-toast][data-type="warning"] {
+    border-left-color: #f59e0b;
+}
+
+spice-toast [data-toast][data-type="info"] {
+    border-left-color: #3b82f6;
+}

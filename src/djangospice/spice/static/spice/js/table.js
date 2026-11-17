@@ -6,7 +6,7 @@
  * - Dynamic [id] context menu bindings
  * - HTMX table replacement compatibility
  */
-class SpiceTable {
+export class SpiceTable {
     constructor(element) {
         this.el = element;
         this.selected = new Set();
@@ -362,23 +362,3 @@ class SpiceTable {
 }
 
 
-// =============================================================================
-// AUTO-INITIALIZATION
-// =============================================================================
-
-function initTableComponents() {
-    document.querySelectorAll('[data-table]').forEach(el => {
-
-        if (!el.__tableInstance) {
-            el.__tableInstance = new SpiceTable(el);
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    initTableComponents();
-});
-
-document.addEventListener('htmx:afterSwap', () => {
-    initTableComponents();
-});

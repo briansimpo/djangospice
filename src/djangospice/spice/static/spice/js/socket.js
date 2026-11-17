@@ -16,7 +16,7 @@ const DEFAULT_OPTIONS = {
     maxRetries: Infinity,
 };
 
-export class SpiceSocketManager {
+export class SpiceSocket {
     constructor(options = {}) {
         this.options = {
             ...DEFAULT_OPTIONS,
@@ -430,14 +430,4 @@ export class SpiceSocketManager {
     get connecting() {
         return this.status === "connecting";
     }
-}
-
-// Default singleton instance export
-export const SpiceSocket = new SpiceSocketManager();
-
-// Global namespace integration for convenience / legacy environments
-if (typeof window !== "undefined") {
-    window.Djangospice ??= {};
-    window.Djangospice.SpiceSocketManager ??= SpiceSocketManager;
-    window.Djangospice.SpiceSocket ??= SpiceSocket;
 }

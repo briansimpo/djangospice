@@ -277,14 +277,7 @@ class Response(HttpResponse):
         self.htmx.redirect(url)
         return self._sync()
 
-    def navigate(
-        self,
-        path: str,
-        *,
-        target: str | None = None,
-        swap: str | None = None,
-        select: str | None = None,
-    ) -> Self:
+    def navigate(self, path: str,*, target: str | None = None, swap: str | None = None, select: str | None = None) -> Self:
         """Set HX-Location for client-side navigation."""
         self.htmx.navigate(
             path,
@@ -318,11 +311,7 @@ class Response(HttpResponse):
         self.htmx.trigger(event, **payload)
         return self._sync()
 
-    def alert(
-        self,
-        message: str,
-        type: str = "info",
-    ) -> Self:
+    def alert(self, message: str, type: str = "info") -> Self:
         """Trigger a client-side alert event."""
         return self.trigger(
             "show-alert",
@@ -330,20 +319,24 @@ class Response(HttpResponse):
             type=type,
         )
 
-    def after_swap(
-        self,
-        event: str,
-        **payload: Any,
-    ) -> Self:
+    def success(self, message: str) -> Self:
+        return self.alert(message, "success")
+
+    def error(self, message: str) -> Self:
+        return self.alert(message, "error")
+
+    def warning(self, message: str) -> Self:
+        return self.alert(message, "warning")
+
+    def info(self, message: str) -> Self:
+        return self.alert(message, "info")
+
+    def after_swap(self, event: str, **payload: Any) -> Self:
         """Trigger an event after the swap phase."""
         self.htmx.swap(event, **payload)
         return self._sync()
 
-    def after_settle(
-        self,
-        event: str,
-        **payload: Any,
-    ) -> Self:
+    def after_settle(self, event: str, **payload: Any) -> Self:
         """Trigger an event after the settle phase."""
         self.htmx.settle(event, **payload)
         return self._sync()

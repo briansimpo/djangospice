@@ -96,11 +96,8 @@ function createElement(tag, className, attributes = {}) {
     return element;
 }
 
-/* ------------------------------------------------------------
- * SpiceLookup
- * ------------------------------------------------------------ */
 
-class SpiceLookup {
+export class SpiceLookup {
     constructor(select) {
         this.select = select;
         this.destroyed = false;
@@ -1318,11 +1315,8 @@ class SpiceLookup {
     }
 }
 
-/* ------------------------------------------------------------
- * Automatic Initialization
- * ------------------------------------------------------------ */
 
-function initializeSpiceLookups(root = document) {
+export function initializeLookup(root = document) {
     if (!root) return;
 
     const selects = [];
@@ -1346,7 +1340,7 @@ function initializeSpiceLookups(root = document) {
     }
 }
 
-function destroySpiceLookups(root) {
+export function destroyLookup(root) {
     if (!root) return;
 
     const selects = [];
@@ -1372,31 +1366,3 @@ function destroySpiceLookups(root) {
     }
 }
 
-/* ------------------------------------------------------------
- * Module Lifecycle
- * ------------------------------------------------------------ */
-
-// Initialize lookup fields already present in the document.
-function startSpiceLookup() {
-    initializeSpiceLookups(document);
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        startSpiceLookup,
-        { once: true }
-    );
-} else {
-    startSpiceLookup();
-}
-
-// Initialize elements inserted by HTMX.
-document.addEventListener("htmx:load", (event) => {
-    initializeSpiceLookups(event.detail?.elt || document);
-});
-
-// Clean up elements before HTMX removes or replaces them.
-document.addEventListener("htmx:beforeCleanupElement", (event) => {
-    destroySpiceLookups(event.detail?.elt);
-});

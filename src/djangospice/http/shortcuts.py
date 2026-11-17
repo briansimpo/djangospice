@@ -27,11 +27,11 @@ def response(
     )
 
 
-def htmx_redirect(to: str,) -> Response:
+def redirect_to(to: str,) -> Response:
     return Response.redirect_to(to)
 
 
-def htmx_navigate(
+def navigate_to(
     to: str,
     *,
     target: str | None = "spice-app",

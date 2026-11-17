@@ -200,6 +200,18 @@ class Widget(Executable, Component):
             self.render_to_string()
         )
     
+    def redirect_to(self, url):
+        return Response.redirect_to(url)
+
+    def navigate_to(self, url, target=None, swap=None, select=None):
+        if target is None:
+            target = self.app_view
+        if swap is None:
+            swap = self.app_view
+        if select is None:
+            select = "innerHTML"
+        return Response.navigate_to(url, target=target, swap=swap, select=select)
+
     def get(self) -> Response:
         return Response.from_content(
             self.render_to_string()
