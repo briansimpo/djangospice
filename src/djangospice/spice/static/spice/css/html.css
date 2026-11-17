@@ -5,8 +5,7 @@ spice-app {
 spice-link, 
 spice-button, 
 spice-boost, 
-spice-nav, 
-spice-toast {
+spice-nav {
 	display: contents;
 }
 
