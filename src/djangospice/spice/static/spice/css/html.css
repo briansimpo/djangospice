@@ -1,19 +1,23 @@
 spice-app {
-  display: block;
+	display: block;
 }
 
-spice-link, spice-button, spice-boost, spice-nav {
-  display: contents;
+spice-link, 
+spice-button, 
+spice-boost, 
+spice-nav, 
+spice-toast {
+	display: contents;
 }
 
 spice-loading {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+	pointer-events: none;
 }
 
 spice-loading.htmx-request,
 body.htmx-request spice-loading,
 spice-loading.active {
-    opacity: 1;
+	opacity: 1;
 }
