@@ -193,7 +193,14 @@ class Widget(Executable, Component):
         template: str | None = None,
         context: dict[str, Any] | None = None,
         htmx: HTMXHeaders | None = None,) -> Response:
-        return Response(content, status=status, content_type=content_type, template=template, context=context, htmx=htmx)  
+        return Response(
+            content, 
+            status=status, 
+            content_type=content_type, 
+            template=template, 
+            context=context, 
+            htmx=htmx
+        )  
 
     def refresh(self) -> Response:
         return Response.from_content(
@@ -203,14 +210,16 @@ class Widget(Executable, Component):
     def redirect_to(self, url):
         return Response.redirect_to(url)
 
-    def navigate_to(self, url, target=None, swap=None, select=None):
-        if target is None:
-            target = self.app_view
-        if swap is None:
-            swap = self.app_view
-        if select is None:
-            select = "innerHTML"
-        return Response.navigate_to(url, target=target, swap=swap, select=select)
+    def navigate_to(self, url, target=None, swap="innerHTML", select=None):
+        target = self.app_view if target is None else target
+        select = self.app_view if select is None else select
+
+        return Response.navigate_to(
+            url,
+            target=target,
+            swap=swap,
+            select=select,
+        )
 
     def get(self) -> Response:
         return Response.from_content(
