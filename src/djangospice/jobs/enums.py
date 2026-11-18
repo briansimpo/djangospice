@@ -1,7 +1,7 @@
 from django.db.models import TextChoices
 
 class JobStatus(TextChoices):
-    PENDING = "pending", "Pending"
+    STARTED = "started", "Started"
     QUEUED = "queued", "Queued"
     RUNNING = "running", "Running"
     SUCCESS = "success", "Success"

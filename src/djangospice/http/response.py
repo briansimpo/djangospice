@@ -4,8 +4,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Self
 
+
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from djangospice.files.helpers import download, stream
 
 from .headers import HTMXHeaders
 
@@ -121,6 +123,38 @@ class Response(HttpResponse):
             target=target,
             swap=swap,
             select=select,
+        )
+
+    @classmethod
+    def download(
+        cls,
+        file,
+        *,
+        filename: str | None = None,
+        content_type: str | None = None
+    ):
+        return download(
+            file=file, 
+            filename=filename, 
+            content_type=content_type, 
+        )
+
+    @classmethod
+    def stream(
+        cls,
+        streaming_content,
+        *,
+        content_type="application/octet-stream",
+        filename=None,
+        as_attachment=False,
+        headers=None,
+    ):
+        return stream(
+            streaming_content=streaming_content,
+            content_type=content_type,
+            filename=filename,
+            as_attachment=as_attachment,
+            headers=headers
         )
 
     # ------------------------------------------------------------------
@@ -361,3 +395,6 @@ class Response(HttpResponse):
     def __str__(self) -> str:
         self.finalize()
         return super().__str__()
+
+
+    

@@ -8,6 +8,8 @@ import django_filters
 import django_tables2 as tables
 
 from djangospice.exec.action import Actions
+from djangospice.exec.decorators import get
+from djangospice.table.job import TableExportJob
 from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
 
@@ -52,7 +54,7 @@ class TableWidget(Widget):
     show_alphabet = True
     alphabet: ClassVar[tuple[str, ...]] = tuple(ascii_uppercase)
     alphabet_parameter = "letter"
-    alphabet_field= "name"
+    alphabet_field = "name"
 
     # ------------------------------------------------------------------
     # PAGINATION
@@ -85,14 +87,23 @@ class TableWidget(Widget):
     row_url = None
     row_target = "_self"
 
+    # ------------------------------------------------------------------
+    # EXPORT
+    # ------------------------------------------------------------------
 
+    exportable = True
+
+    export_formats: ClassVar[tuple[str, ...]] = (
+        "csv",
+        "xlsx",
+    )
+
+    export_directory = "exports"
+    export_unique_filename = True
 
     # ------------------------------------------------------------------
     # LIFECYCLE
     # ------------------------------------------------------------------
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def initialize(self) -> None:
         super().initialize()
@@ -109,9 +120,7 @@ class TableWidget(Widget):
         self.filters = FilterComposer(
             request=self.request,
             filterset_class=(
-                self.filterset_class
-                if self.filterable
-                else None
+                self.filterset_class if self.filterable else None
             ),
         )
 
@@ -129,12 +138,17 @@ class TableWidget(Widget):
             max_page_size=self.max_page_size,
         )
 
-        self.page_size_options = tuple(sorted(set(self.page_size_options) | {self.page_size}))
+        self.page_size_options = tuple(
+            sorted(set(self.page_size_options) | {self.page_size})
+        )
 
     def configure(self) -> None:
         super().configure()
         self.table = self.build_table()
 
+    # ------------------------------------------------------------------
+    # ACTIONS
+    # ------------------------------------------------------------------
 
     @property
     def row_actions(self) -> Actions:
@@ -143,6 +157,10 @@ class TableWidget(Widget):
     @property
     def bulk_actions(self) -> Actions:
         return self.get_actions_by_group("bulk")
+
+    # ------------------------------------------------------------------
+    # SELECTION
+    # ------------------------------------------------------------------
 
     def get_selected_rows(self):
         if not self.request:
@@ -156,6 +174,10 @@ class TableWidget(Widget):
 
         return self.get_value(self.object_parameter)
 
+    # ------------------------------------------------------------------
+    # DISPLAY
+    # ------------------------------------------------------------------
+
     def get_row_url(self):
         return self.row_url
 
@@ -163,16 +185,22 @@ class TableWidget(Widget):
         return self.row_target
 
     def get_skeleton(self):
-        return TableSkeleton(
-            rows=10
-        )
+        return TableSkeleton(rows=10)
 
-    
     # ------------------------------------------------------------------
     # QUERYSET
     # ------------------------------------------------------------------
 
     def get_queryset(self):
+        """
+        Build the queryset using the current request state.
+
+        Filtering order:
+        1. Base queryset
+        2. FilterSet
+        3. Search
+        4. Alphabet filter
+        """
         queryset = super().get_queryset()
 
         queryset = self.filters.apply(queryset)
@@ -228,8 +256,7 @@ class TableWidget(Widget):
             for size in self.page_size_options
             if 0 < size <= self.max_page_size
         )
-    
-  
+
     # ------------------------------------------------------------------
     # CONTEXT
     # ------------------------------------------------------------------
@@ -253,7 +280,9 @@ class TableWidget(Widget):
                 "searchable": self.searchable,
                 "sortable": self.sortable,
                 "search_parameter": self.search_parameter,
-                "search_term": self.query_state.get(self.search_parameter),
+                "search_term": self.query_state.get(
+                    self.search_parameter
+                ),
 
                 # Filters
                 "filterable": self.filterable,
@@ -286,8 +315,117 @@ class TableWidget(Widget):
 
                 "row_url": self.get_row_url(),
                 "row_target": self.get_row_target(),
-              
+
+                # Export
+                "exportable": self.exportable,
+                "export_formats": self.export_formats,
             }
         )
 
         return context
+
+    # ------------------------------------------------------------------
+    # EXPORT
+    # ------------------------------------------------------------------
+
+    
+    def get_export_configuration(self) -> tuple[type, type]:
+        """Resolve the table and model classes."""
+        return self.table_composer.resolve()
+
+    def get_export_filters(self) -> dict:
+        filters = {}
+
+        # FilterSet filters
+        if self.filterable and self.filterset:
+            form = self.filterset.form
+
+            if form.is_valid():
+                for name, value in form.cleaned_data.items():
+                    if value in (None, "", [], (), {}):
+                        continue
+
+                    filter_field = self.filterset.filters[name]
+
+                    if filter_field.method:
+                        raise ValueError(
+                            f"Custom filter method '{name}' requires "
+                            "an explicit export implementation."
+                        )
+
+                    field_name = filter_field.field_name
+                    lookup_expr = filter_field.lookup_expr
+
+                    if lookup_expr != "exact":
+                        field_name = f"{field_name}__{lookup_expr}"
+
+                    if hasattr(value, "pk"):
+                        value = value.pk
+                    elif hasattr(value, "values_list"):
+                        value = list(value.values_list("pk", flat=True))
+
+                    filters[field_name] = value
+
+        # Search
+        search = None
+
+        if self.searchable and self.search_fields:
+            search_term = self.query_state.get(self.search_parameter)
+
+            if search_term:
+                search = {
+                    "fields": list(self.search_fields),
+                    "value": search_term,
+                }
+
+        # Alphabet
+        alphabet = None
+
+        if self.show_alphabet:
+            letter = self.query_state.get(self.alphabet_parameter)
+
+            if letter and letter.upper() in self.alphabet:
+                alphabet = {
+                    "field": self.alphabet_field,
+                    "value": letter.upper(),
+                }
+
+        return {
+            "filters": filters,
+            "search": search,
+            "alphabet": alphabet,
+        }
+
+    def export_data(self, export_format: str):
+        if not self.exportable:
+            return self.response().error("Export is disabled.")
+
+        export_format = export_format.lower().lstrip(".")
+
+        if export_format not in self.export_formats:
+            return self.response().error(
+                f"Unsupported export format: {export_format}"
+            )
+
+        table_class, model_class = self.get_export_configuration()
+
+        job = TableExportJob.create(
+            table_class=table_class,
+            model_class=model_class,
+            export_format=export_format,
+            filters=self.get_export_filters(),
+            directory=self.export_directory,
+            rename_file=self.export_unique_filename,
+        )
+
+        job_result = job.dispatch_now()
+        file_path, file_url = job_result.result
+        return self.response().redirect(file_url).success("Data Export completed successfully")
+
+    @get
+    def export_excel(self):
+        return self.export_data("xlsx")
+
+    @get
+    def export_csv(self):
+        return self.export_data("csv")

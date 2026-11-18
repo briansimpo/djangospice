@@ -214,3 +214,17 @@ if (isBrowser) {
 
     onReady(() => init());
 }
+
+document.body.addEventListener('htmx:beforeRequest', function (event) {
+    if (event.detail.elt.matches('[data-table-export]')) {
+        document.getElementById('table-export-loading')?.classList.remove('hidden');
+        document.getElementById('table-export-loading')?.classList.add('flex');
+    }
+});
+
+document.body.addEventListener('htmx:afterRequest', function (event) {
+    if (event.detail.elt.matches('[data-table-export]')) {
+        document.getElementById('table-export-loading')?.classList.add('hidden');
+        document.getElementById('table-export-loading')?.classList.remove('flex');
+    }
+});

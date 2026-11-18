@@ -43,7 +43,7 @@ class JobHandle:
         mapping = {
             "PENDING": JobStatus.QUEUED,
             "STARTED": JobStatus.STARTED,
-            "PROGRESS": JobStatus.PROGRESS,
+            "PROGRESS": JobStatus.RUNNING,
             "SUCCESS": JobStatus.SUCCESS,
             "FAILURE": JobStatus.FAILURE,
             "RETRY": JobStatus.RETRY,
@@ -59,7 +59,7 @@ class JobHandle:
     @property
     def is_running(self) -> bool:
         """Returns True if the job is currently processing or reporting progress."""
-        return self.status in (JobStatus.STARTED, JobStatus.PROGRESS)
+        return self.status in (JobStatus.STARTED, JobStatus.RUNNING)
 
     @property
     def is_done(self) -> bool:
@@ -87,7 +87,7 @@ class JobHandle:
         Safely extracts custom progress metadata if the job is actively executing.
         Returns None if no progress is currently reported.
         """
-        if self.status == JobStatus.PROGRESS:
+        if self.status == JobStatus.RUNNING:
             info = self._result.info
             if isinstance(info, dict):
                 return info

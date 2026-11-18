@@ -206,61 +206,76 @@ class TableComposer:
             for item in fields
         )
 
-    def get_class(self) -> type[tables.Table]:
-        """Resolve the table class and apply configured columns."""
-
-        if self.table_class is not None:
+    def resolve(self) -> tuple[type[tables.Table], type]:
+            """
+            Resolve the table class and its associated model class.
+            """
+    
             table_class = self.table_class
-
-        else:
-            if self.model is None:
-                raise ValueError(
-                    "A model or table_class is required to build a table."
-                )
-
-            fields = self.get_fields()
-
-            if fields is None:
-                table_class = tables.table_factory(
-                    self.model,
-                    exclude=self.exclude,
-                )
-
-            else:
-                included_fields = tuple(
-                    field
-                    for field in fields
-                    if not field.exclude
-                )
-
-                table_class = tables.table_factory(
-                    self.model,
-                    fields=tuple(
-                        field.name
+    
+            if table_class is None:
+                if self.model is None:
+                    raise ValueError(
+                        "A model or table_class is required to build a table."
+                    )
+    
+                fields = self.get_fields()
+    
+                if fields is None:
+                    table_class = tables.table_factory(
+                        self.model,
+                        exclude=self.exclude,
+                    )
+    
+                else:
+                    included_fields = tuple(
+                        field
+                        for field in fields
+                        if not field.exclude
+                    )
+    
+                    table_class = tables.table_factory(
+                        self.model,
+                        fields=tuple(
+                            field.name
+                            for field in included_fields
+                        ),
+                        exclude=self.exclude,
+                    )
+    
+                    custom_columns = {
+                        field.name: tables.Column(
+                            accessor=field.accessor,
+                            verbose_name=field.label,
+                            orderable=field.sortable,
+                            visible=field.visible,
+                            attrs=field.attrs,
+                        )
                         for field in included_fields
-                    ),
-                    exclude=self.exclude,
+                    }
+    
+                    if custom_columns:
+                        table_class = type(
+                            f"{table_class.__name__}Configured",
+                            (table_class,),
+                            custom_columns,
+                        )
+    
+            model_class = (
+                self.model
+                or getattr(table_class.Meta, "model", None)
+            )
+    
+            if model_class is None:
+                raise ValueError(
+                    "Unable to resolve the model class. "
+                    "Provide a model or define Meta.model on the table class."
                 )
-
-                custom_columns = {
-                    field.name: tables.Column(
-                        accessor=field.accessor,
-                        verbose_name=field.label,
-                        orderable=field.sortable,
-                        visible=field.visible,
-                        attrs=field.attrs,
-                    )
-                    for field in included_fields
-                }
-
-                if custom_columns:
-                    table_class = type(
-                        f"{table_class.__name__}Configured",
-                        (table_class,),
-                        custom_columns,
-                    )
-
-        return table_class
+    
+            return table_class, model_class
+    
+    def get_class(self) -> type[tables.Table]:
+        return self.resolve()[0]
 
     def compose(self, queryset) -> tables.Table:
         """Build the table and configure pagination."""
@@ -271,3 +286,6 @@ class TableComposer:
         )
 
         return self.pagination.configure(table)
+
+
+    

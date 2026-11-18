@@ -1,0 +1,43 @@
+{% load i18n %}
+
+<div id="table-export-loading"
+     role="status"
+     aria-live="polite"
+     class="hidden fixed bottom-6 right-6 z-[9999] items-center gap-4
+            min-w-[320px] max-w-[calc(100vw-2rem)]
+            rounded-xl border border-gray-200 bg-white
+            px-5 py-4 shadow-xl">
+
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-50">
+            <svg class="h-7 w-7 animate-spin text-green-600"
+                style="animation-duration: 0.8s;"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    class="opacity-20"/>
+
+                <path
+                    fill="currentColor"
+                    class="opacity-90"
+                    d="M12 1.5A10.5 10.5 0 0 1 22.5 12h-3A7.5 7.5 0 0 0 12 4.5v-3z"/>
+            </svg>
+        </div>
+
+    <!-- Message -->
+    <div class="flex min-w-0 flex-col gap-1">
+        <span class="text-sm font-semibold text-gray-900">
+            {% trans "Exporting..." %}
+        </span>
+        <span class="text-xs text-gray-500">
+            {% trans "Your file is being prepared. Please wait." %}
+        </span>
+    </div>
+
+</div>

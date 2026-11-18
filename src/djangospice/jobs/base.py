@@ -88,7 +88,7 @@ class Job(Serializable):
     ) -> None:
         self.current = current
         self.total = total
-        self.status = JobStatus.PROGRESS
+        self.status = JobStatus.RUNNING
 
         reporter = active_reporter.get()
 

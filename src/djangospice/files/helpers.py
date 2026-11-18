@@ -3,8 +3,11 @@ import os
 import mimetypes
 from PIL import Image
 from slugify import slugify
-from django.conf import settings
-from django.http import HttpResponse, Http404
+from pathlib import Path
+from django.utils.http import content_disposition_header
+from django.core.files.base import ContentFile
+from django.http import FileResponse, StreamingHttpResponse
+
 from django.core.files.storage import default_storage
 from .storage import MediaStorage
 from .path import PathWrapper
@@ -94,16 +97,67 @@ def read_imported_file(file_path, size=None):
     return in_stream, file_format
 
 
-def download(file_path: str) -> HttpResponse:
-    """
-    Return a Django HTTP response to serve a file from MEDIA_ROOT.
-    """
-    abs_path = os.path.join(settings.MEDIA_ROOT, file_path)
-    if os.path.exists(abs_path):
-        mime_type, _ = mimetypes.guess_type(abs_path)
-        file_name = os.path.basename(abs_path)
-        with open(abs_path, 'rb') as fh:
-            response = HttpResponse(fh.read(), content_type=mime_type)
-            response['Content-Disposition'] = f'inline; filename={file_name}'
-            return response
-    raise Http404(f"File {file_path} not found")
+
+def download(file,*,filename=None,content_type=None):
+    """Return a browser file download."""
+
+    if isinstance(file, bytes):
+        file = ContentFile(file)
+
+    elif isinstance(file, (str, os.PathLike)):
+        path = Path(file)
+        filename = filename or path.name
+        file = path.open("rb")
+
+    elif hasattr(file, "storage") and hasattr(file, "name"):
+        if not file:
+            raise ValueError("File does not exist.")
+
+        filename = filename or Path(file.name).name
+        file.open("rb")
+
+    elif not hasattr(file, "read"):
+        raise TypeError(
+            f"Unsupported file type: {type(file).__name__}"
+        )
+
+    filename = filename or getattr(file, "name", None)
+
+    if filename:
+        filename = Path(filename).name
+
+    content_type = (
+        content_type
+        or (
+            mimetypes.guess_type(filename)[0]
+            if filename else None
+        )
+        or "application/octet-stream"
+    )
+
+    return FileResponse(
+        file,
+        as_attachment=True,
+        filename=filename,
+        content_type=content_type,
+    )
+
+
+def stream(streaming_content,*,content_type="application/octet-stream",filename=None,as_attachment=False,headers=None):
+    """Return a streaming HTTP response."""
+
+    response = StreamingHttpResponse(
+        streaming_content,
+        content_type=content_type,
+        headers=headers,
+    )
+
+    if filename:
+        response["Content-Disposition"] = (
+            content_disposition_header(
+                as_attachment,
+                filename,
+            )
+        )
+
+    return response

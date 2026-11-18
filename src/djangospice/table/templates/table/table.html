@@ -3,7 +3,7 @@
 {% load widget_tweaks %}
 {% load static %}
 
-<div {{ widget.attrs }} data-table class="w-full overflow-hidden rounded-lg border border-slate-200 flex flex-col">
+<div {{ widget.attrs }} data-table class="w-full rounded-lg border border-slate-200 flex flex-col">
 
     {% include "table/_header.html" %}
     {% include "table/_alphabet.html" %}
@@ -11,5 +11,7 @@
     {% include "table/_data_table.html" %}
     {% include "table/_pagination.html" %}
     {% include "table/_context_menu.html" %}
+    {% include "table/_exporting.html" %}
 
+   
 </div>

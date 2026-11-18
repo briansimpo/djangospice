@@ -55,7 +55,7 @@ class JobReporter:
     def progress(self, job, current: int, total: int, message: str = "", **extra: Any) -> None:
         job.current = current
         job.total = total
-        job.status = JobStatus.PROGRESS
+        job.status = JobStatus.RUNNING
 
         self._sync_celery_meta(
             job.status,
@@ -78,7 +78,7 @@ class JobReporter:
 
     def completed(self, job, job_result=None) -> None:
         job.current = job.total
-        job.status = JobStatus.COMPLETED
+        job.status = JobStatus.SUCCESS
 
         result = job_result.result if job_result else None
 
