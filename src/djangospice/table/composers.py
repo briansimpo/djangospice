@@ -4,8 +4,11 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 import django_filters
+from django_filters.filterset import filterset_factory
 import django_tables2 as tables
 from django.db.models import Q, QuerySet
+
+from djangospice.filters.filter import DynamicFilter
 
 from .fields import TableField
 from .resolver import TableResolver
@@ -80,29 +83,50 @@ class PaginationComposer:
 
 class FilterComposer:
     """
-    Integrates a django-filter FilterSet into a queryset pipeline.
+    Integrates django-filter into a queryset pipeline.
+
+    Supports:
+    - Custom FilterSet classes.
+    - Automatically generated FilterSets from model fields.
     """
 
     def __init__(
         self,
         *,
         request=None,
-        filterset_class: type[django_filters.FilterSet] | None = None,
-       
+        model=None,
+        filter_class: type[django_filters.FilterSet] | None = None,
+        filter_fields: tuple[str, ...] | dict | None = None,
     ) -> None:
         self.request = request
-        self.filterset_class = filterset_class
+        self.model = model
+        self.filter_class = filter_class
+        self.filter_fields = filter_fields
+
         self.filterset: django_filters.FilterSet | None = None
 
-    def compose(
-        self,
-        queryset: QuerySet[Any],
-    ) -> django_filters.FilterSet | None:
-        if self.filterset_class is None:
+    def get_filter_class(self):
+        if self.filter_class is not None:
+            return self.filter_class
+
+        if self.filter_fields is None or self.model is None:
+            return None
+
+        return filterset_factory(
+            model=self.model,
+            fields=self.filter_fields,
+            filterset=DynamicFilter
+        )
+
+    def compose(self, queryset: QuerySet[Any]) -> django_filters.FilterSet | None:
+
+        filter_class = self.get_filter_class()
+
+        if filter_class is None:
             self.filterset = None
             return None
 
-        self.filterset = self.filterset_class(
+        self.filterset = filter_class(
             data=self.request.GET if self.request else None,
             queryset=queryset,
             request=self.request,

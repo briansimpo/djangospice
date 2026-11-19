@@ -46,7 +46,8 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
 
     filterable = True
-    filterset_class: ClassVar[type[django_filters.FilterSet] | None] = None
+    filter_class: ClassVar[type[django_filters.FilterSet] | None] = None
+    filter_fields: ClassVar[tuple[str, ...] | dict[str, list[str]] | None] = None
 
     # ------------------------------------------------------------------
     # ALPHABET FILTER
@@ -120,9 +121,9 @@ class TableWidget(Widget):
 
         self.filters = FilterComposer(
             request=self.request,
-            filterset_class=(
-                self.filterset_class if self.filterable else None
-            ),
+            model=self.model,
+            filter_class=self.filter_class,
+            filter_fields=self.filter_fields,
         )
 
         self.table_composer = TableComposer(
