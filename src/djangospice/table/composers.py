@@ -1,13 +1,12 @@
 
 from __future__ import annotations
-
 from typing import Any, Iterable
 
-import django_filters
-from django_filters.filterset import filterset_factory
 import django_tables2 as tables
-from django.db.models import Q, QuerySet
+import django_filters
 
+from django_filters.filterset import filterset_factory
+from django.db.models import Q, QuerySet
 from djangospice.filters.filter import DynamicFilter
 
 from .fields import TableField
