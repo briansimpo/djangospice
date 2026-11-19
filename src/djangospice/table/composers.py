@@ -4,12 +4,11 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 import django_filters
-
 import django_tables2 as tables
-
 from django.db.models import Q, QuerySet
 
-from djangospice.table.fields import TableField
+from .fields import TableField
+from .resolver import TableResolver
 
 
 class PaginationComposer:
@@ -157,7 +156,6 @@ class SearchComposer:
 
 
 class TableComposer:
-    """Build and configure a django-tables2 table."""
 
     def __init__(
         self,
@@ -173,12 +171,15 @@ class TableComposer:
         page_size_parameter: str = "page_size",
         page_size_options: Iterable[int] = (10, 20, 50, 100),
         max_page_size: int = 100,
-    ) -> None:
+    ):
         self.request = request
-        self.model = model
-        self.table_class = table_class
-        self.fields = fields
-        self.exclude = exclude
+
+        self.resolver = TableResolver(
+            model=model,
+            table_class=table_class,
+            fields=fields,
+            exclude=exclude,
+        )
 
         self.pagination = PaginationComposer(
             request=request,
@@ -190,102 +191,12 @@ class TableComposer:
             max_page_size=max_page_size,
         )
 
-    def get_fields(self) -> tuple[TableField, ...] | None:
-        """Normalize field declarations."""
+    def compose(self, queryset):
+        table_class, _ = self.resolver.resolve()
 
-        if self.fields is None:
-            return None
-
-        fields = self.fields
-
-        if isinstance(fields, (str, TableField)):
-            fields = (fields,)
-
-        return tuple(
-            TableField.normalize(item)
-            for item in fields
-        )
-
-    def resolve(self) -> tuple[type[tables.Table], type]:
-            """
-            Resolve the table class and its associated model class.
-            """
-    
-            table_class = self.table_class
-    
-            if table_class is None:
-                if self.model is None:
-                    raise ValueError(
-                        "A model or table_class is required to build a table."
-                    )
-    
-                fields = self.get_fields()
-    
-                if fields is None:
-                    table_class = tables.table_factory(
-                        self.model,
-                        exclude=self.exclude,
-                    )
-    
-                else:
-                    included_fields = tuple(
-                        field
-                        for field in fields
-                        if not field.exclude
-                    )
-    
-                    table_class = tables.table_factory(
-                        self.model,
-                        fields=tuple(
-                            field.name
-                            for field in included_fields
-                        ),
-                        exclude=self.exclude,
-                    )
-    
-                    custom_columns = {
-                        field.name: tables.Column(
-                            accessor=field.accessor,
-                            verbose_name=field.label,
-                            orderable=field.sortable,
-                            visible=field.visible,
-                            attrs=field.attrs,
-                        )
-                        for field in included_fields
-                    }
-    
-                    if custom_columns:
-                        table_class = type(
-                            f"{table_class.__name__}Configured",
-                            (table_class,),
-                            custom_columns,
-                        )
-    
-            model_class = (
-                self.model
-                or getattr(table_class.Meta, "model", None)
-            )
-    
-            if model_class is None:
-                raise ValueError(
-                    "Unable to resolve the model class. "
-                    "Provide a model or define Meta.model on the table class."
-                )
-    
-            return table_class, model_class
-    
-    def get_class(self) -> type[tables.Table]:
-        return self.resolve()[0]
-
-    def compose(self, queryset) -> tables.Table:
-        """Build the table and configure pagination."""
-
-        table = self.get_class()(
+        table = table_class(
             queryset,
             request=self.request,
         )
 
         return self.pagination.configure(table)
-
-
-    

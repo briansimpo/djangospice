@@ -5,4 +5,4 @@ class BaseTable(tables.Table):
     class Meta:
         abstract = True
         
-    
+

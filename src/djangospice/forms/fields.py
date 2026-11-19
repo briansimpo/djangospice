@@ -41,6 +41,10 @@ class LookupChoiceField(forms.ModelChoiceField):
         depends_on=None,
         **kwargs,
     ):
+        # Remove django-filter-specific arguments.
+        kwargs.pop("null_label", None)
+        kwargs.pop("null_value", None)
+
         widget = kwargs.pop("widget", None)
 
         if widget is None:
@@ -72,6 +76,10 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
         depends_on=None,
         **kwargs,
     ):
+        kwargs.pop("null_label", None)
+        kwargs.pop("null_value", None)
+        kwargs.pop("empty_label", None)
+        
         widget = kwargs.pop("widget", None)
 
         if widget is None:

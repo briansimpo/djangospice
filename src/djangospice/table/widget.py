@@ -9,12 +9,13 @@ import django_tables2 as tables
 
 from djangospice.exec.action import Actions
 from djangospice.exec.decorators import get
-from djangospice.table.job import TableExportJob
 from djangospice.utils import get_template_name
 from djangospice.widget.widget import Widget
 
+from .builders import TableExportConfig, TableExportFilter
 from .composers import TableComposer, FilterComposer, SearchComposer
 from .fields import TableField
+from .job import TableExportJob
 from .skeleton import TableSkeleton
 from .apps import namespace
 
@@ -327,76 +328,45 @@ class TableWidget(Widget):
     # ------------------------------------------------------------------
     # EXPORT
     # ------------------------------------------------------------------
-
-    
-    def get_export_configuration(self) -> tuple[type, type]:
-        """Resolve the table and model classes."""
-        return self.table_composer.resolve()
-
     def get_export_filters(self) -> dict:
-        filters = {}
+        return TableExportFilter(
+            filterset=self.filterset if self.filterable else None,
+            query_state=self.query_state,
+            search_fields=(
+                self.search_fields
+                if self.searchable
+                else None
+            ),
+            search_parameter=(
+                self.search_parameter
+                if self.searchable
+                else None
+            ),
+            alphabet=(
+                self.alphabet
+                if self.show_alphabet
+                else None
+            ),
+            alphabet_field=(
+                self.alphabet_field
+                if self.show_alphabet
+                else None
+            ),
+            alphabet_parameter=(
+                self.alphabet_parameter
+                if self.show_alphabet
+                else None
+            ),
+        ).build()
 
-        # FilterSet filters
-        if self.filterable and self.filterset:
-            form = self.filterset.form
 
-            if form.is_valid():
-                for name, value in form.cleaned_data.items():
-                    if value in (None, "", [], (), {}):
-                        continue
-
-                    filter_field = self.filterset.filters[name]
-
-                    if filter_field.method:
-                        raise ValueError(
-                            f"Custom filter method '{name}' requires "
-                            "an explicit export implementation."
-                        )
-
-                    field_name = filter_field.field_name
-                    lookup_expr = filter_field.lookup_expr
-
-                    if lookup_expr != "exact":
-                        field_name = f"{field_name}__{lookup_expr}"
-
-                    if hasattr(value, "pk"):
-                        value = value.pk
-                    elif hasattr(value, "values_list"):
-                        value = list(value.values_list("pk", flat=True))
-
-                    filters[field_name] = value
-
-        # Search
-        search = None
-
-        if self.searchable and self.search_fields:
-            search_term = self.query_state.get(self.search_parameter)
-
-            if search_term:
-                search = {
-                    "fields": list(self.search_fields),
-                    "value": search_term,
-                }
-
-        # Alphabet
-        alphabet = None
-
-        if self.show_alphabet:
-            letter = self.query_state.get(self.alphabet_parameter)
-
-            if letter and letter.upper() in self.alphabet:
-                alphabet = {
-                    "field": self.alphabet_field,
-                    "value": letter.upper(),
-                }
-
-        return {
-            "filters": filters,
-            "search": search,
-            "alphabet": alphabet,
-        }
+    def get_export_configuration(self) -> dict:
+        return TableExportConfig(
+            resolver=self.table_composer.resolver,
+        ).build()
 
     def export_data(self, export_format: str):
+
         if not self.exportable:
             return self.response().error("Export is disabled.")
 
@@ -407,11 +377,12 @@ class TableWidget(Widget):
                 f"Unsupported export format: {export_format}"
             )
 
-        table_class, model_class = self.get_export_configuration()
+        config = self.get_export_configuration()
 
         job = TableExportJob.create(
-            table_class=table_class,
-            model_class=model_class,
+            model_class=config["model_class"],
+            table_class=config["table_class"],
+            table_config=config["table_config"],
             export_format=export_format,
             filters=self.get_export_filters(),
             directory=self.export_directory,
@@ -419,8 +390,14 @@ class TableWidget(Widget):
         )
 
         job_result = job.dispatch_now()
-        file_path, file_url = job_result.result
-        return self.response().redirect(file_url).success("Data Export completed successfully")
+
+        _, file_url = job_result.result
+
+        return (
+            self.response()
+            .redirect(file_url)
+            .success("Data Export completed successfully")
+        )
 
     @get
     def export_excel(self):
