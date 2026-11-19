@@ -2,7 +2,7 @@
  * Djangospice - Main Stylesheet Entry Point
  */
 
-@import "./html.css";
+@import "./base.css";
 @import "./table.css";
 @import "./lookup.css";
 @import "./toast.css";
