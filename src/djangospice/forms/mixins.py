@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.core.exceptions import ImproperlyConfigured
-
 
 
 class FormFieldMixin:
@@ -54,5 +52,4 @@ class FormRequestMixin:
         self.request = request
 
         super().__init__(*args, **kwargs)
-
 

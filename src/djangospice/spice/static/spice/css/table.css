@@ -53,3 +53,134 @@
 [data-table-row] > td {
     transition: background-color 150ms ease;
 }
+
+/* Search container */
+.table-search-container {
+    width: 600px;
+    max-width: 100%;
+    flex: 0 1 600px;
+    min-width: 0;
+}
+
+/* Search field wrapper */
+.table-search {
+    position: relative;
+    width: 100%;
+}
+
+/* Search input */
+.table-search-input {
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 8px 110px 8px 38px;
+    font-size: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.table-search-input:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* Search icon */
+.table-search-icon {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    color: #9ca3af;
+}
+
+.table-search-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* Right-side actions */
+.table-search-actions {
+    position: absolute;
+    top: 0;
+    right: 5px;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Action buttons */
+.table-search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #4b5563;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.table-search-button:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.table-search-button:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 1px;
+}
+
+.table-search-button svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+/* Filter button */
+.table-filter-button {
+    width: auto;
+    min-width: 36px;
+    padding: 0 9px;
+    border-radius: 18px;
+}
+
+.table-filter-button span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Responsive layout */
+@media (max-width: 640px) {
+    .table-search-container {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .table-search-input {
+        height: 42px;
+        padding-right: 100px;
+        font-size: 14px;
+    }
+
+    .table-search-button {
+        width: 34px;
+        height: 34px;
+    }
+
+    .table-filter-button {
+        width: auto;
+        padding: 0 8px;
+    }
+}

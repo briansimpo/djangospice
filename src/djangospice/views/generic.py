@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -39,7 +40,7 @@ class HTMXListView(HTMXTemplateMixin, ListView):
     pass
 
 
-class HTMXDetailView(HTMXTemplateMixin,DetailView):
+class HTMXDetailView(HTMXTemplateMixin, DetailView):
     """
     HTMX-enabled DetailView.
     """
@@ -77,3 +78,42 @@ class HTMXDeleteView(HTMXTemplateMixin, DeleteView):
     """
 
     pass
+
+
+class HTMXObjectView(TemplateView):
+    model = None
+    context_object_name = None
+    object_parameter = "pk"
+
+    def get_queryset(self):
+        if self.model is None:
+            raise NotImplementedError("Define model.")
+
+        return self.model._default_manager.all()
+
+    def get_object(self):
+        object_id = self.kwargs.get(self.object_parameter)
+
+        if object_id is None:
+            return None
+
+        return self.get_queryset().filter(pk=object_id).first()
+
+    def get_context_object_name(self, obj):
+        if self.context_object_name:
+            return self.context_object_name
+
+        return obj._meta.model_name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        obj = self.get_object()
+
+        if obj is None:
+            raise Http404
+
+        context["object"] = obj
+        context[self.get_context_object_name(obj)] = obj
+
+        return context

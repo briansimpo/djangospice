@@ -3,17 +3,14 @@
 {% load l10n %}
 
 <div class="border-b border-slate-200 bg-white p-5">
+    <div class="flex flex-col sm:flex-row  sm:items-center gap-2 relative">
 
-    <div class="flex flex-col sm:flex-row sm:items-center gap-2 relative">
-
-        <!-- Search -->
-        <div class="w-full">
-            <div class="relative">
+        <div class="relative table-search-container">
+            <div class="table-search">
 
                 <!-- Search icon -->
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 px-2">
-                    <svg class="h-4 w-4 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
+                <div class="table-search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <circle cx="11" cy="11" r="7" stroke-width="2"/>
                         <path stroke-linecap="round" stroke-width="2" d="m16 16 4 4"/>
@@ -32,117 +29,111 @@
                         value="{{ search_term }}"
                         placeholder="Search here..."
                         autocomplete="off"
-                        class="w-full pl-9 pr-8 py-2  text-sm focus:!bg-white">
+                        class="table-search-input">
                 </form>
 
-                <!-- Reset / Clear search -->
-                <button
-                    type="button"
-                    hx-get="{{ table_url }}"
-                    hx-target="{{ table_target }}"
-                    hx-swap="outerHTML"
-                    hx-push-url="false"
-                    title="{% trans 'Reset search and filters' %}"
-                    aria-label="{% trans 'Reset search and filters' %}"
-                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-700">
+                <!-- Right-side actions -->
+                <div class="table-search-actions">
 
-                    <svg class="h-5 w-5"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-
-            </div>
-        </div>
-
-        <!-- Filter and Export -->
-        <div class="flex w-full flex-col gap-2 sm:flex-row">
-
-            <!-- Filter -->
-            <div class="relative w-full">
-
-                <button
-                    type="button"
-                    data-toggle="dropdown"
-                    data-target="#bulkDropdownMenu"
-                    class="btn btn-secondary flex w-full items-center justify-center gap-2 font-semibold sm:w-auto">
-                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4h18M6 9h12m-9 5h6m-3 4h0"/>
-                    </svg>
-                    {% trans "Filter" %}
-                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m6 9 6 6 6-6"/>
-                    </svg>
-                </button>
-
-                <div id="bulkDropdownMenu"
-                    data-dropdown-menu
-                    class="absolute right-0 top-12 z-40 hidden w-full rounded-xl border border-gray-200 bg-white py-2 shadow-lg">
-
-                    <div class="border-b px-4 py-3">
-                        <h3 class="text-sm font-semibold">{% trans "Filters" %}</h3>
-                    </div>
-
-                    <form hx-get="{{ table_url }}"
+                    <!-- Reset -->
+                    <button
+                        type="button"
+                        hx-get="{{ table_url }}"
                         hx-target="{{ table_target }}"
                         hx-swap="outerHTML"
                         hx-push-url="false"
-                        class="p-4">
+                        title="{% trans 'Reset search and filters' %}"
+                        aria-label="{% trans 'Reset search and filters' %}"
+                        class="table-search-button">
 
-                        <div class="space-y-4">
-                            {% for field in filterset.form %}
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold">
-                                        {{ field.label }}
-                                    </label>
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="M6 18 18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
 
-                                    {% render_field field %}
+                    <!-- Filter -->
+                    <button
+                        type="button"
+                        data-toggle="dropdown"
+                        data-target="#bulkDropdownMenu"
+                        title="{% trans 'Show filter options' %}"
+                        aria-label="{% trans 'Show filter options' %}"
+                        class="table-search-button table-filter-button">
 
-                                    {% if field.help_text %}
-                                        <p class="mt-1 text-xs text-gray-500">
-                                            {{ field.help_text }}
-                                        </p>
-                                    {% endif %}
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+                        </svg>
 
-                                    {% for error in field.errors %}
-                                        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
-                                    {% endfor %}
-                                </div>
-                            {% endfor %}
-                        </div>
+                        <span>{% trans "Filter" %}</span>
+                    </button>
 
-                        <div class="mt-4 flex flex-col gap-2 border-t pt-3 sm:flex-row sm:justify-end">
-
-                           
-                            <button
-                                type="submit"
-                                data-action="toggle-filters"
-                                class="btn btn-primary w-full sm:w-auto">
-                                {% trans "Apply filters" %}
-                            </button>
-
-                             <button
-                                type="button"
-                                hx-get="{{ table_url }}"
-                                hx-target="{{ table_target }}"
-                                hx-swap="outerHTML"
-                                hx-push-url="false"
-                                class="btn btn-secondary w-full sm:w-auto">
-                                {% trans "Clear filters" %}
-                            </button>
-
-
-                        </div>
-                    </form>
                 </div>
             </div>
 
-            <!-- Export -->
+            <!-- Filter dropdown menu (anchored to the search container) -->
+            <div id="bulkDropdownMenu"
+                data-dropdown-menu
+                class="absolute right-0 top-full mt-2 z-40 hidden w-full sm:w-80 rounded-xl border border-gray-200 bg-white py-2 shadow-lg">
+
+                <div class="border-b px-4 py-3">
+                    <h3 class="text-sm font-semibold">{% trans "Filters" %}</h3>
+                </div>
+
+                <form hx-get="{{ table_url }}"
+                    hx-target="{{ table_target }}"
+                    hx-swap="outerHTML"
+                    hx-push-url="false"
+                    class="p-4">
+
+                    <div class="space-y-4">
+                        {% for field in filterset.form %}
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold">
+                                    {{ field.label }}
+                                </label>
+
+                                {% render_field field %}
+
+                                {% if field.help_text %}
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        {{ field.help_text }}
+                                    </p>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-4 flex flex-col gap-2 border-t pt-3 sm:flex-row sm:justify-end">
+                        <button
+                            type="submit"
+                            data-action="toggle-filters"
+                            class="btn btn-primary w-full sm:w-auto">
+                            {% trans "Apply filters" %}
+                        </button>
+
+                        <button
+                            type="button"
+                            hx-get="{{ table_url }}"
+                            hx-target="{{ table_target }}"
+                            hx-swap="outerHTML"
+                            hx-push-url="false"
+                            class="btn btn-secondary w-full sm:w-auto">
+                            {% trans "Clear filters" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Export -->
+        <div class="flex-none">
             <div class="relative w-full">
 
                 <button
@@ -194,8 +185,7 @@
 
                 </div>
             </div>
-
         </div>
-    </div>
 
+    </div>
 </div> 
