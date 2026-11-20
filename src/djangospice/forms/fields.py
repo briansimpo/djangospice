@@ -56,8 +56,14 @@ class LookupChoiceField(forms.ModelChoiceField):
                 depends_on=depends_on,
             )
 
+        queryset=(
+            queryset
+            if queryset is not None
+            else model._default_manager.all()
+        )
+
         super().__init__(
-            queryset=queryset or model._default_manager.all(),
+            queryset=queryset,
             widget=widget,
             **kwargs,
         )
@@ -92,8 +98,14 @@ class LookupMultipleChoiceField(forms.ModelMultipleChoiceField):
                 multi_select=True,
             )
 
+        queryset=(
+            queryset
+            if queryset is not None
+            else model._default_manager.all()
+        )
+
         super().__init__(
-            queryset=queryset or model._default_manager.all(),
+            queryset=queryset,
             widget=widget,
             **kwargs,
         )
