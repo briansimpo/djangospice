@@ -47,6 +47,7 @@
                                     hx-target="{{ table_target }}"
                                     hx-swap="outerHTML"
                                     hx-push-url="false"
+                                    
                                     {% endif %}
                                     class="group inline-flex items-center gap-2 rounded-sm outline-none transition hover:text-blue-700 focus:ring-2 focus:ring-blue-200">
 
@@ -125,6 +126,7 @@
                                     hx-target="{{app_view}}"
                                     hx-select="{{app_view}}"
                                     hx-push-url="true"
+                                    
 
                                     {% if row_url %}
                                         class="group cursor-pointer transition-colors duration-150 bg-white even:bg-slate-50 hover:bg-slate-100"
@@ -142,6 +144,7 @@
                                             value="{{ row.record.pk }}"
                                             data-action="toggle-row"
                                             data-row-checkbox
+                                            onclick="event.stopPropagation()"
                                             aria-label="{% trans 'Select record' %}"
                                             class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500">
 
