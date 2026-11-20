@@ -46,7 +46,7 @@ class JobHandle:
             "PROGRESS": JobStatus.RUNNING,
             "SUCCESS": JobStatus.SUCCESS,
             "FAILURE": JobStatus.FAILURE,
-            "RETRY": JobStatus.RETRY,
+            "RETRYING": JobStatus.RETRYING,
             "REVOKED": JobStatus.FAILURE,
         }
         return mapping.get(celery_state, JobStatus.QUEUED)
@@ -79,7 +79,7 @@ class JobHandle:
     @property
     def is_retrying(self) -> bool:
         """Returns True if the job failed but is scheduled to retry."""
-        return self.status == JobStatus.RETRY
+        return self.status == JobStatus.RETRYING
 
     @property
     def progress_info(self) -> dict[str, Any] | None:

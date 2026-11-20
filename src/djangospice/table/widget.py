@@ -390,14 +390,18 @@ class TableWidget(Widget):
             rename_file=self.export_unique_filename,
         )
 
-        job_result = job.dispatch_now()
+        job_handle = job.dispatch()
 
-        _, file_url = job_result.result
-
+        if job_handle.is_successful:
+            file_url = job_handle.result
+            return (
+                self.response()
+                .redirect(file_url)
+                .success("Data Export completed successfully")
+            )
         return (
             self.response()
-            .redirect(file_url)
-            .success("Data Export completed successfully")
+            .info("Exporting data")
         )
 
     @get

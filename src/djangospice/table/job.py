@@ -78,9 +78,11 @@ class TableExportJob(Job):
             filename=filename,
         )
 
-    def handle(self) -> tuple[str, str]:
+    def handle(self) -> str:
 
         try:
+            self.progress(10, 100, message="Initializing export...")
+
             builder = TableBuilder(
                 model=self.model_class_path,
                 table_class=self.table_class_path,
@@ -88,6 +90,8 @@ class TableExportJob(Job):
                 table_kwargs=self.table_kwargs,
                 **self.table_config,
             )
+
+            self.progress(40, 100, message="Generating dataset...")
 
             table = builder.build()
 
@@ -99,6 +103,8 @@ class TableExportJob(Job):
                 filename=self.filename,
             )
 
+            self.progress(100, 100, message="Export complete.")
+                  
             return exporter.export()
 
         except Exception:

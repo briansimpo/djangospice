@@ -77,12 +77,12 @@ class TableExporter:
             PurePosixPath(self.directory) / f"{name}.{self.export_format}"
         )
 
-    def export(self) -> tuple[str, str]:
+    def export(self) -> str:
         """
         Export and save the table.
 
         Returns:
-            tuple[str, str]: (file_path, file_url)
+            str: file_url
         """
         exporter = TableExport(
             self.export_format,
@@ -100,4 +100,4 @@ class TableExporter:
 
         file_url = self.storage.url(file_path)
 
-        return file_path, file_url
+        return file_url

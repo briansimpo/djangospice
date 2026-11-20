@@ -49,7 +49,7 @@ class JobWorker:
                 retries_attempted = self.task.request.retries
                 
                 if retries_attempted < job.retries:
-                    job.status = JobStatus.RETRY
+                    job.status = JobStatus.RETRYING
                     countdown = job.backoff * (2**retries_attempted) if job.backoff > 0 else 0
                     
                     logger.warning(
