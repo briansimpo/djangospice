@@ -1,13 +1,12 @@
 {% load i18n %}
 {% load django_tables2 %}
-    <!-- ====================================================== -->
-    <!-- DATA TABLE -->
-    <!-- ====================================================== -->
-
-    <div class="relative">
+<!-- ====================================================== -->
+<!-- DATA TABLE -->
+<!-- ====================================================== -->
+    <div class="w-full min-w-0 overflow-x-auto">
 
         {% if table.paginated_rows|length > 0 %}
-            <table {{ table.attrs.as_html }} class="w-full min-w-full divide-y divide-slate-200 text-left">
+            <table {{ table.attrs.as_html }} class="w-full divide-y divide-slate-200 text-left">
 
                 {% block table_head %}
 
