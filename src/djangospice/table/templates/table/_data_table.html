@@ -140,15 +140,13 @@
                                 <tr
                                     data-table-row
                                     data-object-id="{{ row.record.pk}}"
-                                    data-navigation="true"
-
-                                    hx-get="{{resolved_url}}"
-                                    hx-target="{{app_view}}"
-                                    hx-select="{{app_view}}"
-                                    hx-push-url="true"
                                     
-
                                     {% if row_url %}
+                                        hx-get="{{resolved_url}}"
+                                        hx-target="{{app_view}}"
+                                        hx-select="{{app_view}}"
+                                        hx-push-url="true"
+                                        data-navigation="true"
                                         class="group cursor-pointer transition-colors duration-150 bg-white even:bg-slate-50 hover:bg-slate-100"
                                     {% else %}
                                         class="group transition-colors duration-150 bg-white even:bg-slate-50 hover:bg-slate-100"
