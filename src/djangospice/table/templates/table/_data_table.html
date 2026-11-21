@@ -53,34 +53,54 @@
 
                                     <span>{{ column.header }}</span>
 
-                                    <span class="inline-flex h-5 w-5 items-center justify-center rounded text-slate-300 transition group-hover:bg-slate-200 group-hover:text-slate-600
-                                        {% if column.is_ordered %}bg-blue-100 text-blue-700{% endif %}">
+                                    <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center
+                                                rounded-md text-slate-500
+                                                transition-colors duration-150
+                                                group-hover:bg-slate-100 group-hover:text-slate-700
+                                                {% if column.is_ordered %}
+                                                    bg-blue-50 text-blue-600
+                                                    group-hover:bg-blue-100 group-hover:text-blue-700
+                                                {% endif %}">
 
                                         {% if column.is_ordered %}
 
                                             {% if column.order_by_alias.is_descending %}
 
-                                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v9.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4 4.5a.75.75 0 0 1-1.06 0l-4-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd"/>
-                                            </svg>
+                                                <!-- Sorted descending -->
+                                                <svg class="h-4 w-4" viewBox="0 0 20 20"
+                                                    fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 3.25a.75.75 0 0 1 .75.75v10.19l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V4a.75.75 0 0 1 .75-.75Z"
+                                                        clip-rule="evenodd"/>
+                                                </svg>
 
                                             {% else %}
 
-                                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V6.56L6.03 9.78a.75.75 0 1 1-1.06-1.06l4-4.5a.75.75 0 0 1 1.06 0l4 4.5a.75.75 0 1 1-1.06 1.06l-3.22-3.22v9.69A.75.75 0 0 1 10 17Z" clip-rule="evenodd"/>
-                                            </svg>
+                                                <!-- Sorted ascending -->
+                                                <svg class="h-4 w-4" viewBox="0 0 20 20"
+                                                    fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 16.75a.75.75 0 0 1-.75-.75V5.81L6.03 9.03a.75.75 0 1 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 1 1-1.06 1.06l-3.22-3.22V16a.75.75 0 0 1-.75.75Z"
+                                                        clip-rule="evenodd"/>
+                                                </svg>
 
                                             {% endif %}
 
                                         {% else %}
 
-                                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                            <path d="M8 7h12M8 12h8M8 17h4M4 5v14m0 0-2-2m2 2 2-2"/>
-                                        </svg>
+                                            <!-- Unsorted: bidirectional arrows -->
+                                            <svg class="h-4 w-4" viewBox="0 0 20 20"
+                                                fill="none" stroke="currentColor"
+                                                stroke-width="1.6" stroke-linecap="round"
+                                                stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M7 4v12m0-12L4.5 6.5M7 4l2.5 2.5"/>
+                                                <path d="M13 16V4m0 12l-2.5-2.5M13 16l2.5-2.5"/>
+                                            </svg>
 
                                         {% endif %}
 
                                     </span>
+
 
                                 </a>
 
