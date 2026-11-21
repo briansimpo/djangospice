@@ -18,7 +18,7 @@ class JobReporter:
     def __init__(self, task: Task = None) -> None:
         self.task = task
 
-    def _publish(self, job: Job, event: str, **extra: Any ) -> None:
+    def publish(self, job: Job, event: str, **extra: Any ) -> None:
         data = {
             **job.to_status(),
             **extra,
@@ -39,19 +39,19 @@ class JobReporter:
     def queued(self, job: Job) -> None:
         job.status = JobStatus.QUEUED
 
-        self._publish(job, "job_queued")
+        self.publish(job, "job_queued")
 
     def started(self, job: Job) -> None:
         job.status = JobStatus.STARTED
 
-        self._publish(job, "job_started")
+        self.publish(job, "job_started")
 
     def progress(self, job: Job, current: int, total: int, message: str = "", **extra: Any) -> None:
         job.current = current
         job.total = total
         job.status = JobStatus.RUNNING
 
-        self._publish(
+        self.publish(
             job,
             "job_progressed",
             message=message,
@@ -61,7 +61,7 @@ class JobReporter:
     def retrying(self, job: Job, exception: Exception, countdown: int = 0) -> None:
         job.status = JobStatus.RETRYING
 
-        self._publish(
+        self.publish(
             job,
             "job_retrying",
             error=str(exception),
@@ -74,7 +74,7 @@ class JobReporter:
 
         result = job_result.result if job_result else None
 
-        self._publish(
+        self.publish(
             job,
             "job_completed",
             result=result,
@@ -83,7 +83,7 @@ class JobReporter:
     def failed(self, job: Job, exception: Exception) -> None:
         job.status = JobStatus.FAILURE
 
-        self._publish(
+        self.publish(
             job,
             "job_failed",
             error=str(exception),
