@@ -7,7 +7,7 @@ from djangospice.core.serializable import Serializable
 
 
 @dataclass(kw_only=True)
-class BaseEvent(Serializable, ABC):
+class Event(Serializable, ABC):
     """
     Base class for all events.
 

@@ -3,9 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from djangospice.core.serializable import Serializable
+
 
 @dataclass(frozen=True, slots=True)
-class TableField:
+class TableField(Serializable):
     name: str
     label: str | None = None
     accessor: str | None = None

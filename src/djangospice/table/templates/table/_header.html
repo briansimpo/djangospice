@@ -162,7 +162,6 @@
                     class="absolute right-0 top-12 z-40 hidden w-full sm:w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 bg-white py-2 shadow-lg">
 
                     <button
-                        data-table-export
                         hx-get="{{ widget.export_excel }}"
                         hx-target="{{ table_target }}"
                         hx-swap="none"
@@ -173,7 +172,6 @@
                     </button>
 
                     <button
-                        data-table-export
                         hx-get="{{ widget.export_csv }}"
                         hx-target="{{ table_target }}"
                         hx-swap="none"

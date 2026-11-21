@@ -2,114 +2,89 @@
 from __future__ import annotations
 
 from typing import Any
+from celery import Task
 
-from djangospice.events.dispatcher import Event
+from djangospice.websocket.broadcast import Broadcast
 
-from .context import active_reporter
+from .job import Job
 from .enums import JobStatus
-from .events import (
-    JobQueued,
-    JobStarted,
-    JobProgressed,
-    JobCompleted,
-    JobFailed,
-)
 
 
 class JobReporter:
     """
-    Orchestrates job status updates and dispatches lifecycle events.
-    The active_reporter  is intentionally retained because the worker lifecycle should set and reset this shared context variable.
+    Coordinates job lifecycle state and realtime broadcasting.
     """
 
-    def __init__(self, task: Any = None) -> None:
+    def __init__(self, task: Task = None) -> None:
         self.task = task
 
-    def _sync_celery_meta(self, state: JobStatus, meta: dict[str, Any]) -> None:
+    def _publish(self, job: Job, event: str, **extra: Any ) -> None:
+        data = {
+            **job.to_status(),
+            **extra,
+        }
+
         if self.task:
             self.task.update_state(
-                state=state,
-                meta=meta,
+                state=job.status.upper(),
+                meta=data,
             )
 
-    def queued(self, job) -> None:
+        Broadcast.event(
+            event=event,
+            user=job.user_id,
+            data=data
+        )
+
+    def queued(self, job: Job) -> None:
         job.status = JobStatus.QUEUED
 
-        self._sync_celery_meta(
-            job.status,
-            {"status": job.status.value},
-        )
+        self._publish(job, "job_queued")
 
-        Event.dispatch(JobQueued(job=job))
-
-    def started(self, job) -> None:
+    def started(self, job: Job) -> None:
         job.status = JobStatus.STARTED
 
-        self._sync_celery_meta(
-            job.status,
-            {"percent": 0},
-        )
+        self._publish(job, "job_started")
 
-        Event.dispatch(JobStarted(job=job))
-
-    def progress(self, job, current: int, total: int, message: str = "", **extra: Any) -> None:
+    def progress(self, job: Job, current: int, total: int, message: str = "", **extra: Any) -> None:
         job.current = current
         job.total = total
         job.status = JobStatus.RUNNING
 
-        self._sync_celery_meta(
-            job.status,
-            {
-                "current": current,
-                "total": total,
-                "percent": job.percent,
-                "message": message,
-                **extra,
-            },
+        self._publish(
+            job,
+            "job_progressed",
+            message=message,
+            extra=extra,
         )
 
-        Event.dispatch(
-            JobProgressed(
-                job=job,
-                message=message,
-                extra=extra,
-            )
+    def retrying(self, job: Job, exception: Exception, countdown: int = 0) -> None:
+        job.status = JobStatus.RETRYING
+
+        self._publish(
+            job,
+            "job_retrying",
+            error=str(exception),
+            countdown=countdown,
         )
 
-    def completed(self, job, job_result=None) -> None:
+    def completed(self, job: Job, job_result=None) -> None:
         job.current = job.total
         job.status = JobStatus.SUCCESS
 
         result = job_result.result if job_result else None
 
-        self._sync_celery_meta(
-            job.status,
-            {
-                "percent": job.percent,
-                "result": result,
-            },
+        self._publish(
+            job,
+            "job_completed",
+            result=result,
         )
 
-        Event.dispatch(
-            JobCompleted(
-                job=job,
-                result=result,
-            )
-        )
-
-    def failed(self, job, exception) -> None:
+    def failed(self, job: Job, exception: Exception) -> None:
         job.status = JobStatus.FAILURE
 
-        error = str(exception)
-
-        self._sync_celery_meta(
-            job.status,
-            {"error": error},
-        )
-
-        Event.dispatch(
-            JobFailed(
-                job=job,
-                error=error,
-            )
+        self._publish(
+            job,
+            "job_failed",
+            error=str(exception),
         )

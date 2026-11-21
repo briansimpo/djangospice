@@ -8,7 +8,7 @@ from typing import Any, ClassVar, Type
 
 from django.db import models
 
-from djangospice.jobs.base import Job
+from djangospice.jobs.job import Job
 
 from .builders import TableBuilder
 from .exporter import TableExporter

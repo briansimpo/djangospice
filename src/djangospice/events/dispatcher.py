@@ -5,27 +5,27 @@ from .celery import CeleryAdapter
 from .registry import EventRegistry
 from .listener import EventListener
 
-from .base import BaseEvent
+from .event import Event
 
 logger = logging.getLogger(__name__)
 
 
-class Event:
+class EventDispatcher:
     """Main interface for registering and dispatching events."""
     
 
     @classmethod
-    def register(cls, event_cls: Type[BaseEvent], listener_cls: Type[EventListener]) -> None:
+    def register(cls, event_cls: Type[Event], listener_cls: Type[EventListener]) -> None:
         """Maps an Event class to a Listener class."""
         EventRegistry.register(event_cls, listener_cls)
 
     @classmethod
-    def listeners(cls, event_cls: Type[BaseEvent]) -> List[Type[EventListener]]:
+    def listeners(cls, event_cls: Type[Event]) -> List[Type[EventListener]]:
         """Retrieves all registered listeners for a given event class."""
         return EventRegistry.get_listeners(event_cls)
     
     @classmethod
-    def dispatch(cls, event: BaseEvent) -> None:
+    def dispatch(cls, event: Event) -> None:
         """Dispatches the event to all registered listeners."""
 
         listeners = cls.listeners(type(event))
@@ -38,7 +38,7 @@ class Event:
             cls._execute_listener(event, listener_cls)
             
     @classmethod
-    def _execute_listener(cls, event: BaseEvent, listener_cls: Type[EventListener]) -> None:
+    def _execute_listener(cls, event: Event, listener_cls: Type[EventListener]) -> None:
         """Routes execution based on the listener's configuration."""
         if getattr(listener_cls, 'should_queue', False):
             celery = CeleryAdapter()
@@ -47,7 +47,7 @@ class Event:
             cls._dispatch_sync(event, listener_cls)
                 
     @classmethod
-    def _dispatch_sync(cls, event: BaseEvent, listener_cls: Type[EventListener]) -> None:
+    def _dispatch_sync(cls, event: Event, listener_cls: Type[EventListener]) -> None:
         """Executes the listener synchronously in the current thread."""
         try:
             listener_instance = listener_cls()

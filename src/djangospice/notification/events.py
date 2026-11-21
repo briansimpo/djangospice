@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Any
 
-from djangospice.events import BaseEvent
+from djangospice.events import Event
 from .payload import Payload
 
 
 @dataclass
-class NotificationEvent(BaseEvent):
+class NotificationEvent(Event):
     notification: Payload
 
 
@@ -31,6 +31,6 @@ class NotificationDeleted(NotificationEvent):
 
 
 @dataclass
-class NotificationReadAll(BaseEvent):
+class NotificationReadAll(Event):
     name = "notification_read_all"
     recipient: Any

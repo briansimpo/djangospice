@@ -1,14 +1,14 @@
 from typing import Type
 
 from .subscriber import EventSubscriber
-from .base import BaseEvent
-from .dispatcher import Event
+from .event import Event
+from .dispatcher import EventDispatcher
 
 
-def listen(event_cls: Type[BaseEvent]):
-    """Decorator to register a standalone EventListener to an Event."""
+def listen(event_cls: Type[Event]):
+    """Decorator to register a standalone EventListener to an EventDispatcher."""
     def decorator(listener_cls):
-        Event.register(event_cls, listener_cls)
+        EventDispatcher.register(event_cls, listener_cls)
         return listener_cls
     return decorator
 

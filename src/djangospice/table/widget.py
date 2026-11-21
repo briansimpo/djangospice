@@ -390,19 +390,10 @@ class TableWidget(Widget):
             rename_file=self.export_unique_filename,
         )
 
-        job_handle = job.dispatch()
+        job.dispatch()
 
-        if job_handle.is_successful:
-            file_url = job_handle.result
-            return (
-                self.response()
-                .redirect(file_url)
-                .success("Data Export completed successfully")
-            )
-        return (
-            self.response()
-            .info("Exporting data")
-        )
+        return self.response().info("Export started.")
+             
 
     @get
     def export_excel(self):

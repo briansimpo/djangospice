@@ -1,66 +1,112 @@
+
 import logging
 from typing import Any
+
 from celery.exceptions import Retry
 
-from .base import Job
+from .job import Job
 from .enums import JobStatus
 from .result import JobResult
-from .reporter import JobReporter, active_reporter
+from .reporter import JobReporter
+from .context import  active_reporter
 
 logger = logging.getLogger(__name__)
 
 
 class JobWorker:
-    """Orchestrates job execution and delegates state tracking to the JobReporter."""
+    """
+    Executes jobs and coordinates their execution lifecycle.
+
+    This is the single authority for job execution, retries,
+    and lifecycle reporting.
+    """
 
     def __init__(self, task: Any = None) -> None:
         self.task = task
 
     def execute(self, job: Job) -> JobResult:
-        # 1. Establish initial system identifier
-        job._id = self.task.request.id if self.task else (job.id or "sync-execution")
+        # Establish execution identifier.
+        job._id = (
+            self.task.request.id
+            if self.task
+            else (job.id or "sync-execution")
+        )
 
-        # 2. Attach context reporter
         reporter = JobReporter(self.task)
         token = active_reporter.set(reporter)
 
-        # Let the reporter kick off the lifecycle
         reporter.started(job)
 
         try:
-            # 3. Execute business logic
-            job_result = job.handle()
+            result = job.handle()
 
-            # Normalize return values
-            if not isinstance(job_result, JobResult):
-                job_result = JobResult(job_result)
+            if not isinstance(result, JobResult):
+                result = JobResult(result)
 
-            # Let the reporter finalize completion
-            reporter.completed(job, job_result)
-            return job_result
+            reporter.completed(job, result)
+
+            return result
+
+        except Retry:
+            # Celery retry is a control-flow exception.
+            # Do not report it as a final failure.
+            raise
 
         except Exception as exc:
-            # A. Let Celery's built-in Retry bubble up cleanly
-            if self.task and isinstance(exc, Retry):
-                raise
+            if self._should_retry(job, exc):
+                retries = self.task.request.retries
+                countdown = self._get_countdown(job, retries)
 
-            # B. Check for automatic retry threshold
-            if self.task and job.retries > 0:
-                retries_attempted = self.task.request.retries
-                
-                if retries_attempted < job.retries:
-                    job.status = JobStatus.RETRYING
-                    countdown = job.backoff * (2**retries_attempted) if job.backoff > 0 else 0
-                    
-                    logger.warning(
-                        f"Job {job.name} [{job.id}] failed. "
-                        f"Retrying ({retries_attempted + 1}/{job.retries}) in {countdown}s..."
-                    )
-                    raise self.task.retry(exc=exc, countdown=countdown)
+                job.status = JobStatus.RETRYING.value
 
-            # C. Register hard failure via the reporter
+                logger.warning(
+                    "Job %s [%s] failed. "
+                    "Retrying (%s/%s) in %ss.",
+                    job.name,
+                    job.id,
+                    retries + 1,
+                    job.max_retries,
+                    countdown,
+                )
+
+                reporter.retrying(
+                    job,
+                    exception=exc,
+                    countdown=countdown,
+                )
+
+                raise self.task.retry(
+                    exc=exc,
+                    max_retries=job.max_retries,
+                    countdown=countdown,
+                )
+
             reporter.failed(job, exception=exc)
             raise
 
         finally:
             active_reporter.reset(token)
+
+    def _should_retry(self, job: Job, exc: Exception) -> bool:
+        if not self.task:
+            return False
+
+        if job.max_retries <= 0:
+            return False
+
+        retry_on = job.retry_on
+
+        if not retry_on:
+            return False
+
+        if not isinstance(exc, retry_on):
+            return False
+
+        return self.task.request.retries < job.max_retries
+
+    @staticmethod
+    def _get_countdown(job: Job, retries: int) -> int:
+        if job.retry_backoff <= 0:
+            return 0
+
+        return job.retry_backoff * (2 ** retries)

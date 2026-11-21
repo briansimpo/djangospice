@@ -5,7 +5,7 @@ from typing import Any
 
 from celery import shared_task
 
-from .execution import ExecutionContext
+from .execution import Execution
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def execute_listener(self, listener_path: str, event_path: str, payload: dict[st
 
     # Reconstruct event and listener
     try:
-        context = ExecutionContext.reconstruct(
+        execution = Execution.construct(
             listener_path=listener_path,
             event_path=event_path,
             payload=payload,
@@ -31,12 +31,13 @@ def execute_listener(self, listener_path: str, event_path: str, payload: dict[st
         )
         raise
 
-    listener = context.listener
+    listener = execution.listener
     listener_cls = type(listener)
 
     # Execute listener
     try:
-        context.execute()
+        execution.execute()
+
     except Exception as exc:
         duration = time.perf_counter() - start_time
 

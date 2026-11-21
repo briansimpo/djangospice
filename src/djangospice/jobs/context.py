@@ -1,7 +1,7 @@
 from contextvars import ContextVar
-from typing import Any
+from .reporter import JobReporter
 
-active_reporter: ContextVar[Any | None] = ContextVar(
+active_reporter: ContextVar[JobReporter | None] = ContextVar(
     "active_reporter",
     default=None,
 )

@@ -4,19 +4,19 @@ from typing import Any, Type
 
 from djangospice.core.resolver import resolve_class 
 
-from .base import BaseEvent
+from .event import Event
 from .listener import EventListener
 
 
 @dataclass
-class ExecutionContext:
-    event: BaseEvent
+class Execution:
+    event: Event
     listener: EventListener
 
     @classmethod
-    def reconstruct(cls, listener_path: str, event_path: str, payload: dict[str, Any]) -> "ExecutionContext":
+    def construct(cls, listener_path: str, event_path: str, payload: dict[str, Any]) -> "Execution":
 
-        event_cls: Type[BaseEvent] = resolve_class(event_path)
+        event_cls: Type[Event] = resolve_class(event_path)
         listener_cls: Type[EventListener] = resolve_class(listener_path)
 
         event = event_cls.from_dict(payload)

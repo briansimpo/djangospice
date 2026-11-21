@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Type
-from .base import BaseEvent
+from .event import Event
 
 
 class EventListener(ABC):
@@ -16,6 +16,6 @@ class EventListener(ABC):
     retry_backoff: int = 60 
 
     @abstractmethod
-    def handle(self, event: BaseEvent) -> None:
+    def handle(self, event: Event) -> None:
         """Executes the business logic reacting to the event."""
         pass

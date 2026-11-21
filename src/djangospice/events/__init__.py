@@ -1,11 +1,11 @@
-from .base import BaseEvent
-from .dispatcher import Event
+from .event import Event
+from .dispatcher import EventDispatcher
 from .listener import EventListener
 from .decorators import listen, subscribe
 
 __all__ = [
-    "BaseEvent",
     "Event",
+    "EventDispatcher",
     "EventListener",
     "listen",
     "subscribe"

@@ -4,7 +4,7 @@ import logging
 
 from django.db import transaction
 
-from .base import BaseEvent
+from .event import Event
 from .listener import EventListener
 from .tasks import execute_listener
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class CeleryAdapter:
 
-    def dispatch(self, event: BaseEvent, listener_cls: type[EventListener]) -> None:
+    def dispatch(self, event: Event, listener_cls: type[EventListener]) -> None:
 
         listener_path = f"{listener_cls.__module__}.{listener_cls.__qualname__}"
 
