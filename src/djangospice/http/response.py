@@ -265,11 +265,7 @@ class Response(HttpResponse):
     # Template Rendering
     # ------------------------------------------------------------------
 
-    def render(
-        self,
-        template: str | None = None,
-        context: Mapping[str, Any] | None = None,
-    ) -> Self:
+    def render(self, template: str | None = None, context: Mapping[str, Any] | None = None) -> Self:
         """Render a Django template into the response content."""
         if template is not None:
             self.template = template

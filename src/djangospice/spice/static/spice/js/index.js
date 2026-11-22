@@ -1,17 +1,14 @@
 
-import "./html/root.js";
-import "./html/link.js";
-import "./html/button.js";
-import "./html/nav.js";
-import "./html/boost.js";
-import "./html/loading.js";
-import "./html/toast.js";
+import "./html/index.js";
 
 import { SpiceUI } from './ui.js';
 import { SpiceSocket } from './socket.js';
 import { SpiceRouter } from './router.js';
 import { SpiceTable } from './table.js';
 import { initializeLookup, destroyLookup } from './lookup.js';
+
+import { initialize as initializeNotification } from "./notification.js";
+import { initialize as initializeJob } from "./job.js";
 
 
 /* -------------------------------------------------------------------------- */
@@ -134,7 +131,6 @@ function destroyLookups(root) {
     destroyLookup(root);
 }
 
-
 /* -------------------------------------------------------------------------- */
 /* Application Initialization                                                */
 /* -------------------------------------------------------------------------- */
@@ -156,6 +152,8 @@ export function init(root = document) {
 
     // Initialize Djangospice UI components.
     ui.initStates(root);
+    initializeNotification(socket)
+    initializeJob(socket)
 }
 
 
