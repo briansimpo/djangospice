@@ -361,7 +361,7 @@ class TableWidget(Widget):
         ).build()
 
 
-    def get_export_configuration(self) -> dict:
+    def get_export_config(self) -> dict:
         return TableExportConfig(
             resolver=self.table_composer.resolver,
         ).build()
@@ -378,7 +378,7 @@ class TableWidget(Widget):
                 f"Unsupported export format: {export_format}"
             )
 
-        config = self.get_export_configuration()
+        config = self.get_export_config()
 
         job = TableExportJob.create(
             model_class=config["model_class"],
