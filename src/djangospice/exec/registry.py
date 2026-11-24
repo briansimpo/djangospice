@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from djangospice.exec.identity import ClassIdentity
 
-from .mixin import Executable
+from .executable import Executable
 
 
 class Registry:

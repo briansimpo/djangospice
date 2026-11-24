@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 
 from django.db.models import Model, QuerySet
 
-from djangospice.exec.mixin import Executable
+from djangospice.exec.executable import Executable
 from djangospice.html.component import Component
 from djangospice.http.headers import HTMXHeaders
 from djangospice.http.response import Response

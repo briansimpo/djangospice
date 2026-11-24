@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponseNotFound
 
-from djangospice.exec.mixin import Executable
+from djangospice.exec.executable import Executable
 from djangospice.http.response import Response
 
 

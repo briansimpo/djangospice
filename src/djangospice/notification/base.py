@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import Any
 
-from djangospice.exec.mixin import Executable
+from djangospice.exec.executable import Executable
 from djangospice.utils import safe_reverse
 
 from .enums import (

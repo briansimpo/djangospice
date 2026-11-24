@@ -1,5 +1,5 @@
 from .registry import Registry
-from .mixin import Executable
+from .executable import Executable
 
 
 class Resolver:
