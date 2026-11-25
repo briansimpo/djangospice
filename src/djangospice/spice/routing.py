@@ -1,7 +1,7 @@
 from django.urls import path
 
 from djangospice.package.routing import Routing
-from djangospice.websocket.consumers import DefaultConsumer
+from djangospice.socket.consumers import DefaultConsumer
 
 
 def http_urlpatterns():

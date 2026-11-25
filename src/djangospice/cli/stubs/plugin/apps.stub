@@ -1,0 +1,9 @@
+from djangospice.package import AppConfig
+
+class {class_name}AppConfig(AppConfig):
+    name = "{module_name}"
+    label = "{module_label}"
+    verbose_name = "{verbose_name}"
+
+   
+namespace = {class_name}AppConfig.namespace 

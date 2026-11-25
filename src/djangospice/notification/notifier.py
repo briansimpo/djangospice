@@ -10,7 +10,6 @@ from .models import Notification as NotificationModel
 from .models import NotificationDelivery
 from .builder import NotificationBuilder
 from .enums import Channel
-from .services import ChannelService
 from .celery import CeleryAdapter
 from .publishers import notification_created
 
@@ -142,10 +141,7 @@ class Notifier:
             for user in users:
 
                 # 3. Route
-                channels = ChannelService.channels(
-                    user=user,
-                    notification=notification,
-                )
+                channels = notification.channels(user)
 
                 # 4. Build & Persist
                 notification_record = NotificationBuilder.build(

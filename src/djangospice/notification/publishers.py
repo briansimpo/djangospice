@@ -3,7 +3,7 @@ from django.db import transaction
 from .models import Notification
 from .payload import payload
 
-from djangospice.websocket.broadcast import Broadcast
+from djangospice.socket.broadcast import Broadcast
 
 
 def broadcast_event(event: str, notification: Notification) -> None:

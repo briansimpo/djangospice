@@ -4,7 +4,7 @@ from typing import Any
 
 from djangospice.core.serializer import serialize
 from djangospice.core.payload import Payload
-from djangospice.websocket import Broadcast
+from djangospice.socket import Broadcast
 
 
 def get_payload(event: str, payload: Any = None) -> dict:

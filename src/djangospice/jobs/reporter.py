@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 from celery import Task
 
-from djangospice.websocket.broadcast import Broadcast
+from djangospice.socket.broadcast import Broadcast
 
 from .job import Job
 from .enums import JobStatus

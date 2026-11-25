@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ast
-import sys
 from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import entry_points
@@ -104,7 +103,6 @@ class PackageDiscovery:
         for i, part in enumerate(parts):
             current /= part
             
-            # If this part is a top-level container directory (e.g., 'apps'), 
             # it doesn't strictly need an __init__.py file.
             if i == 0 and part in app_directories:
                 continue
