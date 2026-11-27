@@ -1,12 +1,3 @@
-def notify(user, title, body, template=None, context=None):
-    from .default import DefaultNotification
+def notify(user, notification):
     from .notifier import Notifier
-
-    notification = DefaultNotification(
-        title=title,
-        body=body,
-        template=template,
-        context=context
-    )
-
-    return Notifier.send(user, notification)
+    Notifier.send(user, notification)

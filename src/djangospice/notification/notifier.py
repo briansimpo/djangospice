@@ -125,7 +125,7 @@ class Notifier:
 
 
     @classmethod
-    def send(cls, users: UserCollection, notification: NotificationInput, actor: models.Model | None = None,  target: models.Model | None = None, notification_kwargs: dict[str, Any] | None = None) -> list[Notification]:
+    def send(cls, users: UserCollection, notification: NotificationInput, actor: models.Model | None = None,  target: models.Model | None = None, notification_kwargs: dict[str, Any] | None = None):
 
         # 1. Resolve notification
         notification = cls.resolve_notification(
@@ -135,7 +135,6 @@ class Notifier:
 
         # 2. Resolve recipients
         users = cls.resolve_users(users)
-        notifications = []
 
         with transaction.atomic():
             for user in users:
@@ -156,7 +155,3 @@ class Notifier:
 
                 # 6. Dispatch event
                 notification_created(notification_record)
-
-                notifications.append(notification_record)
-
-        return notifications

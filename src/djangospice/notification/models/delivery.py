@@ -3,12 +3,10 @@ from django.utils import timezone
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-
 from djangospice.db.models import BaseModel
 from djangospice.notification.enums import Channel, DeliveryStatus
 
 from .notification import Notification
-
 
 
 class NotificationDelivery(BaseModel):
